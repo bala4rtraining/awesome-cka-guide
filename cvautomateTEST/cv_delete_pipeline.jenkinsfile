@@ -1,0 +1,21 @@
+//
+// Delete pipeline from the project
+//
+
+pipeline {
+
+         agent any
+
+
+     stages {
+
+
+         stage('DeletePipeline') {
+             steps {
+                  sh 'cvautomate/cv_delete_pipeline.sh'
+             }
+         }
+
+
+     }
+}
