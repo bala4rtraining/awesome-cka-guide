@@ -1,0 +1,68 @@
+pipeline {
+
+  agent {
+    node {
+      label 'ovn_build'
+    }
+  }
+
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+  }
+
+  environment {
+    DOCKER_TAG = "${DOCKER_TAG}"
+  }
+
+  stages {
+    stage('prepare') {
+      steps {
+        ansiColor('xterm') {
+          sh '''
+          git show -s --pretty=%ce > .git/committer-email
+          '''
+        }
+      }
+    }
+    stage('build ovn_manager/ovn_nginx_auth') {
+      steps {
+        ansiColor('xterm') {
+          script {
+            println "${env.DOCKER_TAG}"
+            println "${env.BRANCH_NAME}"
+            println "${env.BUILD_NUMBER}"
+            def centos7_ovn_manager_nginx_auth
+            dir ('ovn_manager/ovn_nginx_auth') {
+              centos7_ovn_manager_nginx_auth = docker.build("ovn_manager/ovn_nginx_auth", "--tag ${env.DOCKER_TAG} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+            }
+            //if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+              docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                centos7_ovn_manager_nginx_auth.push("${env.DOCKER_TAG}")
+                //centos7_ovn_manager_nginx_auth.push("latest")
+              }
+            //}
+          }
+        }
+      }
+    }
+  } // stages
+
+  post {
+    success {
+      script {
+        def committer_email = readFile('.git/committer-email').trim()
+          mail body: "docker push ovn_nginx_auth:${env.DOCKER_TAG} - SUCCESS" ,
+          subject: "docker push ovn_nginx_auth:${env.DOCKER_TAG} - SUCCESS" ,
+          to: "${committer_email}"
+      }
+    }
+    failure {
+      script {
+        def committer_email = readFile('.git/committer-email').trim()
+          mail body: "docker push ovn_nginx_auth:${env.DOCKER_TAG} - FAILURE" ,
+          subject: "docker push ovn_nginx_auth:${env.DOCKER_TAG} - FAILURE" ,
+          to: "${committer_email}"
+      }
+    }
+  }
+}

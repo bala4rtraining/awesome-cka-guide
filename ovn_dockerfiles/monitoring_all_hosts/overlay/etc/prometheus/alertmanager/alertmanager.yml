@@ -1,0 +1,40 @@
+global:
+  smtp_smarthost: '10.173.223.22:25'
+  smtp_from: 'prometheus-alertmanager-nonprod@sl73ovnapd045.visa.com'
+  pagerduty_url: 'undefined'
+  hipchat_url: 'undefined'
+  opsgenie_api_host: 'undefined'
+  victorops_api_url: 'undefined'
+
+templates:
+  - /etc/prometheus/alertmanager/*.tmpl
+
+route:
+  receiver: default
+  group_wait: 30s
+  group_interval: 1m
+  repeat_interval: 3h
+  receiver: default
+  routes:
+  - match_re:
+      alertname: .*
+    group_by: ['alertname', 'severity']
+    receiver: dev_tools
+    continue: true
+
+inhibit_rules:
+- source_match:
+    severity: 'critical'
+  target_match:
+    severity: 'warning'
+  equal: ['alertname']
+
+receivers:
+- name: default
+
+- name: dev_tools
+  email_configs:
+  - to: 'NAOVNDevToolsTrack@visa.com'
+    require_tls: false
+    html: '{{ template "email.html" . }}'
+

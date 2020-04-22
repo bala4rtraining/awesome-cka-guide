@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="styles/jquery.dataTables.min.css">
+<link rel="stylesheet" href="styles/jquery-ui.min.css">
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+<script type="text/javascript" src="js/jquery-3.3.1.js"></script>
+<script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="js/SMEapp.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<style>
+
+.navbar-default {
+     background-color: #1a1f5a !important;
+     min-height: 60px;
+     padding: 5px;
+ }
+
+ .navbar-brand {
+     display: flex;
+     align-items: center;
+ }
+
+.navbar-brand>img {
+     padding: 7px 14px;
+ }
+
+.brand-title {
+      color: white;
+      float: left;
+      height: 50px;
+      padding: 15px 15px;
+      font-size: 20px;
+      line-height: 20px ;
+}
+
+.dropdown {
+      float: left;
+      margin-left:35%;
+}
+
+.dropdown .dropbtn {
+      font-size: 16px; 
+      border: none;
+      outline: none;
+      color: white;
+      padding: 14px 16px;
+      background-color: inherit;
+      font-family: inherit;
+      margin: 0;
+}
+
+.dropdown-content > a:hover{
+      background-color: #e6e6e6;
+}
+
+.dropdown-content {
+      margin-top: -2%;
+      margin-left: 6%;
+      display: none;
+      position: absolute;
+      background-color: #f9f9f9;
+      width: 0px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+      z-index: 1;
+}
+
+.dropdown-content a {
+      float: none;
+      color: black;
+      padding: 12px 70px;
+      text-decoration: none;
+      display: block;
+      text-align: left;
+}
+
+.dropdown:hover .dropdown-content {
+      display: block !important;
+}
+  
+
+</style>
+
+<script type="text/javascript" language="javascript">
+
+function DisableBackButton() {
+     window.history.forward()
+}
+
+DisableBackButton();
+window.onload = DisableBackButton;
+window.onpageshow = function(evt) { if (evt.persisted) DisableBackButton() }
+window.onunload = function() { void (0) }
+</script>
+
+</head>
+<body>
+
+
+<nav class="navbar navbar-default">
+<div class="container">
+<div class="navbar-header">
+<a class="navbar-brand" href="index.html">
+<img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+Cjxzdmcgd2lkdGg9Ijc5cHgiIGhlaWdodD0iMjZweCIgdmlld0JveD0iMCAwIDc5IDI2IiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPgogICAgPCEtLSBHZW5lcmF0b3I6IFNrZXRjaCA0MS4yICgzNTM5NykgLSBodHRwOi8vd3d3LmJvaGVtaWFuY29kaW5nLmNvbS9za2V0Y2ggLS0+CiAgICA8dGl0bGU+VmlzYSBMb2dvPC90aXRsZT4KICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPgogICAgPGRlZnM+CiAgICAgICAgPHBvbHlnb24gaWQ9InBhdGgtMSIgcG9pbnRzPSIwIDAuODcyMzEyMzQyIDc4Ljk5OTg3OCAwLjg3MjMxMjM0MiA3OC45OTk4NzggMjYgMCAyNiI+PC9wb2x5Z29uPgogICAgPC9kZWZzPgogICAgPGcgaWQ9IjMzLi1WRS0tLVByb2Nlc3Npbmctb3B0aW9ucyIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9IjMzLjBfVkUtY2xpZW50LXNldHRpbmdzX3Byb2Nlc3NpbmciIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xMzAuMDAwMDAwLCAtMjEuMDAwMDAwKSI+CiAgICAgICAgICAgIDxnIGlkPSJOYXZpZ2F0aW9uIj4KICAgICAgICAgICAgICAgIDxnIGlkPSJHcm91cC0xNCI+CiAgICAgICAgICAgICAgICAgICAgPGcgaWQ9Ikdyb3VwLTMiPgogICAgICAgICAgICAgICAgICAgICAgICA8ZyBpZD0iQ29tbWVyY2lhbC1Qcm9kdWN0cy0rLVZpc2EtTG9nbyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTMwLjAwMDAwMCwgMjEuMDAwMDAwKSI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8ZyBpZD0iVmlzYS1Mb2dvIj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8bWFzayBpZD0ibWFzay0yIiBmaWxsPSJ3aGl0ZSI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDx1c2UgeGxpbms6aHJlZj0iI3BhdGgtMSI+PC91c2U+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPC9tYXNrPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxnIGlkPSJDbGlwLTIiPjwvZz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMzkuMTE1NjAyNywxLjMxNTg2NzM3IEwzMy44Mzc3NzUyLDI1LjYxODQxNTMgTDI3LjQ1NDAyNDksMjUuNjE4NDE1MyBMMzIuNzMyODIwOCwxLjMxNTg2NzM3IEwzOS4xMTU2MDI3LDEuMzE1ODY3MzcgWiBNNjUuOTcxOTk3NSwxNy4wMDgzODYyIEw2OS4zMzE4OTE2LDcuODgyNDY0OSBMNzEuMjY0ODM1NCwxNy4wMDgzODYyIEw2NS45NzE5OTc1LDE3LjAwODM4NjIgWiBNNzMuMDk3MDY0NywyNS42MTg0MTUzIEw3OSwyNS42MTg0MTUzIEw3My44NDMyMjM2LDEuMzE1ODY3MzcgTDY4LjM5Nzg2MTMsMS4zMTU4NjczNyBDNjcuMTY5OTE5MSwxLjMxNTg2NzM3IDY2LjEzNjYyNywyLjAxNzMwODEgNjUuNjc4NTY5NywzLjA5Nzk5NjY4IEw1Ni4wOTk1NTQ4LDI1LjYxODQxNTMgTDYyLjgwMzg0ODQsMjUuNjE4NDE1MyBMNjQuMTM0NDQyLDIxLjk4OTQzMDQgTDcyLjMyMzMwNjEsMjEuOTg5NDMwNCBMNzMuMDk3MDY0NywyNS42MTg0MTUzIFogTTU2LjQzMjY4NzQsMTcuNjg0NDE1OCBDNTYuNDYwNzcxMywxMS4yNzEyNDM1IDQ3LjQzMDM2LDEwLjkxNTQ4ODkgNDcuNDkwODg1NSw4LjA1MDI3MzY5IEM0Ny41MTA3Mzc5LDcuMTc5MTA2MzYgNDguMzUzMjUzNSw2LjI1MDg4NDA1IDUwLjE5NzU4NzksNi4wMTQwMzM5MyBDNTEuMTExNzY1Nyw1Ljg5ODAwNjE0IDUzLjYzMzk4NjIsNS44MDQ1MTI2OCA1Ni40OTMyMTMsNy4xMDE5MTQzMiBMNTcuNjExNzI1LDEuOTQ1ODY5NSBDNTYuMDc1ODI4OCwxLjM5OTI5MjMxIDU0LjA5OTMwNjYsMC44NzIzNzI3MiA1MS42NDA1MTY5LDAuODcyMzcyNzIgQzQ1LjMyOTg4MTUsMC44NzIzNzI3MiA0MC44OTA2OTU5LDQuMTczODkwNzMgNDAuODU0ODY0OCw4LjkwNTEzOTU5IEM0MC44MTQxOTE2LDEyLjQwNDE5MjUgNDQuMDI2ODg3NSwxNC4zNTUwODk1IDQ2LjQ0MTEzMDUsMTUuNTE5MjAzIEM0OC45MzA0MjUxLDE2LjcxMDE2NiA0OS43NjQyMjUsMTcuNDc1ODUzNSA0OS43NTMwODgzLDE4LjUzOTI4MTcgQzQ5LjczNjE0MTEsMjAuMTY5OTAzNyA0Ny43NjY4ODIsMjAuODkxOTYwOSA0NS45MzUxMzY5LDIwLjkxOTI4OTggQzQyLjcyMzQwOTQsMjAuOTY4NjczNSA0MC44NjIxMjc4LDIwLjA2NDQyMzkgMzkuMzc4NTI1NywxOS4zODMxMjAyIEwzOC4yMTk4MjQ2LDI0LjcxMDMzIEMzOS43MTQwNzkzLDI1LjM4Mzk2MjQgNDIuNDY3MjY1MywyNS45Njk4NTQ4IDQ1LjMxNjgwNzksMjYuMDAwMDYwNCBDNTIuMDI1NDU5MywyNi4wMDAwNjA0IDU2LjQxMjgzNSwyMi43MzczNzgxIDU2LjQzMjY4NzQsMTcuNjg0NDE1OCBMNTYuNDMyNjg3NCwxNy42ODQ0MTU4IFogTTI5Ljk5NDE2MSwxLjMxNTg2NzM3IEwxOS42NTEwNzE3LDI1LjYxODQxNTMgTDEyLjkwNDE2ODEsMjUuNjE4NDE1MyBMNy44MTM3Mjc3LDYuMjIzNTU1MTkgQzcuNTA1Mjg5NTIsNS4wMzA2NzQ0NCA3LjIzNjU1NjEsNC41OTI0NTM3OCA2LjI5ODY1MjI2LDQuMDg4NTQ3OTcgQzQuNzYyNzU2MDMsMy4yNjcyNDM4MyAyLjIyODkxNDYyLDIuNDk5NjM4NDkgMC4wMDAxMjE5NTEyMiwyLjAyMjEwMjYzIEwwLjE1MTE5MzcxMSwxLjMxNTg2NzM3IEwxMS4wMTM4MzQzLDEuMzE1ODY3MzcgQzEyLjM5NzIwNjIsMS4zMTU4NjczNyAxMy42NDIwOTU2LDIuMjIzNDczMTggMTMuOTU4NzY1MiwzLjc5MjcyNTA1IEwxNi42NDc1NTIsMTcuODU2NTM5NyBMMjMuMjg3OTMwNiwxLjMxNTg2NzM3IEwyOS45OTQxNjEsMS4zMTU4NjczNyBaIiBpZD0iRmlsbC0xIiBmaWxsPSIjRkZGRkZGIiBtYXNrPSJ1cmwoI21hc2stMikiPjwvcGF0aD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9nPgogICAgICAgICAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+" alt="visa-logo">
+</a>
+<span class="brand-title">Open VisaNet Development Team</span>
+</div>
+
+<div class="dropdown">
+<button class="dropbtn">Logged in as {{ .Name }}
+<span class="caret"></span></br>
+<span class="login-data"> {{.Time}}</span>
+</button>
+<div class="dropdown-content">
+<form>
+<input style="width: 200px; padding: 10px; cursor: pointer; background: white; color: #000; border-radius: 5px; border: 1px solid #999; font-size: 100%;" type="button" value="Logout" onclick="window.location.href='/logout'" />
+</form>
+</div>
+</div>
+</div>
+</nav>
+
+
+<H3>DEPRECATED INDEX PAGE</H3>
+
+<ul>
+<li><A href=checkmarx.html>CHECKMARX BUG TRACKER APP</A></li>
+<li><A href=inventory.html>INVENTORY MANAGEMENT APP</A></li>
+<li><A href=teamapp.html>OVN TEAM/SME APP</A></li>
+</ul>
+
+</body>
+<div style="float:right">
+<script language="Javascript">
+document.write(" Open Visanet Teamapp v0.0.1 " + document.lastModified +"");
+</script>
+</div>
+</html> 

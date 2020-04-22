@@ -1,0 +1,163 @@
+######
+# OVN Components
+######
+
+# Business Zone
+[dc1_ovn_mediator_servers]
+mediator_1
+
+#
+# Restricted Zone
+[dc1_ovn_switch_servers]
+switch_1
+
+# Restricted Zone
+[dc1_kafka]
+kafka_1
+
+# Restricted Zone
+[dc1_kafka_mirror_maker]
+kafka_mirror_maker_1
+
+# Restricted Zone
+[dc1_ovn_multidc_sync]
+kafka_mirror_maker_1
+
+# Restricted Zone
+[dc1_hadoop_namenodes]
+hadoop_1
+
+# Restricted Zone
+[dc1_hadoop_datanodes]
+hadoop_1
+
+# Restricted Zone
+[dc1_nomad_server]
+nomad_1
+
+# Restricted Zone
+[dc1_nomad_client]
+nomad_1
+
+# Restricted Zone
+[dc1_ovn_riak_servers]
+riak_zk_1
+
+# Restricted Zone
+[dc1_zookeeper]
+riak_zk_1
+
+# Restricted Zone
+[dc1_ftps_server]
+ftps_server_1
+
+# Restricted Zone
+[dc1_ovn_vitalsigns_delivery]
+ftps_server_1
+
+# Restricted Zone
+[dc1_ovn_umf_delivery]
+ftps_server_1
+
+# Restricted Zone
+[dc1_elasticsearch]
+elasticsearch_1
+
+# Restricted Zone
+[dc1_kibana]
+elasticsearch_1
+
+# Restricted Zone
+[dc1_grafana]
+elasticsearch_1
+
+# Restricted Zone
+[dc1_graphite]
+elasticsearch_1
+
+# Perimeter Zone
+[dc1_haproxy]
+haproxy_1
+
+[dc1_tsung]
+haproxy_1
+
+# Business Zone
+[ovn_mediator_servers:children]
+dc1_ovn_mediator_servers
+
+#
+# Restricted Zone
+[ovn_switch_servers:children]
+dc1_ovn_switch_servers
+
+# Restricted Zone
+[kafka:children]
+dc1_kafka
+
+# Restricted Zone
+[kafka_mirror_maker:children]
+dc1_kafka_mirror_maker
+
+# Restricted Zone
+[ovn_multidc_sync:children]
+dc1_ovn_multidc_sync
+
+# Restricted Zone
+[hadoop_namenodes:children]
+dc1_hadoop_namenodes
+
+# Restricted Zone
+[hadoop_datanodes:children]
+dc1_hadoop_datanodes
+
+# Restricted Zone
+[nomad_server:children]
+dc1_nomad_server
+
+# Restricted Zone
+[nomad_client:children]
+dc1_nomad_client
+
+# Restricted Zone
+[ovn_riak_servers:children]
+dc1_ovn_riak_servers
+
+# Restricted Zone
+[zookeeper:children]
+dc1_zookeeper
+
+# Restricted Zone
+[ftps_server:children]
+dc1_ftps_server
+
+# Restricted Zone
+[ovn_vitalsigns_delivery:children]
+dc1_ovn_vitalsigns_delivery
+
+# Restricted Zone
+[ovn_umf_delivery:children]
+dc1_ovn_umf_delivery
+
+# Restricted Zone
+[elasticsearch:children]
+dc1_elasticsearch
+
+# Restricted Zone
+[kibana:children]
+dc1_kibana
+
+# Restricted Zone
+[grafana:children]
+dc1_grafana
+
+# Restricted Zone
+[graphite:children]
+dc1_graphite
+
+# Perimeter Zone
+[haproxy:children]
+dc1_haproxy
+
+[tsung:children]
+dc1_tsung

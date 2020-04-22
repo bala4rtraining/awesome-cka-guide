@@ -1,0 +1,211 @@
+## This file contains the Netcool plugin for elastalert
+#
+from email.mime.text import MIMEText
+from email.utils import formatdate
+from smtplib import SMTP
+from smtplib import SMTP_SSL
+from smtplib import SMTPAuthenticationError
+from smtplib import SMTPException
+from socket import error
+from util import EAException
+from util import elastalert_logger
+from util import lookup_es_key
+from alerts import Alerter
+from alerts import BasicMatchString
+import socket
+import os
+import yaml
+
+class NetCoolAlerter(Alerter):
+    """Sends Email alert to Visa NetCool using NetCool email formatting """
+    # requires alert_text, netcool_email, netcool_vars in rules. Otherwise won't work
+    required_options = frozenset(['alert_text', 'netcool_email', 'netcool_vars'])
+
+    def __init__(self, *args):
+        super(NetCoolAlerter, self).__init__(*args)
+        self.rule['timestamp_format'] = "%Y/%m/%d %H:%M:%S"
+
+        self.smtp_host = self.rule.get('smtp_host', 'localhost')
+        self.smtp_ssl = self.rule.get('smtp_ssl', False)
+        self.from_addr = self.rule.get('from_addr', 'ElastAlert')
+        self.smtp_port = self.rule.get('smtp_port')
+        if self.rule.get('smtp_auth_file'):
+            self.get_account(self.rule['smtp_auth_file'])
+
+        # Convert email to a list if it isn't already
+        if isinstance(self.rule['netcool_email'], str):
+            self.rule['netcool_email'] = [self.rule['netcool_email']]
+
+        # If there is a cc then also convert it a list if it isn't
+        cc = self.rule.get('cc')
+        if cc and isinstance(cc, basestring):
+            self.rule['cc'] = [self.rule['cc']]
+        # If there is a bcc then also convert it to a list if it isn't
+        bcc = self.rule.get('bcc')
+        if bcc and isinstance(bcc, basestring):
+            self.rule['bcc'] = [self.rule['bcc']]
+
+        # Load Visa specific globals if provided in config_visa.yaml
+        self.config_visa = {}
+        if os.path.isfile("/var/lib/elastalert/config_visa.yaml"):
+            filename = "/var/lib/elastalert/config_visa.yaml"
+        elif os.path.isfile('../config_visa.yaml'):
+            filename = '../config_visa.yaml'
+        elif os.path.isfile('config_visa.yaml'):
+            filename = 'config_visa.yaml'
+        else:
+            filename = ''
+
+        if filename:
+            with open(filename) as config_file:
+                data = yaml.load(config_file)
+                self.config_visa['Region'] = data.get('Region')
+                self.config_visa['Environment'] = data.get('Environment')
+                self.config_visa['OVN_AHA'] = data.get('OVN_AHA')
+                self.config_visa['DestinationConsole'] = data.get('DestinationConsole')
+                self.config_visa['netcool_email'] = data.get('netcool_email')
+                # Convert netcool_email to list if it isn't already
+                if isinstance(self.config_visa['netcool_email'], str):
+                    self.config_visa['netcool_email'] = [self.config_visa['netcool_email']]
+
+    # This function is required only if order of fields is important for NETCOOL
+    def get_ordered_netcool_vars(self, nv ):
+        order = ['ppClient', 'Domain' , 'OriginSeverity', 'FreeText' , 'OriginEvtClass',
+                 'ObjectClass','OrigObject', 'Region', 'DestinationConsole', 'OriginType','ForwardFlag' , 'OriginKey' ,
+                 'OriginDateTime', 'Origin']
+        for opt in order:
+            if opt in nv:
+               yield opt
+
+
+    def create_netcool_alert_body(self, matches):
+        nv =  self.rule['netcool_vars']
+
+        # Populate default/implicit netcool vars
+        if 'OriginKey' not in nv:
+            nv['OriginKey'] = "N/A"
+
+        if 'ForwardFlag' not in nv:
+            nv['ForwardFlag'] = "N/A"
+
+        if 'ObjectClass' not in nv:
+            nv['ObjectClass'] = self.rule['name']
+
+        if 'OrigObject' not in nv:
+            nv['OrigObject'] = self.rule['name']
+
+        if 'OriginEvtClass' not in nv:
+            nv['OriginEvtClass'] = "OVN"
+
+        if 'Region' not in nv and 'Region' in self.config_visa:
+            nv['Region'] = self.config_visa['Region']
+
+        if 'OriginType' not in nv and 'OVN_AHA' in self.config_visa:
+            nv['OriginType'] = self.config_visa['OVN_AHA']
+
+        if 'DestinationConsole' not in nv and 'DestinationConsole' in self.config_visa:
+            nv['DestinationConsole'] = self.config_visa['DestinationConsole']
+
+        body = ''
+        for match in matches:
+            #body += unicode(BasicMatchString(self.rule, match))
+            if match.get('Timestamp') is not None:
+                nv['OriginDateTime'] = match['Timestamp']
+            elif match.get('@timestamp') is not None: # otherwise look for @timestamp
+                nv['OriginDateTime'] = match['@timestamp']
+            # nv['OriginDateTime'] = match['Timestamp']
+
+            if match.get('Hostname') is not None:
+                nv.update(dict.fromkeys(['Origin', 'ppClient', 'Domain'], match['Hostname']))
+            elif match.get('host') is not None:
+                nv.update(dict.fromkeys(['Origin', 'ppClient', 'Domain'], match['host']))
+
+# different Payload and message formats for body
+            if 'Environment' in self.config_visa:
+                if match.get('Payload') is not None:
+                   nv['FreeText'] = "Env:%s:: Idx:%s:: Msg::%s Pyld::%s" % ( self.config_visa['Environment'] , self.rule['alert_text'], match['_index'], match['Payload'])
+                if match.get('message') is not None:
+                   nv['FreeText'] = "Env:%s:: Idx:%s:: Msg::%s Pyld::%s" % ( self.config_visa['Environment'] , self.rule['alert_text'], match['_index'], match['message'])
+            else:
+                if match.get('Payload') is not None:
+                   nv['FreeText'] = "Idx:%s:: Msg::%s Pyld::%s" % (self.rule['alert_text'], match['_index'], match['Payload'])
+                if match.get('message') is not None:
+                   nv['FreeText'] = "Idx:%s:: Msg::%s Pyld::%s" % (self.rule['alert_text'], match['_index'], match['message'])
+
+            # Generate output string per NETCOOL format
+            netcool_str = ""
+            for opt in self.get_ordered_netcool_vars(nv):
+                netcool_str += str(opt) + "=" + str(nv[opt]) + ";\n"
+
+            body += unicode(netcool_str)
+
+            # Separate text of aggregated alerts with dashes
+            if len(matches) > 1:
+                body += '\n----------------------------------------\n'
+        return body
+
+
+
+    def alert(self, matches):
+        body = self.create_netcool_alert_body(matches)
+
+        # Add JIRA ticket if it exists
+        if self.pipeline is not None and 'jira_ticket' in self.pipeline:
+            url = '%s/browse/%s' % (self.pipeline['jira_server'], self.pipeline['jira_ticket'])
+            body += '\nJIRA ticket: %s' % (url)
+
+        #to_addr = self.rule['ovn_netcool_email']
+        to_addr = self.rule['netcool_email']
+
+        email_msg = MIMEText(body.encode('UTF-8'), _charset='UTF-8')
+
+        email_msg['Subject'] = unicode("Netcool - OVN - Elastalert")
+        email_msg['To'] = ', '.join(self.rule['netcool_email'])
+        email_msg['From'] = self.from_addr
+        email_msg['Reply-To'] = self.rule.get('email_reply_to', email_msg['To'])
+        email_msg['Date'] = formatdate()
+        if self.rule.get('cc'):
+            email_msg['CC'] = ','.join(self.rule['cc'])
+            to_addr = to_addr + self.rule['cc']
+        if self.rule.get('bcc'):
+            to_addr = to_addr + self.rule['bcc']
+
+        try:
+            if self.smtp_ssl:
+                if self.smtp_port:
+                    self.smtp = SMTP_SSL(self.smtp_host, self.smtp_port)
+                else:
+                    self.smtp = SMTP_SSL(self.smtp_host)
+            else:
+                if self.smtp_port:
+                    self.smtp = SMTP(self.smtp_host, self.smtp_port)
+                else:
+                    self.smtp = SMTP(self.smtp_host)
+                self.smtp.ehlo()
+                if self.smtp.has_extn('STARTTLS'):
+                    self.smtp.starttls()
+            if 'smtp_auth_file' in self.rule:
+                self.smtp.login(self.user, self.password)
+        except (SMTPException, error) as e:
+            raise EAException("Error connecting to SMTP host: %s" % (e))
+        except SMTPAuthenticationError as e:
+            raise EAException("SMTP username/password rejected: %s" % (e))
+        self.smtp.sendmail(self.from_addr, to_addr, email_msg.as_string())
+        self.smtp.close()
+
+        elastalert_logger.info("Sent email to %s" % (self.rule['netcool_email']))
+
+    def create_default_title(self, matches):
+        subject = 'NetCoolAlert: %s' % (self.rule['name'])
+
+        # If the rule has a query_key, add that value plus timestamp to subject
+        if 'query_key' in self.rule:
+            qk = matches[0].get(self.rule['query_key'])
+            if qk:
+                subject += ' - %s' % (qk)
+
+        return subject
+
+    def get_info(self):
+        return {'type': 'ovn_netcool_email',
+                'recipients': self.rule['netcool_email']}

@@ -1,0 +1,20 @@
+# ELASTALERT MONITOR - elastalert_khe
+#
+name: Flatline monitor for elastalert_khe
+description: Alert when the elastalert service has stopped checking for 5 minutes
+es_host: 10.16.200.102
+type: flatline
+timestamp_field: '@timestamp'
+index: elastalert_status
+threshold: 50
+timeframe:
+   minutes: 5
+use_count_query: true
+doc_type: elastalert_status
+############
+alert_subject: sl73ovnmgp01(elastalert-khe) is not checking ELASTALERT rules - please verify the service is still running..
+alert_text: more information can be found at https://visawiki/display/OVN/Elastalert+monitor
+alert:
+- "email"
+email:
+- "gdlovnalertsadmins@visa.com"

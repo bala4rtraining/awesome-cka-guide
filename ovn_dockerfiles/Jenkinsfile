@@ -1,0 +1,686 @@
+pipeline {
+  agent {
+    node {
+      label 'ovn_build'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+      booleanParam(name: 'BUILD_CAS_UI', defaultValue: false, description: 'Do you want to build & publish docker_casui only?')
+      booleanParam(name: 'BUILD_OVN_WEBAPP', defaultValue: false, description: 'Do you want to build & publish ovn_webapp only?')
+      booleanParam(name: 'CENTOS7_OVN_DOCKER', defaultValue: false, description: 'Do you want to build & publish centos7_ovn_docker?')
+      booleanParam(name: 'CENTOS7_OVN_MINIMAL', defaultValue: false, description: 'Do you want to build & publish centos7_ovn_minimal?')
+      booleanParam(name: 'CENTOS7_VAULT', defaultValue: false, description: 'Do you want to build & publish centos7_vault?')
+      booleanParam(name: 'CENTOS7_GOBUILD', defaultValue: false, description: 'Do you want to build & publish centos7_gobuild?')
+      booleanParam(name: 'DOCKER_JENKINS', defaultValue: false, description: 'Do you want to build & publish docker_jenkins?')
+      booleanParam(name: 'GODOCSERVER', defaultValue: false, description: 'Do you want to build & publish GODOCSERVER?')
+      booleanParam(name: 'OVN_MANAGER_NGINX_AUTH', defaultValue: false, description: 'Do you want to build & publish ovn_manager_nginx_auth?')
+      booleanParam(name: 'OVN_MANAGER_NGINX', defaultValue: false, description: 'Do you want to build & publish dovn_manager_nginx?')
+      booleanParam(name: 'OVN_CASSANDRA', defaultValue: false, description: 'Do you want to build & publish ovn-cassandra?')
+      booleanParam(name: 'OVN_PUMBA_CHAOS', defaultValue: false, description: 'Do you want to build & publish ovn-pumba-chaos?')
+      booleanParam(name: 'MONITORING_ALL_HOSTS', defaultValue: false, description: 'Do you want to build & publish prometheus_docker?')
+  }
+  stages {
+
+    stage('Build common image') {
+      steps {
+        ansiColor('xterm') {
+          script {
+            sh "git rev-list HEAD --count > .git/rev-list-count"
+            def version_id = readFile('.git/rev-list-count').trim()
+            println version_id
+            env.VERSION_ID = version_id
+
+            sh "git rev-parse HEAD > .git/git-commit"
+            def commit_id = readFile('.git/git-commit').trim()
+            println commit_id
+            env.COMMIT_ID = commit_id
+
+            /* This builds the actual image; synonymous to
+              * docker build on the command line */
+            def centos7_ovn_common
+            dir ('centos7_ovn_common') {
+              centos7_ovn_common = docker.build("centos7_ovn_common", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+            }
+
+            docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock'){
+                sh '''
+                docker save centos7_ovn_common > centos7_ovn_common.tar
+                dockle --format json --input centos7_ovn_common.tar > ${WORKSPACE}/centos7_ovn_common_dockle.json
+                rm centos7_ovn_common.tar
+                '''
+            }
+
+            centos7_ovn_common.inside {
+              sh 'echo "centos7_ovn_common: Tests passed"'
+            }
+            if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+              docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                centos7_ovn_common.push("${env.VERSION_ID}")
+                centos7_ovn_common.push("latest")
+              }
+            }
+          }
+        }
+      }
+    }
+
+    stage('parallel Build') {
+      /* This builds the actual image; synonymous to
+        * docker build on the command line */
+      parallel {
+
+        stage('build centos7_ovn_docker') {
+        when {
+          anyOf{
+            expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep centos7_ovn_docker* || exit 0')};
+            expression { return params.CENTOS7_OVN_DOCKER }
+           }
+        }
+          steps {
+            ansiColor('xterm') {
+              script {
+                def centos7_ovn_docker
+                dir ('centos7_ovn_docker') {
+                  centos7_ovn_docker = docker.build("centos7_ovn_docker", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock'){
+                    sh '''
+                    docker save centos7_ovn_docker > centos7_ovn_docker.tar
+                    dockle --format json --input centos7_ovn_docker.tar > ${WORKSPACE}/centos7_ovn_docker_dockle.json
+                    rm centos7_ovn_docker.tar
+                    '''
+                }
+                centos7_ovn_docker.inside {
+                  sh 'echo "centos7_ovn_docker: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_ovn_docker.push("${env.VERSION_ID}")
+                    centos7_ovn_docker.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stage('build centos7_vault') {
+        when {
+          anyOf{
+            expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep centos7_vault* || exit 0')};
+            expression { return params.CENTOS7_VAULT }
+          }
+        }
+          steps {
+            ansiColor('xterm') {
+              script {
+                def centos7_vault
+                dir ('centos7_vault') {
+                  centos7_vault = docker.build("centos7_vault", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock'){
+                    sh '''
+                    docker save centos7_vault > centos7_vault.tar
+                    dockle --format json --input centos7_vault.tar > ${WORKSPACE}/centos7_vault_dockle.json
+                    rm centos7_vault.tar
+                    '''
+                }
+                centos7_vault.inside {
+                  sh 'echo "centos7_vault: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_vault.push("${env.VERSION_ID}")
+                    centos7_vault.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stage('build centos7_gobuild') {
+        when {
+          anyOf{
+            expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep centos7_gobuild* || exit 0')};
+            expression { return params.CENTOS7_GOBUILD }
+          }
+        }
+          steps {
+            ansiColor('xterm') {
+              script {
+                def centos7_gobuild
+                dir ('centos7_gobuild') {
+                  centos7_gobuild = docker.build("centos7_gobuild", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                centos7_gobuild.inside('-v /var/run/docker.sock:/var/run/docker.sock') {
+                  sh '''
+                  docker save centos7_gobuild > centos7_gobuild.tar
+                  dockle --format json --input centos7_gobuild.tar > ${WORKSPACE}/centos7_gobuild_dockle.json
+                  rm centos7_gobuild.tar
+                  '''
+                }
+                centos7_gobuild.inside {
+                  sh 'echo "centos7_gobuild: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_gobuild.push("${env.VERSION_ID}")
+                    centos7_gobuild.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stage('build docker-jenkins') {
+        when {
+          anyOf{
+            expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep docker-jenkins* || exit 0')};
+            expression { return params.DOCKER_JENKINS }
+
+          }
+        }
+          steps {
+            ansiColor('xterm') {
+              script {
+                def centos7_docker_jenkins
+                dir ('docker-jenkins') {
+                  centos7_docker_jenkins = docker.build("docker_jenkins", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock'){
+                    sh '''
+                    docker save docker_jenkins > docker_jenkins.tar
+                    dockle --format json --input docker_jenkins.tar > ${WORKSPACE}/docker_jenkins_dockle.json
+                    rm docker_jenkins.tar
+                    '''
+                }
+                centos7_docker_jenkins.inside {
+                  sh 'echo "centos7_docker_jenkins: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_docker_jenkins.push("${env.VERSION_ID}")
+                    centos7_docker_jenkins.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stage('build docker-casui master') {
+            when {
+              anyOf {
+                expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep docker-casui* || exit 0')};
+              allOf {
+                            anyOf { branch 'master'; branch 'epic-*'};
+                            expression { return params.BUILD_CAS_UI }
+                        }
+            }
+            }
+          steps {
+            ansiColor('xterm') {
+              script {
+
+              def artifactory = Artifactory.server('ovn-artifactory')
+              def downloadSpec = """{
+                 "files": [
+                  {
+                      "pattern": "ovn-app-temp-el7/ovn_cas_ui-*-linux-amd64-*-build*.tar.gz",
+                      "target": "docker-casui/",
+                      "build": "OVN-OP :: ovn_cas_ui :: ${env.BRANCH_NAME}/LATEST"
+                    }
+                 ]
+                }"""
+                artifactory.download(downloadSpec)
+                // Get the filename and version tag for downloaded file
+                def file_name = findFiles(glob: 'docker-casui/*.tar.gz')[0].name
+                def version_tag = file_name.split('ovn_cas_ui-')[1].split('-linux-amd64.tar.gz')[0]
+
+                def centos7_ovn_cas_ui
+                dir ('docker-casui') {
+                  centos7_ovn_cas_ui = docker.build("docker-casui", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                centos7_ovn_cas_ui.inside {
+                  sh 'echo "centos7_ovn_cas_ui: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_ovn_cas_ui.push(version_tag)
+                    centos7_ovn_cas_ui.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+        stage('build docker-casui release') {
+          when {
+            anyOf {
+              expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep docker-casui* || exit 0')};
+            allOf {
+                            branch 'release-*';
+                            expression { return params.BUILD_CAS_UI }
+                        }
+            }
+            }
+          steps {
+            ansiColor('xterm') {
+              script {
+
+              def artifactory = Artifactory.server('ovn-artifactory')
+              def downloadSpec = """{
+                 "files": [
+                  {
+                      "pattern": "ovn-app-el7/ovn_cas_ui-*-linux-amd64-release-*-build*.tar.gz",
+                      "target": "docker-casui/",
+                      "build": "OVN-OP :: ovn_cas_ui :: ${env.BRANCH_NAME}/LATEST"
+                    }
+                 ]
+                }"""
+                artifactory.download(downloadSpec)
+                // Get the filename and version tag for downloaded file
+                def file_name = findFiles(glob: 'docker-casui/*.tar.gz')[0].name
+                def version_tag = file_name.split('ovn_cas_ui-')[1].split('-linux-amd64.tar.gz')[0]
+
+                def centos7_ovn_cas_ui
+                dir ('docker-casui') {
+                  centos7_ovn_cas_ui = docker.build("docker-casui", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                centos7_ovn_cas_ui.inside {
+                  sh 'echo "centos7_ovn_cas_ui: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_ovn_cas_ui.push(version_tag)
+                    centos7_ovn_cas_ui.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+        stage('build ovn_webapp feature') {
+          when {
+         allOf {
+                           anyOf {branch 'feature/*'};
+                           expression { return params.BUILD_OVN_WEBAPP }
+                        }
+              }
+	 steps {
+            ansiColor('xterm') {
+              script {
+
+              def artifactory = Artifactory.server('ovn-artifactory')
+              def name_branch = "${env.BRANCH_NAME}".split('/')[1]
+              def downloadSpec = """{
+                 "files": [
+                  {
+                      "pattern": "ovn-app-temp-el7/webapp-OVN*.tar.gz",
+                      "target": "ovn_webapp/",
+                      "build": "OVN-OP :: ovndev_webapps :: feature :: ${name_branch}/LATEST"
+
+                    }
+                 ]
+                }"""
+
+                artifactory.download(downloadSpec)
+                // Get the filename and version tag for downloaded file
+                def file_name = findFiles(glob: 'ovn_webapp/*.tar.gz')[0].name
+                def version_tag = file_name.split('webapp-OVN_Webapps-build')[1].split('.tar.gz')[0]
+
+
+                def centos7_ovn_webapp
+                dir ('ovn_webapp') {
+                  centos7_ovn_webapp = docker.build("ovn_webapp", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock'){
+                    sh '''
+                    docker save ovn_webapp > ovn_webapp.tar
+                    dockle --format json --input ovn_webapp.tar > ${WORKSPACE}/ovn_webapp_dockle.json
+                    rm ovn_webapp.tar
+                    '''
+                }
+                centos7_ovn_webapp.inside {
+                  sh 'echo "centos7_ovn_webapp: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_ovn_webapp.push(version_tag)
+                    centos7_ovn_webapp.push("latest")
+
+                }
+              }
+            }
+          }
+        }
+      }
+       stage('build ovn_webapp master') {
+         when {
+
+		allOf {
+                           anyOf { branch 'master'; branch 'epic-*'};
+                           expression { return params.BUILD_OVN_WEBAPP }
+                        }
+            }
+	  steps {
+            ansiColor('xterm') {
+              script {
+
+              def artifactory = Artifactory.server('ovn-artifactory')
+
+              def downloadSpec = """{
+                 "files": [
+                  {
+                      "pattern": "ovn-app-temp-el7/webapp-OVN*.tar.gz",
+                      "target": "ovn_webapp/",
+                      "build": "OVN-OP :: ovndev_webapps :: ${env.BRANCH_NAME}/LATEST"
+                    }
+                 ]
+                }"""
+
+                artifactory.download(downloadSpec)
+                // Get the filename and version tag for downloaded file
+                def file_name = findFiles(glob: 'ovn_webapp/*.tar.gz')[0].name
+                def version_tag = file_name.split('webapp-OVN_Webapps-build')[1].split('.tar.gz')[0]
+
+
+                def centos7_ovn_webapp
+                dir ('ovn_webapp') {
+                  centos7_ovn_webapp = docker.build("ovn_webapp", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock'){
+                    sh '''
+                    docker save ovn_webapp > ovn_webapp.tar
+                    dockle --format json --input ovn_webapp.tar > ${WORKSPACE}/ovn_webapp_dockle.json
+                    rm ovn_webapp.tar
+                    '''
+                }
+                centos7_ovn_webapp.inside {
+                  sh 'echo "centos7_ovn_webapp: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_ovn_webapp.push(version_tag)
+                    centos7_ovn_webapp.push("latest")
+
+                }
+              }
+            }
+          }
+        }
+      }
+
+        stage('build ovn_manager/nginx') {
+        when {
+          anyOf{
+            expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep ovn_manager/nginx* || exit 0')};
+            expression { return params.OVN_MANAGER_NGINX }
+            }
+          }
+          steps {
+            ansiColor('xterm') {
+              script {
+                def centos7_ovn_manager_nginx
+                dir ('ovn_manager/nginx') {
+                  centos7_ovn_manager_nginx = docker.build("ovn_manager/nginx", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock'){
+                    sh '''
+                    docker save ovn_manager/nginx > ovn_manager_nginx.tar
+                    dockle --format json --input ovn_manager_nginx.tar > ${WORKSPACE}/ovn_manager_nginx_dockle.json
+                    rm ovn_manager_nginx.tar
+                    '''
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_ovn_manager_nginx.push("${env.VERSION_ID}")
+                    centos7_ovn_manager_nginx.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stage('build ovn_manager/ovn_nginx_auth') {
+        when {
+          anyOf{
+           expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep ovn_manager/ovn_nginx_auth* || exit 0')};
+           expression { return params.OVN_MANAGER_NGINX_AUTH }
+          }
+        }
+          steps {
+            ansiColor('xterm') {
+              script {
+              def artifactory = Artifactory.server('ovn-artifactory')
+              def downloadSpec_1 = """{
+                 "files": [
+                  {
+                      "pattern": "ovn-app-el7/ovn_nginx_auth-*-linux-amd64.tar.gz",
+                      "target": "ovn_manager/ovn_nginx_auth/",
+                      "build": "ovn_nginx_auth_build/LATEST"
+                    }
+                 ]
+                }"""
+                def downloadSpec_2 = """{
+                   "files": [
+                    {
+                        "pattern": "ovn-app-el7/ovn_nginx_auth-*-linux-amd64.tar.gz",
+                        "target": "ovn_manager/ovn_nginx_auth/",
+                        "build": "ovn_nginx_auth_build_and_docker_push/LATEST"
+                      }
+                   ]
+                  }"""
+                artifactory.download(downloadSpec_1)
+                def file_exists = findFiles(glob: 'ovn_manager/ovn_nginx_auth/*.tar.gz').length
+                if ( file_exists <= 0 ) {
+                artifactory.download(downloadSpec_2)
+                }
+                // Get the filename and version tag for downloaded file
+                def file_name = findFiles(glob: 'ovn_manager/ovn_nginx_auth/*.tar.gz')[0].name
+                def version_tag = file_name.split('ovn_nginx_auth-v')[1].split('-linux-amd64.tar.gz')[0]
+                def centos7_ovn_manager_nginx_auth
+                dir ('ovn_manager/ovn_nginx_auth') {
+                  centos7_ovn_manager_nginx_auth = docker.build("ovn_manager/ovn_nginx_auth", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock'){
+                    sh '''
+                    docker save ovn_manager/ovn_nginx_auth > ovn_manager_ovn_nginx_auth.tar
+                    dockle --format json --input ovn_manager_ovn_nginx_auth.tar > ${WORKSPACE}/ovn_manager_ovn_nginx_auth_dockle.json
+                    rm ovn_manager_ovn_nginx_auth.tar
+                    '''
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_ovn_manager_nginx_auth.push(version_tag)
+                    centos7_ovn_manager_nginx_auth.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stage('build cassandra') {
+        when {
+          anyOf{
+            expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep ovn-cassandra* || exit 0')};
+            expression { return params.OVN_CASSANDRA }
+           }
+        }
+          steps {
+            ansiColor('xterm') {
+              script {
+                def cassandra
+                dir ('ovn-cassandra') {
+                  cassandra = docker.build("cassandra", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock') {
+                  sh '''
+                  docker save cassandra > cassandra.tar
+                  dockle --format json --input cassandra.tar > ${WORKSPACE}/cassandra_dockle.json
+                  rm cassandra.tar
+                  '''
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    cassandra.push("${env.VERSION_ID}")
+                    cassandra.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stage('build centos7_ovn_minimal') {
+        when {
+          anyOf{
+            expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep centos7_ovn_minimal* || exit 0')};
+            expression { return params.CENTOS7_OVN_MINIMAL}
+          }
+        }
+          steps {
+            ansiColor('xterm') {
+              script {
+                def centos7_ovn_minimal
+                dir ('centos7_ovn_minimal') {
+                  centos7_ovn_minimal = docker.build("centos7_ovn_minimal", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock'){
+                    sh '''
+                    docker save centos7_ovn_minimal > centos7_ovn_minimal.tar
+                    dockle --format json --input centos7_ovn_minimal.tar > ${WORKSPACE}/centos7_ovn_minimal_dockle.json
+                    rm centos7_ovn_minimal.tar
+                    '''
+                }
+                centos7_ovn_minimal.inside {
+                  sh 'echo "centos7_ovn_minimal: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_ovn_minimal.push("${env.VERSION_ID}")
+                    centos7_ovn_minimal.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stage('build ovn-pumba-chaos') {
+        when {
+          anyOf{
+            expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep ovn-pumba-chaos* || exit 0')};
+            expression { return params.OVN_PUMBA_CHAOS}
+          }
+        }
+          steps {
+            ansiColor('xterm') {
+              script {
+                def centos7_ovn_minimal
+                dir ('ovn-pumba-chaos') {
+                  centos7_ovn_minimal = docker.build("ovn-pumba-chaos", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock'){
+                    sh '''
+                    docker save ovn-pumba-chaos > ovn-pumba-chaos.tar
+                    dockle --format json --input ovn-pumba-chaos.tar > ${WORKSPACE}/ovn-pumba-chaos_dockle.json
+                    rm ovn-pumba-chaos.tar
+                    '''
+                }
+                centos7_ovn_minimal.inside {
+                  sh 'echo "ovn-pumba-chaos: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    centos7_ovn_minimal.push("${env.VERSION_ID}")
+                    centos7_ovn_minimal.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stage('build godocserver') {
+        when {
+          anyOf{
+            expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep godocserver* || exit 0')};
+            expression { return params.GODOCSERVER}
+          }
+        }
+          steps {
+            ansiColor('xterm') {
+              script {
+                def godocserver
+                dir ('godocserver') {
+                  godocserver = docker.build("godocserver", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock') {
+                  sh '''
+                  docker save godocserver > godocserver.tar
+                  dockle --format json --input godocserver.tar > ${WORKSPACE}/godocserver_dockle.json
+                  rm godocserver.tar
+                  '''
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    godocserver.push("${env.VERSION_ID}")
+                    godocserver.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stage('build monitoring_all_hosts') {
+        when {
+          anyOf{
+            expression {return sh(returnStdout: true, script: 'git diff --name-only HEAD~1..HEAD | grep monitoring_all_hosts* || exit 0')};
+            expression { return params.MONITORING_ALL_HOSTS}
+          }
+        }
+          steps {
+            ansiColor('xterm') {
+              script {
+                def monitoring_system_service
+                dir ('monitoring_all_hosts') {
+                  monitoring_system_service = docker.build("monitoring_all_hosts", "--label git-commit=${env.COMMIT_ID} --label git-branch=${env.BRANCH_NAME} --label build-number=${env.BUILD_NUMBER} .")
+                }
+                docker.image("ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable").inside('-v /var/run/docker.sock:/var/run/docker.sock') {
+                  sh '''
+                  docker save monitoring_all_hosts > monitoring_all_hosts.tar
+                  dockle --format json --input monitoring_all_hosts.tar > ${WORKSPACE}/monitoring_all_hosts_dockle.json
+                  rm monitoring_all_hosts.tar
+                  '''
+                }
+                monitoring_system_service.inside {
+                  sh 'echo "monitoring_all_hosts: Tests passed"'
+                }
+                if ((env.BRANCH_NAME == 'master') || (env.BRANCH_NAME ==~ 'release-*'))  {
+                  docker.withRegistry('https://ovn-docker.artifactory.trusted.visa.com', 'svcnpovndev_docker_registry') {
+                    monitoring_system_service.push("${env.VERSION_ID}")
+                    monitoring_system_service.push("latest")
+                  }
+                }
+              }
+            }
+          }
+        }
+      } // parallel
+    } // parallel stage
+  } // stages
+  post {
+      always {
+          archiveArtifacts artifacts: '**_dockle.json'
+      }
+  }
+}

@@ -1,0 +1,26 @@
+[Unit]
+Description=Prometheus is a systems and service monitoring system
+Documentation=https://prometheus.io/docs/introduction/overview/
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+Restart=always
+RestartSec=10
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+WorkingDirectory=/opt/app/prometheus/prometheus
+ExecStart=/opt/app/prometheus/prometheus/prometheus \
+  --log.level "info" \
+  --config.file /etc/prometheus/prometheus.yml \
+  --storage.tsdb.path /opt/app/prometheus/data \
+  --storage.tsdb.retention "10d" \
+  --web.external-url "http://127.0.0.1/prometheus" \
+  --web.listen-address ":9088" \
+  --web.enable-admin-api
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,21 @@
+# ELASTALERT MONITOR - elastalert_telin
+#
+name: Flatline monitor for elastalert_telin
+description: Alert when the elastalert service has stopped checking for 5 minutes
+es_host: sl982ovnapp0304.visa.com
+type: flatline
+timestamp_field: '@timestamp'
+index: elastalert_status
+threshold: 50
+timeframe:
+   minutes: 5
+use_count_query: true
+doc_type: elastalert_status
+############
+alert_subject: sl73ovnmgp02(elastalert-telin) is not checking ELASTALERT rules - please verify the service is still running..
+alert_text: more information can be found at https://visawiki/display/OVN/Elastalert+monitor
+alert:
+- "email"
+email:
+- "ryeung@visa.com"
+- "gdlovnalertsadmins@visa.com"

@@ -1,0 +1,26 @@
+--- 
+global: 
+  evaluation_interval: 15s
+  external_labels: 
+    monitor: MSS
+  scrape_interval: 15s
+rule_files: 
+  - /etc/prometheus/rules/prometheus-alert.rules.yml
+alerting:
+  alertmanagers:
+    - path_prefix: "/alertmanager"
+      static_configs:
+      - targets:
+        - '127.0.0.1:9087'
+scrape_configs: 
+  - job_name: prometheus
+    metrics_path: /prometheus/metrics
+    static_configs: 
+      - targets: 
+          - "localhost:9088"
+  - job_name: node_exporter
+    metrics_path: /node_exporter/metrics
+    static_configs: 
+      - targets: [{% for ip in all_hosts_ips %} 
+          - "{{ ip }}:9120"
+      {% endfor %}]

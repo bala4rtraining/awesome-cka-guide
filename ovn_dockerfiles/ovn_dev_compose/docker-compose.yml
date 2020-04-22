@@ -1,0 +1,71 @@
+---
+version: "3"
+
+services:
+  mediator_1:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker
+    privileged: true
+    volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup
+
+  switch_1:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker
+    privileged: true
+    volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup
+
+  kafka_1:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker
+    privileged: true
+    volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup
+
+  kafka_mirror_maker_1:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker
+    privileged: true
+    volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup
+
+  hadoop_1:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker
+    privileged: true
+    volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup
+
+  nomad_1:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker
+    privileged: true
+    volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup
+
+  riak_zk_1:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker
+    privileged: true
+    volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup
+
+  ftps_server_1:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker
+    privileged: true
+    volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup
+
+  elasticsearch_1:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker
+    privileged: true
+    volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup
+
+  haproxy_1:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker
+    privileged: true
+    volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup
+
+  vault:
+    image: ovn-docker.artifactory.trusted.visa.com/centos7_vault
+
+networks:
+  default:
+    external:
+      name: ovn_test

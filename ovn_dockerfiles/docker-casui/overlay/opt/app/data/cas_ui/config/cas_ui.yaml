@@ -1,0 +1,13 @@
+server:
+  port: "7443"
+  scheme: "http"
+  cas_tools:
+    url : "http://localhost:8443"
+
+logger:
+  file_backend:
+    log_level: info
+    path: /opt/app/data/cas_ui/log
+    prefix: cas-ui
+  console_backend:
+    log_level: info

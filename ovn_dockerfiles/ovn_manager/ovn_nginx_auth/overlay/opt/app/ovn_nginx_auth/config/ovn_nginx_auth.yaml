@@ -1,0 +1,94 @@
+# Daemon server config
+server:
+  port: 4242
+  scheme: "http"
+
+# Logger config
+logger:
+  console_backend:
+    log_level: "debug"
+  file_backend:
+    log_level: "info"
+    path: "/var/log/ovn_nginx_auth"
+
+# Auth config
+auth: 
+  # Ldap config
+  ldap:
+    host: "visadcoce.visa.com"
+    port: "389"
+    search_filter: "(sAMAccountName=%s)"
+    search_base_dn: "dc=visa,dc=com"
+    attributes:
+      name: "givenName"
+      surname: "sn"
+      username: "sAMAccountName"
+      member_of: "memberOf"
+      email: "mail"
+    # Valid Groups
+    groups:
+      - ".*OVNDEV.*"
+      - ".*group_ovn_.*"
+
+# Session config
+session:
+    secret: "ovn_key"
+    path:     "/"
+    domain:   ""
+    maxAge:   3600
+    secure:   false
+    httpOnly: true
+
+# Applications config
+applications:
+  grafana:
+      # Authorization
+      authorization_mode: "header"
+      header_name: "X-WEBAUTH-USER"
+      header_value: "username"
+  kibana:
+      # Authorization
+      authorization_mode: "url"
+      filter_groups:
+        - group_ovn_viewer
+        - group_ovn_editor
+        - group_ovn_admin
+      groups_role_mapping:
+        group_ovn_admin: "admin"
+        group_ovn_editor: "editor"
+        group_ovn_viewer: "viewer"
+      url_role_mapping:
+        - ".*/_update":
+            default: "editor"
+        - ".*/_create":
+            default: "editor"
+        - ".*/_search":
+            default: "viewer"
+        - ".*/elasticsearch/.kibana/dashboard/.*":
+            POST: "editor"
+            DELETE: "editor"
+            PUT: "editor"
+            default: "viewer"
+        - ".*":
+            DELETE: "editor"
+            PUT: "editor"
+            default: "any"
+
+  nomad_ui:
+      authorization_mode: "url"
+      filter_groups:
+        - group_ovn_viewer
+        - group_ovn_editor
+        - group_ovn_admin
+      groups_role_mapping:
+        group_ovn_admin: "admin"
+        group_ovn_editor: "editor"
+        group_ovn_viewer: "viewer"
+      url_role_mapping:
+        - ".*/ws/nomad/.*":
+            default: "editor"
+        - ".*":
+            default: "viewer"
+
+  cas-tools:
+    authorization_mode: "passthrough"

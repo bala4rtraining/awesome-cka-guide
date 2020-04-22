@@ -1,0 +1,12 @@
+webapp:
+  image: ovn-docker.artifactory.trusted.visa.com/ovn_webapp
+  container_name: webapp
+  restart: always
+  volumes:
+    - /opt/app/data/webapp-mysql:/var/lib/mysql
+  environment:
+    - MYSQL_ROOT_PASSWORD=adminpass
+  ports:
+    - "127.0.0.1:3306:3306"
+    - "127.0.0.1:8090:8090"
+

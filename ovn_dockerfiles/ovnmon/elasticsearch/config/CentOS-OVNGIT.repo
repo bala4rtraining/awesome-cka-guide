@@ -1,0 +1,20 @@
+[base-ovngit]
+name=CentOS-$releasever - Base via OVNGIT
+baseurl=http://sl55ovnapq01.visa.com/git/@pod1/mirror/centos/7.2/2016/04-01:/os/x86_64
+gpgcheck=0
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+[updates-ovngit]
+name=CentOS-$releasever - Updates via OVNGIT
+baseurl=http://sl55ovnapq01.visa.com/git/@pod1/mirror/centos/7.2.1511/updates/2016/09-29:/x86_64
+gpgcheck=0
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+[epel-ovngit]
+name=CentOS-$releasever - EPEL via OVNGIT
+baseurl=http://sl55ovnapq01.visa.com/git/@pod1/mirror/epel/7/2016-07-21:/x86_64
+gpgcheck=0
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7

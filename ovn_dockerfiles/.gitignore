@@ -1,0 +1,7 @@
+docker-elk-master
+
+.DS_Store
+
+.idea/
+*.iml
+

@@ -1,0 +1,44 @@
+################## ELASTALERT_MONITOR #################
+# File: /opt/app/data/elastalert_monitor/config_dci.yaml
+################## ELASTALERT_MONITOR #################
+rules_folder: /var/lib/elastalert_monitor/rules
+from_addr: ELASTALERT-MONITOR@sl73ovnmgp02.visa.com
+email_reply_to: noreply@sl73ovnmgp02.visa.com
+
+
+# How often ElastAlert will query elasticsearch
+# The unit can be anything from weeks to seconds
+run_every:
+  minutes: 5
+
+# ElastAlert will buffer results from the most recent
+# period of time, in case some log sources are not in real time
+buffer_time:
+  minutes: 5
+
+# The elasticsearch hostname for metadata writeback
+# Note that every rule can have it's own elasticsearch host
+es_host: sl981ovnapp0304.visa.com
+
+# The elasticsearch port
+es_port: 9200
+
+# Optional URL prefix for elasticsearch
+#es_url_prefix:
+
+# Option basic-auth username and password for elasticsearch
+#es_username: someusername
+#es_password: somepassword
+
+# The index on es_host which is used for metadata storage
+# This can be a unmapped index, but it is recommended that you run
+# elastalert-create-index to set a mapping
+writeback_index: elastalert_monitor
+
+# If an alert fails for some reason, ElastAlert will retry
+# sending the alert until this time period has elapsed
+alert_time_limit:
+  days: 2
+
+# This is the setting for the SMTP server accessible from this host
+smtp_host: corpportal.visa.com

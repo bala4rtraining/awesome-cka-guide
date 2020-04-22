@@ -1,0 +1,26 @@
+# === ovn_manager's nginx and nginx_auth docker-compose file ===
+#
+version: '2'
+
+services:
+  nginx:
+    build: nginx/
+    image: ovn-docker.artifactory.trusted.visa.com/ovn_manager/nginx
+    restart: always
+    volumes:
+      - /opt/app/data/ovn_manager/nginx/conf.d:/etc/nginx/conf.d
+      - /opt/app/data/ovn_manager/nginx/tls:/etc/pki/tls
+      - /opt/app/data/ovn_manager/nginx/log:/var/log/nginx
+      - /opt/app/data/ovn_manager/nginx/html:/var/www/html
+    ports:
+      - "443:443"
+
+  ovn_nginx_auth:
+    build: ovn_nginx_auth/
+    image: ovn-docker.artifactory.trusted.visa.com/ovn_manager/ovn_nginx_auth
+    restart: always
+    volumes:
+      - /opt/app/data/ovn_manager/ovn_nginx_auth/config:/opt/app/ovn_nginx_auth/config
+      - /opt/app/data/ovn_manager/ovn_nginx_auth/log:/var/log/ovn_nginx_auth
+    ports:
+      - "4242:4242"

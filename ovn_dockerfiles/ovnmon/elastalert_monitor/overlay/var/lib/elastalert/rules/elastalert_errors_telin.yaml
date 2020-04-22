@@ -1,0 +1,20 @@
+# ELASTALERT MONITOR - elastalert_telin
+#
+name: errorlog monitor for elastalert_telin
+description: Alert when the elastalert service has an error reported to the status log
+es_host: sl982ovnapp0304.visa.com
+type: any
+timestamp_field: '@timestamp'
+index: elastalert_status
+filter:
+- query_string:
+      query: '_type:elastalert_error AND !message:  ( "Error searching for pending aggregated matches" OR "u''No mapping found for [Timestamp] in order to sort on")'
+
+############
+alert_subject: sl73ovnmgp02(elastalert-TELIN) threw an error. Please check to see if a rule may have been disabled
+alert_text: more information can be found at https://visawiki/display/OVN/Elastalert+monitor
+alert:
+- "email"
+email:
+- "ryeung@visa.com"
+- "gdlovnalertsadmins@visa.com"

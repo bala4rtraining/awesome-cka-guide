@@ -1,0 +1,26 @@
+[Unit]
+Description=The Alertmanager handles alerts sent by client applications such as the Prometheus server
+Documentation=https://prometheus.io/docs/alerting/alertmanager/
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+Restart=always
+RestartSec=3
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+WorkingDirectory=/opt/app/prometheus/alertmanager/alertmanager
+ExecStart=/opt/app/prometheus/alertmanager/alertmanager/alertmanager \
+  -log.format "logger:syslog?appname=alertmanager&local=7" \
+  -log.level "info" \
+  -config.file /etc/prometheus/alertmanager/alertmanager.yml \
+  -storage.path /opt/app/prometheus/alertmanager/data \
+  -data.retention "240h0m0s" \
+  -web.external-url "http://127.0.0.1/alertmanager" \
+  -web.listen-address ":9087"
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

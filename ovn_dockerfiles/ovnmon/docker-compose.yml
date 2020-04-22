@@ -1,0 +1,101 @@
+# === OVNMON docker-compose file ===
+# Compare with https://github.com/deviantony/docker-elk
+#
+version: '2'
+
+services:
+
+  elasticsearch1:
+    build: elasticsearch/
+    image: sl55ovnapq01.visa.com/ovnmon_elasticsearch
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - cluster.name=docker-cluster
+      - node.name=docker-es1
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.zen.ping.unicast.hosts=elasticsearch2"
+
+    networks:
+      elk:
+        aliases:
+          - elasticsearch
+          - esdocker
+          - esdocker1
+
+  elasticsearch2:
+    image: sl55ovnapq01.visa.com/ovnmon_elasticsearch
+    volumes:
+      - esdata2:/usr/share/elasticsearch/data
+    environment:
+      - cluster.name=docker-cluster
+      - node.name=docker-es2
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.zen.ping.unicast.hosts=elasticsearch1"
+    networks:
+      elk:
+        aliases:
+          - esdocker2
+
+  logstash:
+    build: logstash/
+    image: sl55ovnapq01.visa.com/ovnmon_logstash
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5000:5000"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch1
+      - elasticsearch2
+
+  kibana:
+    build: kibana/
+    image: sl55ovnapq01.visa.com/ovnmon_kibana
+    volumes:
+      - ./kibana/config/:/usr/share/kibana/config
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch1
+      - elasticsearch2
+
+  grafana:
+    build: grafana/
+    image: sl55ovnapq01.visa.com/ovnmon_grafana
+    volumes:
+      - ./grafana/config/:/usr/share/grafana/config
+    ports:
+      - "3000:3000"
+    networks:
+      - elk
+
+  elastalert:
+    build: elastalert/
+    image: sl55ovnapq01.visa.com/ovnmon_elastalert
+    volumes:
+      - ./elastalert/rules/:/var/lib/elastalert/rules
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch1
+      - elasticsearch2
+
+volumes:
+  esdata1:
+    driver: local
+  esdata2:
+    driver: local
+
+networks:
+  elk:
+    driver: bridge

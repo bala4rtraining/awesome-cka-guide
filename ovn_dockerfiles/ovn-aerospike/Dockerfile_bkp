@@ -1,0 +1,51 @@
+#
+# Aerospike Server Dockerfile
+#
+# http://github.com/aerospike/aerospike-server.docker
+#
+
+#FROM centos:7.3.1611
+
+# if this does not work then please use above
+FROM ovn-docker.artifactory.trusted.visa.com/centos:7.3.1611
+
+ENV AEROSPIKE_VERSION 3.14.1.2
+ENV AEROSPIKE_SHA256 c2833a4403fa5190e09804ed6515d2b16fcfd6eb4484ac73729130f5a878912c   
+ENV http_proxy http://userproxy.visa.com:80
+
+
+# Install Aerospike Server and Tools
+
+
+RUN  \
+echo $PATH \
+&& curl -sLO http://www.aerospike.com/artifacts/aerospike-server-community/3.14.1.4/aerospike-server-community-3.14.1.4-el7.tgz \
+&& mkdir aerospike \
+&& gunzip aerospike-server-community-3.14.1.4-el7.tgz \
+&& tar xf aerospike-server-community-3.14.1.4-el7.tar -C aerospike \
+&& cd aerospike \
+&& ls -al \
+&& cd aerospike-server-community-3.14.1.4-el7 \
+&& ls -al \
+&& rpm -ivh aerospike-server-community-3.14.1.4-1.el7.x86_64.rpm
+
+# Add the Aerospike configuration specific to this dockerfile
+COPY aerospike.conf /etc/aerospike/aerospike.conf
+COPY entrypoint.sh /entrypoint.sh
+# Mount the Aerospike data directory
+VOLUME ["/opt/aerospike/data"]
+# VOLUME ["/etc/aerospike/"]
+
+
+# Expose Aerospike ports
+#
+#   3000 – service port, for client connections
+#   3001 – fabric port, for cluster communication
+#   3002 – mesh port, for cluster heartbeat
+#   3003 – info port
+#
+EXPOSE 3000 3001 3002 3003
+
+# Execute the run script in foreground mode
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["asd"]
