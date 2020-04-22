@@ -1,0 +1,76 @@
+---
+########
+# This playbook dynamically loads configs from the target cluster.
+#
+# All OVN playbook must use the ansible `include` directive to load
+# this playbook as the very first step in the playbooks
+#
+#    include: <path to ovn_vars.yml>/ovn_vars.yml
+#               or
+#    include: ../ovn_vars.yml
+#
+########
+
+- hosts: "{{ ovn_vars_hosts | default('all,localhost,!cumulus_switch,!ovn_manager') }}"
+  gather_facts: true
+  tasks:
+
+  # all configs that are common across all CLUSTERs are defined in the YAML files
+  # inside this directory.
+  - include_vars:
+      dir: "ovn_vars"
+      depth: 1
+
+  # configs specific to the CLUSTER or overrides are defined in the YAML files
+  # inside this directory.
+  - include_vars:
+      dir: "ovn_vars/{{ CLUSTER }}"
+      depth: 1
+    when: CLUSTER is defined
+
+  # configs specific to the DATACENTER within the CLUSTER or overrides are defined in the YAML files
+  # inside this directory.
+  - include_vars:
+      dir: "ovn_vars/{{ CLUSTER }}/{{ DATACENTER }}"
+      depth: 1
+    when: CLUSTER is defined and DATACENTER is defined
+
+  # check if the secrets and certs directories exist
+  - stat:
+      path: "ovn_vars/{{ CLUSTER }}/{{ DATACENTER }}/secrets"
+    become: false
+    delegate_to: localhost
+    register: SECRETS
+  - stat:
+      path: "ovn_vars/{{ CLUSTER }}/{{ DATACENTER }}/certs"
+    become: false
+    delegate_to: localhost
+    register: CERTS
+
+  # configs specific to the DATACENTER within the CLUSTER or overrides are defined in the YAML files
+  # inside this directory.
+  - include_vars:
+      dir: "ovn_vars/{{ CLUSTER }}/{{ DATACENTER }}/secrets"
+      depth: 1
+    when: CLUSTER is defined and DATACENTER is defined and SECRETS.stat.exists
+
+  # configs specific to the DATACENTER within the CLUSTER or overrides are defined in the YAML files
+  # inside this directory.
+  - include_vars:
+      dir: "ovn_vars/{{ CLUSTER }}/{{ DATACENTER }}/certs"
+      depth: 1
+    when: CLUSTER is defined and DATACENTER is defined and CERTS.stat.exists
+
+  post_tasks:
+
+  - debug:
+      var: "{{ item }}"
+#    when: "'localhost' not in inventory_hostname"
+    with_items:
+      - CLUSTER
+      - DATACENTER
+      - remote_kafka_members
+      - remote_zookeeper_members
+      - remote_zookeeper_members_nodenames
+      - remote_namenode_members
+      - remote_kerberos_server_members

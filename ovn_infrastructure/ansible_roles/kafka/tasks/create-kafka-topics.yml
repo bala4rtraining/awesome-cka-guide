@@ -1,0 +1,15 @@
+---
+
+- name: check if ovn replication topic exists
+  when: inventory_hostname == "{{ broker_configuration_lead }}"
+  command: "{{ kafka_install_dir }}/bin/kafka-topics.sh --describe --zookeeper {{ zookeeper_default_member }}"
+  register: topic_info
+
+- name: create the topic if it does not exist
+  when: not ansible_check_mode and inventory_hostname == "{{ broker_configuration_lead }}" and topic_info.stdout.find('Topic:{{ new_topic }}') == -1
+  command: "{{ kafka_install_dir }}/bin/kafka-topics.sh --create --zookeeper {{ zookeeper_default_member }} --replication-factor {{ replication_factor }} --partitions {{ number_brokers }} --topic {{ new_topic }}"
+  retries: 3
+  delay: 10
+  with_items: "{{ kafka_topic_names }}"
+  loop_control:
+    loop_var: new_topic

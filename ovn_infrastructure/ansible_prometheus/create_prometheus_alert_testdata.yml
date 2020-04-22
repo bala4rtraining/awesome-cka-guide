@@ -1,0 +1,34 @@
+# To create a test data generator which can generate statsd metrics test data
+# to test the prometheus alerts in lower environment in absence of real metrics.
+#
+# ***This is only for "NON-PROD" systems (dev and test) to generate test data ***
+#
+# variables:
+#   metric_name         :             Name of the metric
+#   metric_type         :             Metric Type (gauge/counter)
+#   min_value           :             Initial value
+#   duration            :             Test data duration
+#   ramp_or_max_value   :             Rampup value in case of counter or max value in case of gauge
+# Update metric detail in files/prometheus_alert_testdata.csv
+
+- name: Create test data to generate dummy metric to test prometheus alerts
+  gather_facts: yes
+  hosts: all
+  tasks:
+#1. copy the script to the host directory
+   - name: copy the bash script which will be used to create test data
+     template:
+      src: files/prom_test_data_generator.sh
+      dest: /usr/local/bin/prom_test_data_generator.sh
+      mode: "0755"
+
+#2. run the script with the csv file as input having metrics detail.
+   - name: run the script with the given parameters
+     shell: /usr/local/bin/prom_test_data_generator.sh -m "{{ metric_name }}" -t "{{ metric_type }}" -i "{{ min_value }}" -d "{{ duration }}" -r "{{ ramp_or_max_value }}"
+     vars:
+       metric_name: "{{ item.split(',')[0] }}"
+       metric_type: "{{ item.split(',')[1] }}"
+       min_value: "{{ item.split(',')[2] }}"
+       duration: "{{ item.split(',')[3] }}"
+       ramp_or_max_value: "{{ item.split(',')[4] }}"
+     with_lines: awk 'NR>1'  files/prometheus_alert_testdata.csv

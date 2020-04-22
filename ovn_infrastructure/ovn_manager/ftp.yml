@@ -1,0 +1,6 @@
+- include: ../ovn_vars.yml ovn_vars_hosts=ftps_server
+
+- name: provision FTPS server
+  hosts: ftps_server[0]
+  roles:
+  - { role: ../ansible_roles/ftps_server, ssl_cert_file: "{{ftps_cert_file}}", ssl_pkey: "{{ftps_pkey}}", pasv_min_port: "{{ftps_pasv_min_port}}", pasv_max_port: "{{ftps_pasv_max_port}}", pasv_address: "{{ftps_address}}" }

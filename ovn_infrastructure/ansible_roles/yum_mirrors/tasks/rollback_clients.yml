@@ -1,0 +1,34 @@
+---
+
+# roll back the old configurations
+- name: checking if yum mirror client config file exists
+  stat: 
+    path: "{{ yum_config_dir }}/ovn_centos_el7.repo_backup"
+  register: config_result
+
+- name: rename the existing yum mirror client config file as backup
+  shell: mv "{{ yum_config_dir }}/ovn_centos_el7.repo_backup" "{{ yum_config_dir }}/ovn_centos_el7.repo"
+  when: config_result.stat.exists == True
+
+# remove deployment repo configurations
+- name: remove local base configurations from yum mirror client servers
+  file: state=absent path="{{ yum_config_dir }}/local-base-mirror"
+
+- name: remove deployment repo configurations from yum mirror client servers
+  file: state=absent path="{{ yum_config_dir }}/ovn_deployment_el7.repo"
+
+# remove ssl configs from yum.conf
+- name: remove ssl configs from yum.conf
+  blockinfile:
+    dest: "/etc/yum.conf"
+    block: |
+      sslverify=true
+      sslclientcert=/etc/pki/tls/certs/{{ inventory_hostname }}.pem
+      sslcacert=/etc/pki/tls/certs/bundle.pem
+      sslclientkey=/etc/pki/tls/private/{{ inventory_hostname }}.pem
+    state: absent
+
+# clean the yum cache
+- name: clean yum cache
+  shell: |
+    yum clean all

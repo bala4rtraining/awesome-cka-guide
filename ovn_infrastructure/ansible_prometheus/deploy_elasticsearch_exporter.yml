@@ -1,0 +1,10 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: install elasticsearch_exporter
+  hosts: elasticsearch
+  roles:
+    - { role: prometheus, dispatch: ['elasticsearch_exporter'] }
+  vars:
+    - elasticsearch_client_ssl_enabled: "false"
+    - elasticsearch_client_use_fqdn: "false"

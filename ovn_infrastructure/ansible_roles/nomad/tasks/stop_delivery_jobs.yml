@@ -1,0 +1,29 @@
+---
+- name: embed template with values (delivery-job-cleanup.sh.j2)
+  template: >
+    src=delivery-job-cleanup.sh.j2
+    dest={{nomad_server_install_dir}}/delivery-job-cleanup.sh
+    owner={{nomad_username}}
+    group={{nomad_username}}
+    mode=0755
+  when: nomad_enable_tls
+
+- name: embed template with values (delivery-job-cleanup-non-tls.sh.j2)
+  template: >
+    src=delivery-job-cleanup-non-tls.sh.j2
+    dest={{nomad_server_install_dir}}/delivery-job-cleanup.sh
+    owner={{nomad_username}}
+    group={{nomad_username}}
+    mode=0755
+  when: not nomad_enable_tls
+
+- name: verify the delivery-job-cleanup.sh file existance at the path
+  stat:
+    path: "{{nomad_server_install_dir}}/delivery-job-cleanup.sh"
+  register: st
+  run_once: true
+
+- name: cleanup delivery jobs on nomad
+  command: "{{nomad_server_install_dir}}/delivery-job-cleanup.sh"
+  when: st.stat.exists
+  run_once: true

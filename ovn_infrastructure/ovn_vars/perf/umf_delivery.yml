@@ -1,0 +1,18 @@
+---
+umf_apf_port: 52444
+umf_ub_port: 50117
+
+umf_delivery:
+  apf:
+    endpoint_name: "{{ vic_identity }}APF"
+    endpoint1: '"{{ umf_apf_servers[0] }}", {{ umf_apf_port }}'
+    endpoint2: '"{{ umf_apf_servers[0] }}", {{ umf_apf_port }}'
+  ub:
+    endpoint_name: "{{ vic_identity }}UB"
+    endpoint1: '"{{ umf_ub_servers[0] }}", {{ umf_ub_port }}'
+    endpoint2: '"{{ umf_ub_servers[1] }}", {{ umf_ub_port }}'
+
+extra_umf_delivery: true
+apf_max_connection_attempts: 3
+connection_reconnect_delay: 60000
+batch_lifetime: 60000

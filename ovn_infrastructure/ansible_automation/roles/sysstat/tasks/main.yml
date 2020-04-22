@@ -1,0 +1,27 @@
+---
+- name: Install sysstat
+  yum:
+    name: sysstat
+    state: present
+  register: sysstat_install_result
+
+- name: Update the sysstat config
+  template:
+    src: sysstat.j2
+    dest: /etc/sysconfig/sysstat
+    backup: yes
+  register: sysstat_config_result
+
+- name: Enable and start sysstat package.
+  service:
+    name: sysstat
+    state: restarted
+  when: >
+    sysstat_config_result.changed == true or
+    sysstat_install_result.changed == true
+  
+- name: Enable sysstat to autostart at boot.
+  service:
+    name: sysstat
+    state: started
+    enabled: yes

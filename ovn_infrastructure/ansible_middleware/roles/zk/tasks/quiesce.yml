@@ -1,0 +1,20 @@
+---
+- name: remove existing zookeeper config file
+  file:
+    path={{zookeeper_install_dir}}/conf/zoo.cfg 
+    state=absent 
+
+- name: zookeeper configuration file
+  template: >
+    src=zoo.cfg.quiescenode.j2
+    dest={{zookeeper_install_dir}}/conf/zoo.cfg
+    owner={{username}}
+    group={{username}}
+
+- name: reload systemd configuration
+  systemd: daemon_reload=yes
+
+- name: restart zookeeper
+  systemd:
+    name: zookeeper
+    state: restarted

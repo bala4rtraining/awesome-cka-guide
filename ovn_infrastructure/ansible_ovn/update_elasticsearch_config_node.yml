@@ -1,0 +1,73 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+
+# Playbook for updating elasticsearch config .
+# please provide the parameter es_node(node on which the config files needs to be updated)
+# Playbook does the following 
+# 1. disable sharding.
+# 2. shutdown es_node.
+# 3. copy the configs to es_node.
+# 4. start the es_node.
+# 5. wait for es_node to join the cluster.
+# 6. enable shard allocation.
+# after running this playbook wait for the cluster status to turn green before proceeding 
+# to the other nodes in the cluster.
+
+- name:  update elastic search config and restart {{ es_node }}
+  hosts: "{{ es_node }}"
+  gather_facts: yes
+  roles:
+   - {role: elasticsearch, dispatch: [ 'shutdownelastic']}
+   - {role: elasticsearch, dispatch: [ 'update_config']}
+  tasks:
+    
+    - name: start elasticsearch service on {{ es_node }}
+      service: name=elasticsearch state=started 
+        
+    - name: wait for the node {{ es_node }} to join cluster
+      uri: 
+        url: http://{{ es_node_cluster }}:{{ elasticsearch_port }}/_cat/nodes
+        method: GET
+        return_content: yes 
+      register: response
+      until: response.content.find("{{ es_node }}") != -1
+      retries: 100
+      delay: 10
+      when: elasticsearch_ssl == "false"
+
+    - name: enable sharding 
+      uri:
+        url: http://{{es_node_cluster}}:{{ elasticsearch_port }}/_cluster/settings
+        method: PUT
+        body: '{ "transient": {  "cluster.routing.allocation.enable" : "all"} }'
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+      when: elasticsearch_ssl == "false"
+    
+    - name: wait for the node {{ es_node }} to join cluster
+      uri: 
+        url: https://{{ es_node_cluster }}:{{ elasticsearch_port }}/_cat/nodes
+        method: GET
+        return_content: yes 
+        client_cert: "{{ elasticsearch_client_cert_path }}"
+        client_key: "{{ elasticsearch_client_key_path }}"
+        validate_certs: no
+      register: response
+      until: response.content.find("{{ es_node }}") != -1
+      retries: 100
+      delay: 10
+      when: elasticsearch_ssl == "true"
+
+    - name: enable sharding 
+      uri:
+        url: https://{{es_node_cluster}}:{{ elasticsearch_port }}/_cluster/settings
+        method: PUT
+        body: '{ "transient": {  "cluster.routing.allocation.enable" : "all"} }'
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        client_cert: "{{ elasticsearch_client_cert_path }}"
+        client_key: "{{ elasticsearch_client_key_path }}"
+        validate_certs: no
+      when: elasticsearch_ssl == "true"

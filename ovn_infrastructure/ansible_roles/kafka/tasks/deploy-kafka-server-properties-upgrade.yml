@@ -1,0 +1,15 @@
+---
+- name: Stopping current kafka
+  service: name=kafka state=stopped
+
+- name: check that kafka is not running
+  wait_for: port={{ client_port }} host={{ hostvars[inventory_hostname]['ansible_'+default_iface]['ipv4']['address'] }} state=stopped delay=20
+
+- name: broker properties
+  template: >
+    src=server.properties_upgrade.j2
+    dest={{ kafka_install_dir }}/config/server.properties
+    owner={{ kafka_username }}
+    group={{ kafka_group }}
+  notify:
+    - restart kafka

@@ -1,0 +1,70 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_umf_broker,ovn_umf_delivery[0]
+
+- include: set_common_variables.yml target_hosts=ovn_umf_delivery[0]
+
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+
+- name: run the ansible setup role to gather facts about all hosts
+  hosts: ovn_umf_broker
+  gather_facts: yes
+
+- name: start apf ovn_umf_delivery
+  hosts: ovn_umf_delivery[0]
+  roles:
+  - { role: ovn,
+      ovngit_ref: "{{umf_delivery_ovngit_ref|default(omit)}}",
+      ovn_firewalld_ports: ["10000-11998/tcp", "4369/tcp"],
+      when: umf_delivery.apf.endpoint_name is defined and umf_delivery_apf == true}
+  vars:
+    name: ovn_umf_delivery_apf
+    node_name: ovn_umf_delivery_apf
+    service_name: ovn_umf_delivery
+    topic_names: '["{{tran_log_kafka_topic}}"]' #See ansible_kafka site.yml
+    endpoint1: '{{umf_delivery.apf.endpoint1}}'
+    endpoint2: '{{umf_delivery.apf.endpoint2}}'
+    endpoint_name: '{{umf_delivery.apf.endpoint_name}}'
+    source_dir: "{{ umf_delivery_ovngit_ref|default('files/') }}"
+    source_file: ovn_umf_delivery.tar.gz
+    max_connection_attempts: "{{apf_max_connection_attempts}}"
+
+- name: start ub ovn_umf_delivery
+  hosts: ovn_umf_delivery[0]
+  roles:
+  - { role: ovn,
+      ovngit_ref: "{{umf_delivery_ovngit_ref|default(omit)}}",
+      ovn_firewalld_ports: ["10000-11998/tcp", "4369/tcp"],
+      when: umf_delivery.ub.endpoint_name is defined and umf_delivery_ub == true}
+  vars:
+    name: ovn_umf_delivery_ub
+    node_name: ovn_umf_delivery_ub
+    service_name: ovn_umf_delivery
+    topic_names: '["{{tran_log_kafka_topic}}"]' #See ansible_kafka site.yml
+    endpoint1: '{{umf_delivery.ub.endpoint1}}'
+    endpoint2: '{{umf_delivery.ub.endpoint2}}'
+    endpoint_name: '{{umf_delivery.ub.endpoint_name}}'
+    source_dir: "{{ umf_delivery_ovngit_ref|default('files/') }}"
+    source_file: ovn_umf_delivery.tar.gz
+

@@ -1,0 +1,21 @@
+---
+# tasks file for hostnames
+
+- name: Set /etc/hostname
+  template:
+    src: hostname.j2
+    dest: /etc/hostname
+
+
+- name: Set /etc/hosts
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+
+- name: Use new hostname
+  shell: hostname -F /etc/hostname
+
+
+- name: Reboot the switch
+  shell: reboot
+  

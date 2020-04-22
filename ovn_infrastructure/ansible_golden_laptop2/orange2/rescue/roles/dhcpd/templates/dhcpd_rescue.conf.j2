@@ -1,0 +1,385 @@
+#############################################
+# DHCP Server Configuration template for 
+# orange2/rescue server to serve regular ovn nodes
+#
+# The variables will come from:
+#   group_vars
+#   default
+#
+#############################################
+
+authoritative;
+
+#
+# For PXEboot 
+#
+
+option space pxelinux;
+option pxelinux.magic code 208 = string;
+option pxelinux.configfile code 209 = text;
+option pxelinux.pathprefix code 210 = text;
+option pxelinux.reboottime code 211 = unsigned integer 32;
+option architecture-type code 93 = unsigned integer 16;
+
+
+
+# Deny unknown-clients if it has no host declaration
+deny unknown-clients;
+
+# Use hostname declaration
+use-host-decl-names on;
+
+# Lease time
+default-lease-time {{ default_lease_time}}; 
+max-lease-time     {{ max_lease_time }};
+min-lease-time     {{ min_lease_time }};
+
+log-facility {{ log_facility}};
+
+#
+# Auto provision a Cumulus switch with ONIE boot
+#
+option cumulus-provision-url code 239 = text;
+option default-url code 114           = text;
+
+
+################################################################################################################
+# OVN local subnets
+#
+#   OOB-switch            (rescue 1G -- eth0 )
+#   OOB-server + Switches (rescue 1G -- swp1: all switch eth0 except for OOB SW, all server iLO via OOB Server )
+#   Servers               (rescue 10G -- border swp: all server 10Gs except for HAproxy)
+#
+################################################################################################################
+
+
+#
+# subnet: rescue 1G eno2 -- OOB SW eth0
+#
+# For ONIE boot of OOB SW
+#
+subnet {{ rescue.int_1g_oob_sw_eth0.subnet }} netmask {{ rescue.int_1g_oob_sw_eth0.subnet_int_ip_mask }} {
+
+  option subnet-mask {{ rescue.int_1g_oob_sw_eth0.subnet_int_ip_mask }};
+
+  option default-url           "http://{{rescue.int_1g_oob_sw_eth0.subnet_int_ip}}/cumulus/onie-installer";
+  option cumulus-provision-url "http://{{rescue.int_1g_oob_sw_eth0.subnet_int_ip}}/cumulus/{{cumulus_prov_oob_sw_file}}.j2.sh";
+
+
+  #
+  # OOB SW switch
+  #
+  host {{ oob_sw.hostname }} {
+    hardware ethernet {{ oob_sw.int_eth0.subnet_int_mac }};
+    fixed-address     {{ oob_sw.int_eth0.subnet_int_ip | ipaddr('address')}};
+    option host-name  "{{ oob_sw.hostname }}";
+  }
+   
+}
+
+
+
+#
+# subnet: rescue 1G eno3 -- OOB SW swp1 -- For all eth0 on IB and OOB serv switches 
+#
+# For ONIE booting:
+#   All other switches (other than OOB SW but include OOB Serv)
+#
+
+subnet {{ rescue.int_1g_oob_sw_swp1.subnet }} netmask {{ rescue.int_1g_oob_sw_swp1.subnet_int_ip_mask }} {
+
+  option subnet-mask {{ rescue.int_1g_oob_sw_swp1.subnet_int_ip_mask }};
+  option routers     {{ rescue.int_1g_oob_sw_swp1.subnet_int_ip_router }};
+
+  option default-url           "http://{{rescue.int_1g_oob_sw_swp1.subnet_int_ip}}/cumulus/onie-installer";
+  option cumulus-provision-url "http://{{rescue.int_1g_oob_sw_swp1.subnet_int_ip}}/cumulus/{{cumulus_prov_other_sw_file}}.j2.sh";
+
+
+  #
+  # OOB Serv switch
+  #
+  host {{ oob_serv.hostname }} {
+    hardware ethernet {{ oob_serv.int_eth0.subnet_int_mac }};
+    fixed-address     {{ oob_serv.int_eth0.subnet_int_ip| ipaddr('address') }};
+    option host-name  "{{ oob_serv.hostname }}";
+  }
+
+  #
+  # IB Switches
+  #
+
+  host {{ ovn_border_leaf1.hostname }} {
+    hardware ethernet {{ ovn_border_leaf1.int_eth0.subnet_int_mac }};
+    fixed-address     {{ ovn_border_leaf1.int_eth0.subnet_int_ip }};
+    option host-name  "{{ ovn_border_leaf1.hostname }}";
+  }
+  host {{ ovn_border_leaf2.hostname }} {
+    hardware ethernet {{ ovn_border_leaf2.int_eth0.subnet_int_mac }};
+    fixed-address     {{ ovn_border_leaf2.int_eth0.subnet_int_ip }};
+    option host-name  "{{ ovn_border_leaf2.hostname }}";
+  }
+
+  host {{ ovn_spine1.hostname }} {
+    hardware ethernet {{ ovn_spine1.int_eth0.subnet_int_mac }};
+    fixed-address     {{ ovn_spine1.int_eth0.subnet_int_ip }};
+    option host-name  "{{ ovn_spine1.hostname }}";
+  }
+  host {{ ovn_spine2.hostname }} {
+    hardware ethernet {{ ovn_spine2.int_eth0.subnet_int_mac }};
+    fixed-address     {{ ovn_spine2.int_eth0.subnet_int_ip }};
+    option host-name  "{{ ovn_spine2.hostname }}";
+  }
+ 
+  host {{ ovn_leaf1.hostname }} {
+    hardware ethernet {{ ovn_leaf1.int_eth0.subnet_int_mac }};
+    fixed-address     {{ ovn_leaf1.int_eth0.subnet_int_ip }};
+    option host-name  "{{ ovn_leaf1.hostname }}";
+  }
+  host {{ ovn_leaf2.hostname }} {
+    hardware ethernet {{ ovn_leaf2.int_eth0.subnet_int_mac }};
+    fixed-address     {{ ovn_leaf2.int_eth0.subnet_int_ip }};
+    option host-name  "{{ ovn_leaf2.hostname }}";
+  }
+
+ host {{ ovn_leaf3.hostname }} {
+    hardware ethernet {{ ovn_leaf3.int_eth0.subnet_int_mac }};
+    fixed-address     {{ ovn_leaf3.int_eth0.subnet_int_ip }};
+    option host-name  "{{ ovn_leaf3.hostname }}";
+  }
+  host {{ ovn_leaf4.hostname }} {
+    hardware ethernet {{ ovn_leaf4.int_eth0.subnet_int_mac }};
+    fixed-address     {{ ovn_leaf4.int_eth0.subnet_int_ip }};
+    option host-name  "{{ ovn_leaf4.hostname }}";
+  }
+
+  host {{ ovn_leaf5.hostname }} {
+    hardware ethernet {{ ovn_leaf5.int_eth0.subnet_int_mac }};
+    fixed-address     {{ ovn_leaf5.int_eth0.subnet_int_ip }};
+    option host-name  "{{ ovn_leaf5.hostname }}";
+  }
+
+
+}
+
+
+
+#
+# subnet: eno4 - iLO subnet
+#                (IP addresses only)
+#
+
+subnet {{ rescue.int_1g_oob_serv_swp1.subnet }} netmask {{ rescue.int_1g_oob_serv_swp1.subnet_int_ip_mask }} {
+
+  option subnet-mask {{ rescue.int_1g_oob_serv_swp1.subnet_int_ip_mask }};
+  option routers     {{ rescue.int_1g_oob_serv_swp1.subnet_int_ip_router }};
+
+{% for node in servers_ilo %}
+{%   for entry in servers_ilo[node] %}
+  
+{%    set str = entry.split(';') %} 
+
+   host {{ str[1] }} { 
+     hardware ethernet   {{ str[0] }}; 
+     option host-name    "{{ str[1] }}"; 
+     fixed-address       {{ str[2]}};
+   }
+  
+{%   endfor %}
+{% endfor %} 
+
+}
+
+
+
+
+#
+# subnet: server subnet - HAproxy
+#
+subnet {{ rescue.int_10g_border_sw.subnet_ha }} netmask {{ rescue.int_10g_border_sw.subnet_ha_mask }} {
+
+  option subnet-mask  {{ rescue.int_10g_border_sw.subnet_ha_mask }};
+  option routers      {{ rescue.int_10g_border_sw.subnet_ha_router }};
+  next-server {{ rescue.int_10g_border_sw.subnet_int_ip }}; # The rescue server
+
+
+  
+
+{% for node in servers_ha %}
+{%   for entry in servers_ha[node] %}
+  
+{%    set str = entry.split(';') %} 
+
+   host {{ str[1] }} { 
+     hardware ethernet   {{ str[0] }}; 
+     option host-name    "{{ str[1] }}"; 
+     fixed-address       {{ str[2]}};
+   }
+  
+{%   endfor %}
+{% endfor %} 
+  
+  
+
+}
+
+
+
+#
+# Dummy subnet for the DHCP server itself
+#
+subnet {{ rescue.int_10g_border_sw.subnet_rescue }} netmask {{ rescue.int_10g_border_sw.subnet_rescue_mask }} {
+
+  option routers      {{ rescue.int_10g_border_sw.subnet_rescue_router }};
+}
+
+#
+# subnet: server subnet - rack1
+#
+subnet {{ rescue.int_10g_border_sw.subnet_rack1 }} netmask {{ rescue.int_10g_border_sw.subnet_rack_mask }} {
+
+  option subnet-mask  {{ rescue.int_10g_border_sw.subnet_rack_mask }};
+  option routers      {{ rescue.int_10g_border_sw.subnet_rack1_router }};
+  next-server {{ rescue.int_10g_border_sw.subnet_int_ip }}; # The rescue server
+  
+
+{% for entry in servers_rack.rack1 %}
+{%    set str = entry.split(';') %} 
+
+   host {{ str[1] }} { 
+     hardware ethernet   {{ str[0] }}; 
+     option host-name    "{{ str[1] }}"; 
+     fixed-address       {{ str[2]}};
+   }
+  
+{% endfor %} 
+  
+
+}
+
+#
+# subnet: server subnet - rack2
+#
+
+subnet {{ rescue.int_10g_border_sw.subnet_rack2 }} netmask {{ rescue.int_10g_border_sw.subnet_rack_mask }} {
+
+  option subnet-mask  {{ rescue.int_10g_border_sw.subnet_rack_mask }};
+  option routers      {{ rescue.int_10g_border_sw.subnet_rack2_router }};
+  next-server {{ rescue.int_10g_border_sw.subnet_int_ip }}; # The rescue server
+ 
+  
+
+{% for entry in servers_rack.rack2 %}
+{%    set str = entry.split(';') %} 
+
+   host {{ str[1] }} { 
+     hardware ethernet   {{ str[0] }}; 
+     option host-name    "{{ str[1] }}"; 
+     fixed-address       {{ str[2]}};
+   }
+  
+{% endfor %} 
+  
+
+}
+
+#
+# subnet: server subnet - rack3
+#
+
+subnet {{ rescue.int_10g_border_sw.subnet_rack3 }} netmask {{ rescue.int_10g_border_sw.subnet_rack_mask }} {
+
+  option subnet-mask  {{ rescue.int_10g_border_sw.subnet_rack_mask }};
+  option routers      {{ rescue.int_10g_border_sw.subnet_rack3_router }};
+  next-server {{ rescue.int_10g_border_sw.subnet_int_ip }}; # The rescue server
+
+  
+
+{% for entry in servers_rack.rack3 %}
+{%    set str = entry.split(';') %} 
+
+   host {{ str[1] }} { 
+     hardware ethernet   {{ str[0] }}; 
+     option host-name    "{{ str[1] }}"; 
+     fixed-address       {{ str[2]}};
+   }
+  
+{% endfor %} 
+  
+
+}
+
+#
+# subnet: server subnet - rack4
+#
+
+
+subnet {{ rescue.int_10g_border_sw.subnet_rack4 }} netmask {{ rescue.int_10g_border_sw.subnet_rack_mask }} {
+
+  option subnet-mask  {{ rescue.int_10g_border_sw.subnet_rack_mask }};
+  option routers      {{ rescue.int_10g_border_sw.subnet_rack4_router }};
+  next-server {{ rescue.int_10g_border_sw.subnet_int_ip }}; # The rescue server
+
+  
+
+{% for entry in servers_rack.rack4 %}
+{%    set str = entry.split(';') %} 
+
+   host {{ str[1] }} { 
+     hardware ethernet   {{ str[0] }}; 
+     option host-name    "{{ str[1] }}"; 
+     fixed-address       {{ str[2]}};
+   }
+  
+{% endfor %} 
+  
+
+}
+
+
+#
+# subnet: server subnet - rack5
+#
+
+
+subnet {{ rescue.int_10g_border_sw.subnet_rack5 }} netmask {{ rescue.int_10g_border_sw.subnet_rack_mask }} {
+
+  option subnet-mask  {{ rescue.int_10g_border_sw.subnet_rack_mask }};
+  option routers      {{ rescue.int_10g_border_sw.subnet_rack5_router }};
+  next-server {{ rescue.int_10g_border_sw.subnet_int_ip }}; # The rescue server
+
+  
+
+{% for entry in servers_rack.rack5 %}
+{%    set str = entry.split(';') %} 
+
+   host {{ str[1] }} { 
+     hardware ethernet   {{ str[0] }}; 
+     option host-name    "{{ str[1] }}"; 
+     fixed-address       {{ str[2]}};
+   }
+  
+{% endfor %} 
+  
+
+}
+
+
+
+
+
+
+
+#
+# Common to all PXEboot
+#
+class "pxeclients" {
+
+      match if substring (option vendor-class-identifier, 0, 9) = "PXEClient";
+
+      if option architecture-type = 00:07 {
+	filename "uefi/grubx64.efi";
+      } else {
+        filename "pxelinux/pxelinux.0";
+      }
+
+}

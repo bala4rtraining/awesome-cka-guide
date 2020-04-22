@@ -1,0 +1,16 @@
+---
+artifactory_url: "https://artifactory.trusted.visa.com/ovn/repo"
+
+alertmanager_install_dir: "/opt/app/alertmanager"
+alertmanager_base_dir: "{{ alertmanager_install_dir }}/alertmanager"
+alertmanager_data_dir: "{{ alertmanager_install_dir }}/data"
+alertmanager_retention: "360h0m0s"
+alertmanager_user: "root"
+alertmanager_group: "root"
+alertmanager_smtp_smarthost: "localhost:25"
+alertmanager_smtp_from: "alertmanager@example.org"
+alertmanager_port: "9087"
+
+alertmanager_version: "0.7.0-rc.0.linux-amd64"
+alertmanager_archive_base: "alertmanager-{{ alertmanager_version }}"
+alertmanager_archive: "{{ artifactory_url }}/{{ alertmanager_archive_base }}.tar.gz"

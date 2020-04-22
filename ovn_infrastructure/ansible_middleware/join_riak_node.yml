@@ -1,0 +1,20 @@
+---
+
+- include: mware_vars.yml ovn_vars_hosts="{{ target_hosts }}"
+
+# Use this playbook to add a node to an existing riak cluster
+- name: gathering host facts for use in later plays
+  hosts: "{{ target_hosts }}"
+  become: true
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Gather fact on first node in ovn_riak_servers
+      setup:
+      delegate_facts: true
+      delegate_to: "{{ groups['ovn_riak_servers'][0] }}"
+
+- name: join nodes to cluster
+  hosts: "{{ target_hosts }}"
+  roles:
+    - { role: riak, dispatch: ['joinnode'] }

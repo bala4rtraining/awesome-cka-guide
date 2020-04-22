@@ -1,0 +1,170 @@
+---
+# uninstall openjdk
+- name: uninstall java other than jre
+  yum:
+    name: "{{ java_version }}"
+    state: absent
+  with_items: "{{ hadoop_remove_java_versions }}"
+  loop_control:
+    loop_var: java_version
+
+# install Oracle JRE
+- name: install Oracle Jre
+  yum:
+    name: "{{jre_name}}"
+    state: present
+
+# Select correct jre
+- name: select the Oracle Jre using alternatives
+  alternatives:
+    name: java
+    path: /usr/java/{{jre_version}}/bin/java
+
+# install sudo
+- name: install sudo if it's not installed
+  yum:
+    name: sudo
+    state: present
+
+# Check user exists or not
+- name: Check user exists or not
+  command: 'id -u hdfs'
+  ignore_errors: yes
+  register: user_check
+
+# Check group exists or not
+- name: Check group exists or not
+  command: 'id -g hdfs'
+  ignore_errors: yes
+  register: group_check
+
+# create hdfs group
+- name: create hdfs group with gid= "{{ hdfs_grp_id }}" used for hdfs group in Global Enterprise
+  group:
+    name: hdfs
+    gid: "{{ hdfs_grp_id }}"
+    state: present
+    system: yes
+  when: group_check | failed
+
+# create hdfs user
+- name: create hdfs user with uid= "{{ hdfs_usr_id }}" used for hdfs user in Global Enterprise
+  user:
+    name: hdfs
+    comment: "Hadoop HDFS Cloudera"
+    group: hdfs
+    groups: hdfs,wheel
+    uid: "{{ hdfs_usr_id }}"
+    system: yes
+    home: "{{hadoop_dfs_home_dir}}"
+    shell: /bin/bash
+    state: present
+  when: user_check | failed
+
+# install hadoop rpms
+- name: install hadoop rpms
+  yum:
+     name: "{{ rpm }}"
+     state: installed
+  with_items: "{{ hadoop_rpms }}"
+  loop_control:
+    loop_var: rpm
+
+# Disable hadoop_datanodes service
+- name: disable hadoop_datanodes service
+  service:
+    name: hadoop-hdfs-datanode
+    state: stopped
+    enabled: no
+
+# Disable hadoop_namenodes service
+- name: disable hadoop_namenodes service
+  service:
+    name: hadoop-hdfs-namenode
+    state: stopped
+    enabled: no
+
+# create log4j prop file
+- name: create hadoop log4j properties
+  template:
+    src:   log4j.properties.j2
+    dest:  "{{ hadoop_conf_dir }}/log4j.properties"
+    owner: hdfs
+    group: hdfs
+    mode: "0644"
+
+# create logs directory
+- name: create logs directory
+  file:
+    path: "{{hadoop_logs_dir}}"
+    state: directory
+    owner: hdfs
+    group: hdfs
+    mode: "0755"
+
+# create hadoop data directory
+- name: create hadoop data directory
+  file:
+    path: "{{hadoop_dfs_data_dir}}"
+    state: directory
+    owner: hdfs
+    group: hdfs
+    mode: "0755"
+
+- name: make sure default umask for hdfs user is set to 0022
+  blockinfile:
+    path: "{{hadoop_dfs_home_dir}}/.bashrc"
+    insertafter: EOF
+    block: 'umask 0022'
+    create: yes
+    state: present
+  when: hadoop_reinstall
+
+# install core-site.xml
+- name: install core-site.xml file
+  template:
+    src: core-site.xml.j2
+    dest: /usr/lib/hadoop/etc/hadoop/core-site.xml
+    owner: hdfs
+    group: hdfs
+    mode: "0644"
+
+# isnatll hdfs-site.xml
+- name: install hdfs-site.xml file
+  template:
+    src: hdfs-site.xml.j2
+    dest: /usr/lib/hadoop/etc/hadoop/hdfs-site.xml
+    owner: hdfs
+    group: hdfs
+    mode: "0644"
+
+# check if jmx exporter already provisioned
+- name: check if {{ jmx_exporter_archive_base }} is already provisioned
+  stat:
+    path: "{{ jmx_exporter_base_dir }}/{{ jmx_exporter_archive_base }}"
+  register: jmx_exporter_provision_status
+
+# copy prometheus jmx_exporter
+- name: copy prometheus jmx_exporter agent configuration script under hadoop libexec dir
+  template:
+    src: "hadoop-prometheus-monitor.j2"
+    dest: "{{ hadoop_libexec_dir }}/hadoop-prometheus-monitor.sh"
+    owner: hdfs
+    group: hdfs
+    mode: "0750"
+
+# add prometheus config scripst in hadoop_daemon
+- name: modify /usr/lib/hadoop/sbin/hadoop_deamon.sh to add prometheus configuration scripts
+  blockinfile:
+    dest: "{{ hadoop_sbin_dir }}/hadoop-daemon.sh"
+    marker: "###-- {mark} ANSIBLE MANAGED BLOCK ###"
+    insertafter: "^.*HADOOP_LIBEXEC_DIR/hadoop-config.*"
+    block: |
+       . $HADOOP_LIBEXEC_DIR/hadoop-prometheus-monitor.sh $2
+
+# add hdfs user to prometheus group
+- name: add hdfs user to prometheus group
+  user:
+    name: hdfs
+    groups: prometheus
+  when: ( inventory_hostname in groups['hadoop_namenodes']) or ( inventory_hostname in groups['hadoop_datanodes'] )

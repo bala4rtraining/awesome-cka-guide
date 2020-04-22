@@ -1,0 +1,40 @@
+---
+
+
+#working_dir = node['visa_cassandra']['partition']
+#version = node['visa_cassandra']['version']
+
+#=begin
+#Steps to reset after testing
+#su - cassandra
+#cqlsh -u cqladmin -p cas_ocean0! sl73vcpsdbd256
+#ALTER USER cassandra WITH PASSWORD 'cassandra' SUPERUSER;
+#=end
+
+#candidate_node=node['visa_cassandra']['seed'].split(",").first
+
+#if candidate_node==node['ipaddress']
+#  bash "Create admin CQL script" do
+#    user node['visa_cassandra']['service_user']
+#    cwd "/tmp"
+#    code <<-EOF
+#    DATE=$(date +%Y-%m-%d-%H%M%S)
+#    exec 1>/tmp/create_admin_cql-log-$DATE.log
+#    exec 2>&1
+#    "#{working_dir}/dse-#{version}/bin/cqlsh" -f /#{file_cache_path}/create_admin.cql -u cassandra -p cassandra "#{node['hostname']}"
+#    EOF
+#    not_if { !Dir.glob('/tmp/create_admin_cql-log-*.log').empty? }
+#  end
+
+#  bash "Execute CQL script" do
+#    user node['visa_cassandra']['service_user']
+#    cwd "/tmp"
+#    code <<-EOF
+#    DATE=$(date +%Y-%m-%d-%H%M%S)
+#    exec 1>/tmp/execute_cql-log-$DATE.log
+#    exec 2>&1
+#    "#{working_dir}/dse-#{version}/bin/cqlsh" -f #{file_cache_path}/script.cql -u cqladmin -p cas_ocean0! "#{node['hostname']}"
+#    EOF
+#    not_if { !Dir.glob('/tmp/execute_cql-log-*.log').empty? }
+#  end
+#end

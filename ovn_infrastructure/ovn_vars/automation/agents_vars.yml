@@ -1,0 +1,4 @@
+---
+jenkins_agent_authorized_keys:
+  - pubkey: |
+      ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDEuLF7AQQ0EBwq6mTdAHR7O9kbG6P2m3atujhLW4mPJnVliHkAhiiHJrVMKzHw2/GgWWo46ZCn0XLDZE0nd3rKajiMvZrfn+hkA9IfHoIu9KZmlchqggqR6YIdlkTGfcoY2ZzM/VTPos10q7fmGRIHvbk4NQknu2CKz0ZeSU8nwB73P3E4SckLil2nmXmuaSrFxQHPlgDOaIEx4HUjX1iLv+rBaYjh7KZqOxNwTOvNmDUsz5BCDVMXO+W1fWez//pjkzcZ9Yp7AyGeVgeQTxRCexbmRzptK8SNXT0blhxLTfyj+SbfOngxXJeNOK9hRv2McnD6HoCmuL6076lH9Cg9 mvertefe@sl73bfrgapd001.visa.com

@@ -1,0 +1,32 @@
+---
+#######
+# These are north-south firewall rules for the `DEV` (dev1, dev2) cluster only.
+#
+# The rules are the same as for the `firewall_north_south_rule.yml`
+# except the rules defined here only applies to this cluster.
+#
+# One should consider twice before adding rules here.
+# That is one should consult with others and add the rule to the global
+# `north_south_firewall_rules` before coming here to add the rule.
+#######
+cluster_north_south_firewall_rules:
+
+# Kerberos Server
+# Since `kerberos_server` is valid for Dev environment only, we can't add firewall rules to global ones. 
+# Once its available for other environments, we will move this rules to global firewall_east_west_rule.yml
+# From dc1 to dc2
+- src: "{{ groups.dc1_kerberos_server + groups.dc1_hdfs_HA_All_nodes + groups.dc1_ovn_xdc_sync }}"
+  dest: "{{ groups.dc2_kerberos_server }}"
+  ports:
+  - { port: "{{ kerberos_kdc_port }}", protocol: "udp" }
+  - { port: "{{ kerberos_kdc_port }}", protocol: "tcp" }
+  - { port: "{{ kerberos_kadmind_port }}", protocol: "udp" }
+  - { port: "{{ kerberos_kadmind_port }}", protocol: "tcp" }
+# From dc2 to dc1
+- src: "{{ groups.dc2_kerberos_server + groups.dc2_hdfs_HA_All_nodes + groups.dc2_ovn_xdc_sync }}"
+  dest: "{{ groups.dc1_kerberos_server }}"
+  ports:
+  - { port: "{{ kerberos_kdc_port }}", protocol: "udp" }
+  - { port: "{{ kerberos_kdc_port }}", protocol: "tcp" }
+  - { port: "{{ kerberos_kadmind_port }}", protocol: "udp" }
+  - { port: "{{ kerberos_kadmind_port }}", protocol: "tcp" }

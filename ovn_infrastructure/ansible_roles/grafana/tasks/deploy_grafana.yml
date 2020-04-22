@@ -1,0 +1,74 @@
+---
+# tasks file for grafana
+
+- name: install rpms
+  yum: name="{{ download_path_url }}/{{ item }}" state=present update_cache=yes validate_certs=no
+  with_items: "{{ grafana_rpms }}"
+
+- name: Create a directory for grafana dashboards stored in JSON format
+  file: path=/var/lib/grafana/dashboards owner=grafana group=grafana state=directory
+  when: grafana_initial_install
+
+- name: install configuration files for grafana
+  template: src={{item.src}} dest={{item.dest}} mode={{item.mode}}
+  with_items:
+    - "{{ grafana_templates }}"
+
+- name: Restart grafana-server
+  service: name=grafana-server state=restarted
+
+#Use CURL since uri requires httplib2 until Ansible 2.1 for grafana with auth proxy
+- name: Verify grafana is now active and can respond to API call so that we can setup the initial basic config items for grafana with auth proxy
+  command: curl -sS -H 'X-WEBAUTH-USER:{{ grafana_admin_user }}' --noproxy 127.0.0.1 -XGET -i 'http://127.0.0.1:{{grafana_port}}/api/datasources' -H "Content-Type:application/json"
+  register: verify_grafana
+  changed_when: "'200 OK' in verify_grafana.stdout"
+  failed_when: "'200 OK' not in verify_grafana.stdout"
+  when: grafana_initial_install and grafana_auth_proxy_enabled
+
+- name: Set Datasource1 on initial creation (point to local-graphite using Grafana Web API) with auth proxy
+  command: curl -sS -H 'X-WEBAUTH-USER:{{ grafana_admin_user }}' --noproxy 127.0.0.1 -i -XPOST 'http://127.0.0.1:{{grafana_port}}/api/datasources' -H "Content-Type:application/json" --data-binary '{"name":"local-graphite","type":"graphite","url":"http://127.0.0.1:{{graphite_port}}","access":"proxy"}'
+  register: add_datasource_resp
+  when: (grafana_initial_install) and grafana_auth_proxy_enabled and ("'graphite' not in verify_grafana.stdout") and ("'200 OK' in verify_grafana.stdout")
+  changed_when: "'Datasource added' in add_datasource_resp.stdout"
+
+- name: Set Datasource2 on initial creation (point to DEV-graphite using Grafana Web API) with auth proxy
+  command: curl -sS -H 'X-WEBAUTH-USER:{{ grafana_admin_user }}' --noproxy 127.0.0.1 -i -XPOST 'http://127.0.0.1:{{grafana_port}}/api/datasources' -H "Content-Type:application/json" --data-binary '{"name":"DEV-graphite","type":"graphite","url":"http://ovndev/graphite","access":"proxy"}'
+  register: add_datasource_resp
+  when: (grafana_initial_install) and grafana_auth_proxy_enabled and ("'graphite' not in verify_grafana.stdout") and ("'200 OK' in verify_grafana.stdout")
+  changed_when: "'Datasource added' in add_datasource_resp.stdout"
+
+# Use python script to add seed admin grafana by consuming using grafana api
+- name: Copy python script
+  template: src=seed_admins_http.py.j2 dest=/tmp/seed_admins_http.py mode="0644"
+  when: grafana_auth_proxy_enabled
+
+- name: Run python script to seed admins
+  command: python /tmp/seed_admins_http.py
+  register: seed_admin_script
+  when: grafana_auth_proxy_enabled
+
+- name: Remove python script
+  file:
+    state: absent
+    path: /tmp/seed_admins_http.py
+  when: grafana_auth_proxy_enabled
+
+#Use CURL since uri requires httplib2 until Ansible 2.1 for grafana without auth proxy
+- name: Verify grafana is now active and can respond to API call so that we can setup the initial basic config items for grafana without auth proxy
+  command: curl -sS --noproxy 127.0.0.1 -XGET -i 'http://{{ grafana_admin_user }}:{{ grafana_admin_pass }}@127.0.0.1:{{grafana_port}}/api/datasources' -H "Content-Type:application/json"
+  register: verify_grafana
+  changed_when: "'200 OK' in verify_grafana.stdout"
+  failed_when: "'200 OK' not in verify_grafana.stdout"
+  when: grafana_initial_install and (not grafana_auth_proxy_enabled and not grafana_reverse_proxy_enabled)
+
+- name: Set Datasource1 on initial creation (point to local-graphite using Grafana Web API) without auth proxy
+  command: curl -sS --noproxy 127.0.0.1 -i -XPOST 'http://{{ grafana_admin_user }}:{{ grafana_admin_pass }}@127.0.0.1:{{grafana_port}}/api/datasources' -H "Content-Type:application/json" --data-binary '{"name":"local-graphite","type":"graphite","url":"http://127.0.0.1:{{graphite_port}}","access":"proxy"}'
+  register: add_datasource_resp
+  when: (grafana_initial_install) and (not grafana_auth_proxy_enabled and not grafana_reverse_proxy_enabled) and ("'graphite' not in verify_grafana.stdout") and ("'200 OK' in verify_grafana.stdout")
+  changed_when: "'Datasource added' in add_datasource_resp.stdout"
+
+- name: Set Datasource2 on initial creation (point to DEV-graphite using Grafana Web API) without auth proxy
+  command: curl -sS --noproxy 127.0.0.1 -i -XPOST 'http://{{ grafana_admin_user }}:{{ grafana_admin_pass }}@127.0.0.1:{{grafana_port}}/api/datasources' -H "Content-Type:application/json" --data-binary '{"name":"DEV-graphite","type":"graphite","url":"http://ovndev/graphite","access":"proxy"}'
+  register: add_datasource_resp
+  when: (grafana_initial_install) and (not grafana_auth_proxy_enabled and not grafana_reverse_proxy_enabled) and ("'graphite' not in verify_grafana.stdout") and ("'200 OK' in verify_grafana.stdout")
+  changed_when: "'Datasource added' in add_datasource_resp.stdout"

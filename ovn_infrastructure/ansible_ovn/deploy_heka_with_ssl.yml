@@ -1,0 +1,64 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!localhost,!cumulus_switch,!ovn_manager
+
+# Site specific host information
+- name: Gather facts to determine elasticsearch + graphite host information
+  hosts: all:!localhost:!cumulus_switch:!ovn_manager
+  gather_facts: yes
+
+- name: Run deployment of heka toml scripts for all ovn erlang servers
+  hosts: all:!localhost:!cumulus_switch:!ovn_manager
+  roles:
+  - { role: heka, dispatch: ['provision_heka_user'] }
+
+- name: Set Elastic Search Hostname based on eserv_type=lbonly host attribute
+  hosts: all:!localhost:!cumulus_switch:!ovn_manager
+  tasks:
+  - set_fact: elasticsearch_host="{{ hostvars[item]['ansible_nodename'] }}"
+    with_items: "{{ groups['elasticsearch'] }}"
+    when: hostvars[item].eserv_type == "lbonly"
+
+- name: Run deployment of heka toml scripts for all ovn erlang servers
+  hosts: ovn_mediator_servers:ovn_switch_servers:ovn_riak_servers:ovn_multidc_sync:ovn_umf_broker:ovn_umf_delivery:ovn_vitalsigns_delivery
+  vars:
+    heka_log_templates: "{{ ovnlog_templates }}"
+    elasticsearch_client_ssl_enabled: "true"
+  roles:
+  - { role: heka, dispatch: ['deploy_config_with_ssl'] }
+
+- name: Run deployment of heka toml scripts for kafka
+  hosts: kafka:zookeeper
+  vars:
+    heka_log_templates: "{{ kafkalog_templates }}"
+    elasticsearch_client_ssl_enabled: "true"
+  roles:
+  - { role: heka, dispatch: ['deploy_config_with_ssl'] }
+
+- name: add the log forwarding for elasticsearch using heka
+  hosts: elasticsearch
+  vars:
+    heka_log_templates: "{{ elasticsearchlog_templates }}"
+    elasticsearch_client_ssl_enabled: "true"
+  roles:
+  - { role: heka, dispatch: ['deploy_config_with_ssl'] }
+
+- name: add the log forwarding for hadoop
+  hosts: hadoop_namenodes:hadoop_datanodes
+  roles:
+  - { role: heka, dispatch: ['deploy_config_with_ssl'] }
+  vars:
+    heka_log_templates: "{{ hadooplog_templates }}"
+    elasticsearch_client_ssl_enabled: "true"
+
+- name: add the log forwarding for ovn_xdc_sync logs
+  hosts: ovn_xdc_sync
+  roles:
+  - { role: heka, dispatch: ['deploy_config_with_ssl'] }
+  vars:
+    heka_log_templates: "{{ xdc_sync_log_templates }}"
+    elasticsearch_client_ssl_enabled: "true"
+
+- name: Restart heka
+  hosts: all:!localhost:!cumulus_switch:!ovn_manager
+  roles:
+  - { role: heka, dispatch: ['restart_heka'] }

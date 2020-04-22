@@ -1,0 +1,10 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=kafka
+
+- name: run the java playbook to update openjdk to latest oraclejre
+  serial: 1
+  hosts: kafka
+  roles:
+    - { role: kafka, dispatch: ['stopkafka']}
+    - { role: java, dispatch: ['openjdk-to-oraclejre-update']} # Playbook is used to dispatch openjdk to oraclejre
+    - { role: kafka, dispatch: ['startkafka']}

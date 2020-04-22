@@ -1,0 +1,6 @@
+---
+# handlers file for tftp on the orange server
+
+- name: Restart TFTP server
+  service: name=xinetd state=restarted enabled=yes
+

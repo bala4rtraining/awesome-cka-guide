@@ -1,0 +1,9 @@
+[connection]
+hostname = localhost
+port = 9042
+factory = cqlshlib.ssl.ssl_transport_factory
+
+[ssl]
+certfile = /home/was/.cassandra/qa1b_cert.pem
+validate = false
+version = SSLv23

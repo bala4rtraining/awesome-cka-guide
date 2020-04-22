@@ -1,0 +1,22 @@
+#
+# Deploy Vault and Consul Enterprise for Key Management System
+#
+- name: Deploy consul client on vault nodes for KMS
+  hosts: ovn_cluster_vault_nodes
+  become: true
+  roles:
+  - { role: hc_consul_ent, dispatch: ['deploy'], consul_mode_is_server: false, enable_firewall_rules: false }  
+
+
+- name: Deploy vault server for KMS
+  hosts: ovn_cluster_vault_nodes
+  become: true
+  roles:
+  - { role: hc_vault_ent, dispatch: ['deploy'], enable_firewall_rules: false }
+
+- name: Deploy consul server only
+  hosts: ovn_cluster_consul_nodes
+  become: true
+  roles:
+  - { role: hc_consul_ent, dispatch: ['deploy'], consul_mode_is_server: true, enable_firewall_rules: false }
+

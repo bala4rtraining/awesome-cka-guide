@@ -1,0 +1,25 @@
+groups:
+- name: appinfra-alert.rules
+  rules:  
+  - alert: YumMirrorsSyncFailure
+    expr: increase(yum_mirrors_rsync_status[1h]) > 0
+    labels:
+      severity: critical
+    annotations:
+      Description: Yum mirrors sync failed on {{ $labels.repoName }} on {{ $labels.hostname }}
+      Summary: Artifactories sync failed on Yum Repos.
+  - alert: YumMirrorsLastSyncFailed
+    expr: increase(ovn_yummirrors_repo_sync_status{status=~"failed|timeout"}[5m]) > 0
+    labels:
+      severity: warning
+    annotations:
+      Description: Yum mirrors sync failed at {{ $labels.errorpoint }} on {{ $labels.hostname }} with status {{ $labels.status }}
+      Summary: Yum Mirror last Sync Failed
+  - alert: YumMirrorsLastSyncFailed
+    expr: increase(ovn_yummirrors_repo_sync_status{status=~"failed|timeout"}[30m]) > 1
+    for : 6h
+    labels:
+      severity: critical
+    annotations:
+      Description: Yum mirrors sync failed at {{ $labels.errorpoint }} on {{ $labels.hostname }} with status {{ $labels.status }}
+      Summary: Yum Mirrors last Sync Failed

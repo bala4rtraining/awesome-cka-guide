@@ -1,0 +1,5 @@
+---
+# tasks file for dhcpd
+- name: Configure DHCP server for orange servers
+  template: src=dhcpd_orange.conf.j2 dest=/etc/dhcp/dhcpd.conf
+  notify: Restart DHCP server

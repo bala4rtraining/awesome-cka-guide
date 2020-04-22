@@ -1,0 +1,11 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_mediator_servers,haproxy
+
+- name: gather facts about ovn_mediator_servers nodes
+  hosts: ovn_mediator_servers
+  gather_facts: yes
+
+- name: Setup HA proxy
+  hosts: haproxy
+  roles:
+     - haproxy

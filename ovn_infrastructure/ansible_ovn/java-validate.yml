@@ -1,0 +1,8 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts }}"
+
+# Playbook is used to dispatch to find java type
+- name: run the java playbook to check java type
+  hosts: "{{ target_hosts }}"
+  roles:
+     - {role: java, dispatch: ['validate-java-type']}

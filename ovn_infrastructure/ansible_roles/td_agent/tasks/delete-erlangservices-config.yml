@@ -1,0 +1,19 @@
+---
+
+- name: delete td-agent erlangservices config files
+  file:
+    state: absent
+    path: "/etc/td-agent/conf/input/erlangservices.conf"
+
+- name: Restart fluentd service.
+  systemd:
+    name: td-agent
+    state: restarted
+
+- name: ensure td-agent is started 
+  systemd:
+    name: td-agent
+    state: started
+
+- name: td-agent is enabled to start at boot.
+  shell: systemctl enable td-agent.service

@@ -1,0 +1,15 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all
+
+- name: disable systemd service from OVN Node
+  hosts: '{{ host_name }}'
+  gather_facts: yes
+  tasks:
+    - name: check if the service is active
+      command: systemctl status "{{ service_name }}.service"
+      register: status_check
+      ignore_errors: yes
+
+    - name: disable the service if not active
+      command: systemctl disable "{{ service_name }}.service"
+      when: status_check.stdout.find('dead') != -1

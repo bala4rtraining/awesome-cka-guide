@@ -1,0 +1,5 @@
+epic_name=int-epic21
+construct_vars_from=int-epic8
+epic_template_dir=VSS
+vm_dc1=sl73ovnapd358,sl73ovnapd359,sl73ovnapd360,sl73ovnapd361,sl73ovnapd362,sl73ovnapd363
+vm_dc2=sl73ovnapd394,sl73ovnapd395,sl73ovnapd396,sl73ovnapd397,sl73ovnapd398,sl73ovnapd399

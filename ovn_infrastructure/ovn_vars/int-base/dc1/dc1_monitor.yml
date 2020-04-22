@@ -1,0 +1,16 @@
+---
+kibana_reverse_proxy_enabled: true
+kibana_basepath: "/kibana-int-base-1"
+grafana_reverse_proxy_enabled: true
+grafana_reverse_proxy_url: "https://ovntest.visa.com/grafana-int-base-1/"
+graphite_url: "http://sl73ovnapd413.visa.com:5603"
+prometheus_datacenter_id: "INT-base-DC1"
+carbon_host: "sl73ovnapd413.visa.com"
+grafana_reverse_proxy_path: "grafana-int-base-1"
+kibana_reverse_proxy_path: "kibana-int-base-1"
+
+alertmanager_context_path: "alertmanager-int-base-1"
+alertmanager_app_context_path: "alertmanager-int-base-1-app"
+prometheus_context_path: "prometheus-int-base-1"
+prometheus_app_context_path: "prometheus-int-base-1-app"
+vss_output_context_path: "vss-output-int-base-1"

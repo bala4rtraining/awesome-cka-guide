@@ -1,0 +1,117 @@
+---
+- name: Redeploy prometheus configuration files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "{{ item.mode }}"
+    validate: "{{ prometheus_base_dir }}/promtool check config %s"
+  with_items:
+    - "{{ prometheus_config_files }}"
+  register: prometheus_config_result
+
+- name: link prometheus config for new active node
+  file:
+    src: "{{ prometheus_config_dir }}/prometheus-active.yml"
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+  when: >
+    (
+      ( prometheus_use_fqdn == "true" and 
+        ( ( prometheus_active_node is defined and ansible_fqdn == prometheus_active_node ) or
+          ( prometheus_active_node is not defined and  hostvars[inventory_hostname]['prometheus_mode'] == "active" )
+        )
+      )
+      or
+      ( prometheus_use_fqdn == "false" and
+        ( ( prometheus_active_node is defined and inventory_hostname == prometheus_active_node ) or
+          ( prometheus_active_node is not defined and  hostvars[inventory_hostname]['prometheus_mode'] == "active" ) 
+        )
+      )
+    )
+
+- name: link prometheus config for new standby node
+  file:
+    src: "{{ prometheus_config_dir }}/prometheus-active.yml"
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+  when: >
+    (
+      ( prometheus_use_fqdn == "true" and 
+        ( ( prometheus_standby_node is defined and ansible_fqdn == prometheus_standby_node ) or
+          ( prometheus_standby_node is not defined and  hostvars[inventory_hostname]['prometheus_mode'] == "standby" )
+        )
+      )
+      or
+      ( prometheus_use_fqdn == "false" and
+        ( ( prometheus_standby_node is defined and inventory_hostname == prometheus_standby_node ) or
+          ( prometheus_standby_node is not defined and  hostvars[inventory_hostname]['prometheus_mode'] == "standby" ) 
+        )
+      )
+    )
+
+- name: Copying the lt-active configuration file to Prometheus lt-active server
+  template:
+    src: prometheus-ltactive-federate-active-standby.yml.j2
+    dest: "{{ prometheus_config_dir }}/prometheus-ltactive-federate-active-standby.yml"
+    mode: "0644"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    
+- name: link prometheus config for lt-active node
+  file:
+    src: "{{ prometheus_config_dir }}/prometheus-ltactive-federate-active-standby.yml"
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+  when: >
+    (
+      ( prometheus_use_fqdn == "true" and 
+        ( ( prometheus_lt_active_node is defined and ansible_fqdn == prometheus_lt_active_node ) or
+          ( prometheus_lt_active_node is not defined and  hostvars[inventory_hostname]['prometheus_mode'] == "lt-active" )
+        )
+      )
+      or
+      ( prometheus_use_fqdn == "false" and
+        ( ( prometheus_lt_active_node is defined and inventory_hostname == prometheus_lt_active_node ) or
+          ( prometheus_lt_active_node is not defined and  hostvars[inventory_hostname]['prometheus_mode'] == "lt-active" ) 
+        )
+      )
+    )
+
+- name: link prometheus config for lt standby node
+  file:
+    src: "{{ prometheus_config_dir }}/prometheus-lt-standby.yml"
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+  when: >
+    (
+      ( prometheus_use_fqdn == "true" and 
+        ( ( prometheus_lt_standby_node is defined and ansible_fqdn == prometheus_lt_standby_node ) or
+          ( prometheus_lt_standby_node is not defined and  hostvars[inventory_hostname]['prometheus_mode'] == "lt-standby" )
+        )
+      )
+      or
+      ( prometheus_use_fqdn == "false" and
+        ( ( prometheus_lt_standby_node is defined and inventory_hostname == prometheus_lt_standby_node ) or
+          ( prometheus_lt_standby_node is not defined and  hostvars[inventory_hostname]['prometheus_mode'] == "lt-standby" ) 
+        )
+      )
+    )
+
+- name: reload prometheus
+  service:
+    name: prometheus
+    state: reloaded

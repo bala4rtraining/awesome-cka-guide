@@ -1,0 +1,33 @@
+---
+- name: include tasks common to client
+  include: common_client_deploy.yml
+
+- name: include nomad certs
+  include: nomad_certs.yml
+
+- name: embed template with values (nomad-vss-client.service.j2)
+  template: >
+    src=nomad-vss-client.service.j2
+    dest={{system_service_dir}}/nomad-vss-client.service
+    owner={{nomad_username}}
+    group={{nomad_username}}
+    mode=0644
+
+- name: embed template with values (nomad-vss-client_conf) 
+  template: >
+    src=nomad-vss-client.conf.j2
+    dest={{nomad_client_install_dir}}/nomad-vss-client.conf
+    owner={{nomad_username}}
+    group={{nomad_username}}
+    mode=0644
+
+- name: reload systemd configuration (nomad-vss-client_conf)  
+  command: systemctl daemon-reload
+
+- name: restart vss_nomad_client service (nomad-vss-client_conf) 
+  service: name=nomad-vss-client state=restarted
+
+- name: validate that the service is up (client port validation)
+  wait_for: port={{nomad_client_http_port}} delay=2
+
+

@@ -1,0 +1,8 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: deploy td-agent erlangservices input plugin
+  hosts: ovn_mediator_servers:ovn_switch_servers:ovn_riak_servers:ovn_multidc_sync:ovn_umf_broker:ovn_umf_delivery:ovn_vitalsigns_delivery
+  roles:
+    - { role: td_agent, dispatch: ['install-erlangservices-plugin']}
+    

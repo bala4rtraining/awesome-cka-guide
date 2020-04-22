@@ -1,0 +1,72 @@
+---
+
+- name: check if system-auth file exists
+  stat:
+    path: /etc/pam.d/system-auth
+  register: sysauth
+
+- name: check if password-auth file exists
+  stat:
+    path: /etc/pam.d/password-auth
+  register: pwdauth
+
+- name: check if system-auth-ac file exists
+  stat:
+    path: /etc/pam.d/system-auth-ac
+  register: sysauthac
+
+- name: backup system-auth file
+  command: cp -p /etc/pam.d/system-auth /etc/pam.d/system-auth.bak.{{ lookup ('pipe', 'date +"%Y%m%d%H%M"') }}
+  when: sysauth.stat.exists
+
+- name: backup password-auth file
+  command: cp -p /etc/pam.d/password-auth /etc/pam.d/password-auth.bak.{{ lookup ('pipe', 'date +"%Y%m%d%H%M"') }}
+  when: pwdauth.stat.exists
+
+- name: backup system-auth-ac file
+  command: cp -p /etc/pam.d/system-auth-ac /etc/pam.d/system-auth-ac.bak.{{ lookup ('pipe', 'date +"%Y%m%d%H%M"') }}
+  when: sysauthac.stat.exists
+
+- name: create (overwrite if exists) system-auth-ac file to remediate tsr findings 6834,6835,6836,6837,6838,6839,6840,6841,6842,6843
+  shell:
+    cmd: |
+      cat <<EOF > /etc/pam.d/system-auth-ac
+      #%PAM-1.0
+      # This file is auto-generated.
+      # User changes will be destroyed the next time authconfig is run.
+      auth        required      pam_env.so
+      auth        required      pam_faillock.so preauth audit silent deny=6 unlock_time=1800
+      auth        sufficient    pam_unix.so nullok try_first_pass
+      auth        requisite     pam_succeed_if.so uid >= 500 quiet
+      auth        sufficient    pam_sss.so use_first_pass
+      auth        [default=die] pam_faillock.so authfail audit deny=6
+      auth        sufficient    pam_faillock.so authsucc audit deny=6
+      auth        [success=1 default=bad]     pam_unix.so
+      auth        required      pam_deny.so
+      account     required      pam_faillock.so
+      account     required      pam_unix.so
+      account     sufficient    pam_localuser.so
+      account     sufficient    pam_succeed_if.so uid < 500 quiet
+      account     [default=bad success=ok user_unknown=ignore] pam_sss.so
+      account     required      pam_permit.so
+      account     required      pam_access.so
+      password    required      pam_cracklib.so try_first_pass retry=6 minclass=0 minlen=7 lcredit=-1 ucredit=-1 dcredit=-1 ocredit=-1 maxrepeat=0
+      password    sufficient    pam_unix.so sha512 shadow nullok try_first_pass use_authtok remember=12
+      password    sufficient    pam_sss.so use_authtok
+      password    required      pam_deny.so
+      session     optional      pam_keyinit.so revoke
+      session     required      pam_limits.so
+      session     [success=1 default=ignore] pam_succeed_if.so service in crond quiet use_uid
+      session     required      pam_unix.so
+      session     optional      pam_sss.so
+      session     optional      pam_mkhomedir.so umask=0077
+      EOF
+
+- name: set file permission for system-auth-ac
+  command: chmod 0644 /etc/pam.d/system-auth-ac
+
+- name: create (overwrite, if exists) system-auth symlink 
+  command: ln -sf /etc/pam.d/system-auth-ac /etc/pam.d/system-auth
+
+- name: create (overwrite, if exists) password-auth symlink 
+  command: ln -sf /etc/pam.d/system-auth-ac /etc/pam.d/password-auth

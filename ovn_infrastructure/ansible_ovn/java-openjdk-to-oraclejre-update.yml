@@ -1,0 +1,9 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts }}"
+
+# playbook is used to dispatch openjdk to oraclejre update
+- name: run the java playbook to upgrade openjdk to oraclejre
+  hosts: "{{ target_hosts }}"
+  roles:
+     - {role: java, dispatch: ['openjdk-to-oraclejre-update']}
+     - {role: java, dispatch: ['validate-java-type']}

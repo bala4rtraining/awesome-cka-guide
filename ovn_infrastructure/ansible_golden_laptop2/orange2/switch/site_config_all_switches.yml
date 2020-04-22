@@ -1,0 +1,35 @@
+---
+#
+# This is the main file for running Ansible
+# on rescue to configure OOB switches
+#
+# This playbook uses hosts + group_vars/oob
+#
+# NOTE: This should be run separately AFTER
+#       the top level site.yml playbook is run.
+#
+#       This playbook will need to use the host inventory
+#       and group vars created by the top level site.yml
+#
+
+
+- name: Configure All Cumulus switches
+  hosts: all
+  user: cumulus
+  become: yes
+  become_method: sudo
+  roles:
+    - cumulus_common
+    - cumulus_interfaces
+    - cumulus_quagga
+    - cumulus_dhcp_relay
+    - cumulus_snmp
+    #- cumulus_ports
+
+    
+
+    
+
+    
+
+  

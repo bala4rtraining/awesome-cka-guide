@@ -1,0 +1,8 @@
+---
+admin_principal_id: "220201"
+support_principal_id: "220202"
+appsupport_principal_id: "220203"
+cd_principal_id: "220204"
+
+ca_trust_file: "/etc/ssh/trusted-user-ca-keys.pub"
+ca_principals_dir: "/etc/ssh/auth_principals"

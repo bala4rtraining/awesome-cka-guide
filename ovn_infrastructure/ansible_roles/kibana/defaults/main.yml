@@ -1,0 +1,19 @@
+---
+# defaults file for roles/kibana
+
+kibana_port: 8080
+# for  reverse proxy
+kibana_reverse_proxy_enabled: false
+kibana_basepath: /kibana
+kibana_user: kibana
+kibana_group: kibana
+
+elasticsearch_port: 9200
+kibana_old_version: 5.0.0
+download_path_url: "{{ artifactory_url }}/ovn-extra-el7/"
+kibana_rpms: kibana-5.5.1-x86_64
+
+elasticsearch_client_ssl_enabled: "false"
+elasticsearch_client_use_fqdn: "true"
+
+elasticsearch_host: "{{ elasticsearch_lbhost | default('127.0.0.1') }}"

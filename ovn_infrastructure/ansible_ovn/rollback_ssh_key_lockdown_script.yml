@@ -1,0 +1,8 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts | default('all,!cumulus_switch') }}"
+
+- name: running ssh_lockdown_rollback_script
+  hosts: "{{ target_hosts | default('all,!cumulus_switch') }}"
+  gather_facts: yes
+  roles:
+     - { role: sshd_lockdown, dispatch: ['ssh_script_rollback'] }

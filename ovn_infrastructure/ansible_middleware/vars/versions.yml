@@ -1,0 +1,6 @@
+---
+
+#zookeeper version to install
+zk_version: "zookeeper-3.4.8"
+java_version: 8
+riak_version: "2.1.1-1"

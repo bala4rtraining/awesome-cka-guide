@@ -1,0 +1,5 @@
+---
+- name: Delete endOfConfig.txt file from FTPS server
+  file:
+    path: "{{ vss_sftp_directory }}/endOfConfig.txt"
+    state: absent

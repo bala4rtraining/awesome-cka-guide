@@ -1,0 +1,60 @@
+---
+# Curator file to delete all the elastic search indices which are older than specified period
+actions:
+{% set exclude = []  %}
+{% set last = [] %}
+{% for log_pattern in curator_log_patterns %}
+
+  {{loop.index}}:
+    action: delete_indices
+    description: Delete indices({{ log_pattern }}) older than {{ curator_log_patterns[log_pattern] }} days
+    options: 
+      ignore_empty_list: True
+      timeout_override: 300
+    filters:
+    - filtertype: age
+      source: name
+      direction: older
+      timestring: "%Y.%m.%d"
+      unit: days
+      unit_count: {{ curator_log_patterns[log_pattern] }}
+    - filtertype: pattern
+      kind: regex
+      value: {{ log_pattern }}
+    - filtertype: pattern
+      kind: regex
+      value: ${ELASTICSEARCH_EXCLUDE_LIST}
+      exclude: True
+    # TODO: need a better way to handle function which do not return any value
+    {% set temp_log_pattern = exclude.append(log_pattern) %}
+    {% set temp_loop_index = last.append(loop.index) %}
+{% endfor %}
+
+# Handling scenario when the curator_log_patterns is empty
+{% if last|length == 0 %}
+# TODO: need a better way to handle function which do not return any value
+{%  set temp_log_pattern = exclude.append("NONE")%}
+{%  set temp_loop_index = last.append(0) %}
+{% endif %}
+
+  {{last[-1]+1}}:
+    action: delete_indices
+    description: Delete indices older than {{ curator_default_retention_period }} days and do not match any above criteria
+    options: 
+      ignore_empty_list: True
+      timeout_override: 300
+    filters:
+    - filtertype: age
+      source: name
+      direction: older
+      timestring: "%Y.%m.%d"
+      unit: days
+      unit_count: {{ curator_default_retention_period }}
+    - filtertype: pattern
+      kind: regex
+      value: {{ exclude|join("|")}}
+      exclude: True
+    - filtertype: pattern
+      kind: regex
+      value: ${ELASTICSEARCH_EXCLUDE_LIST}
+      exclude: True

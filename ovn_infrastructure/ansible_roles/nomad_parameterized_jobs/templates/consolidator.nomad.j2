@@ -1,0 +1,83 @@
+/*
+
+Once deployed, this should be called through nomad job dispatch HTTP API like:
+
+curl -X POST -d
+*/
+
+job "consolidator_job" {
+
+  datacenters = ["{{ vic_identity|trim }}"]
+
+  type = "batch"
+
+  parameterized {
+    meta_required = [
+      "CIB",
+    ]
+  }
+
+  group "g1" {
+    task "t1" {
+      driver = "raw_exec"
+      artifact {
+        source = "{{ consolidator_dist_url }}"
+      }
+
+      config {
+        command = "${NOMAD_TASK_DIR}/consolidator"
+        args = ["-config=${NOMAD_TASK_DIR}/consolidator.yml", "-cib=${NOMAD_META_CIB}"]
+      }
+
+      template {
+        data = <<EOH
+---
+name: consolidator
+lru_size: 3000
+kafka:
+  broker: "{{ consolidator_broker }}"
+  group: "{{ consolidator_group }}"
+  topics: ["{{ consolidator_topics }}"]
+  session_timeout: {{ consolidator_kafka_timeout }}
+  events_channel_enable: {{ consolidator_events_channel_enable }}
+  application_rebalance_enable: {{ consolidator_rebalance_enable }}
+backoff:
+  min: {{ consolidator_backoff_min }}
+  max: {{ consolidator_backoff_max }}
+  factor: {{ consolidator_backoff_factor }}
+  jitter: {{ consolidator_backoff_jitter }}
+logger:
+  level: debug
+  development: true
+  disable-caller: false
+  disable-stacktrace: false
+  encoding: json
+  encoder-config:
+    message-key: msg
+    level-key: level
+    time-key: ts
+    name-key: logger
+    caller-key: src
+    stacktrace-key: stacktrace
+    line-ending: "\n"
+    level-encoder: lowercase
+    time-encoder: iso8601
+    duration-encoder: seconds
+    caller-encoder: short
+  output-paths:
+    - stdout
+  error-output-paths:
+    - stderr
+tracing:
+  disable: false
+  type: jaeger
+  jaeger:
+    log-spans: false
+    EOH
+
+        destination = "local/consolidator.yml"
+      }
+    }
+  }
+}
+

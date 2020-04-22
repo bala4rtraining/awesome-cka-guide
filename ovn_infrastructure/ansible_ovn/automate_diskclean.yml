@@ -1,0 +1,29 @@
+---
+# this playbooks is used to clean the disk space issues on /var/log/.
+# checks for the directory or the files which are causing the disk fulls and deletes or truncates them.
+
+- name: free disk space
+  hosts: all
+  gather_facts: yes
+  tasks:
+
+      # sort the disk space 
+    - name: sort the /var/log 
+      shell: du -ks /var/log/* | sort -n | tail -1 | awk '{ print $2}'
+      register: directory_path
+
+      # check if the last sorted path is a file or a directory
+    - name: check directory exists
+      stat:
+        path: "{{ directory_path.stdout }}"
+      register: dir_to_delete
+       
+      # truncate files of the sorted directory to 0 
+    - name: truncate files in folders which are occupying more space
+      shell: truncate -s 0 "{{ directory_path.stdout }}"/* &> /dev/null
+      when: dir_to_delete.stat.exists and dir_to_delete.stat.isdir
+
+      # truncate size to 0 if the sorted du is a file
+    - name: truncate "{{ directory_path.stdout }}" file size to 0
+      shell: truncate "{{ directory_path.stdout }}" --size 0
+      when: dir_to_delete.stat.exists and dir_to_delete.stat.isdir == false and dir_to_delete.stat.islnk == false

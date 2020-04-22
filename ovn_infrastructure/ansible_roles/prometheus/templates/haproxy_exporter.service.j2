@@ -1,0 +1,24 @@
+[Unit]
+Description=exporter for collecting data about haproxy
+Documentation=https://github.com/prometheus/haproxy_exporter
+After=network.target
+
+[Service]
+Type=simple
+User={{ prometheus_user }}
+Group={{ prometheus_group }}
+Restart=always
+RestartSec=3
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+WorkingDirectory={{ haproxy_exporter_base_dir }}
+
+{% if haproxy_exporter_opts is defined %}
+ExecStart={{ haproxy_exporter_base_dir }}/haproxy_exporter -web.listen-address {{ haproxy_exporter_address }}  -haproxy.scrape-uri "unix:/run/admin.sock"  -web.listen-address {{ haproxy_exporter_address }} -haproxy.pid-file {{haproxy_exporter_pid_loc}} -log.format "logger:syslog?appname=haproxy_exporter&local=7" -log.level {{haproxy_exporter_log_level}} -haproxy.server-metric-fields {{haproxy_exporter_opts}}
+{% else %}
+ExecStart={{ haproxy_exporter_base_dir }}/haproxy_exporter -web.listen-address {{ haproxy_exporter_address }}  -haproxy.scrape-uri "unix:/run/admin.sock"  -web.listen-address {{ haproxy_exporter_address }} -haproxy.pid-file {{haproxy_exporter_pid_loc}} -log.format "logger:syslog?appname=haproxy_exporter&local=7" -log.level {{haproxy_exporter_log_level}}
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

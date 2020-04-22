@@ -1,0 +1,28 @@
+---
+- include: mware_vars.yml ovn_vars_hosts="{{ target_hosts | default('yum_mirror_servers') }}"
+
+# Install nginx 
+- name: install nginx
+  hosts: "{{ target_hosts | default('yum_mirror_servers') }}"
+  roles:
+    - nginx
+  vars:
+    - nginx_sites:
+        default:
+          - listen {{ nginx_default_port }}
+          - server_name localhost
+    - nginx_locations:
+      - site: default
+        locations:
+          - name: yum_local_repo
+            location:
+              - location / {
+                  autoindex on;
+                  root /opt/app/yum-mirror;
+                }
+
+# add new node for yum mirrors
+- name: add new node
+  hosts: "{{ target_hosts | default('yum_mirror_servers') }}"
+  roles:
+    - { role: yum_mirrors, dispatch: ['addnode']}

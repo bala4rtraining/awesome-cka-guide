@@ -1,0 +1,7 @@
+#!/usr/bin/ksh
+#set -x
+
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.$(date +"%d%b%y.%H%M")
+cat  /etc/ssh/sshd_config| sed 's~^AuthorizedKeysFile.*~AuthorizedKeysFile .ssh/authorized_keys~g' >  /etc/ssh/sshd_config_new
+cp /etc/ssh/sshd_config_new /etc/ssh/sshd_config
+/sbin/service sshd restart

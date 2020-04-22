@@ -1,0 +1,28 @@
+---
+- name: Install Mesos Packages
+  yum: name={{item}} state=present
+  with_items:
+    - wget
+    - curl
+    - unzip
+    - libselinux-python
+    - python-setuptools
+    - mesos-{{mesos_version}}
+  notify:
+    - Disable master service
+    - Disable slave service
+    - Remove Default Mesos Config
+    - Remove Default Mesos-Master Config
+    - Remove Default Mesos-Slave Config
+    - Create Default Mesos Config
+    - Create Default Mesos-Master Config
+    - Create Default Mesos-Slave Config
+    - Remove work dir
+    - Create work dir
+
+
+- include: mesos-master.yml
+  when: mesos_install_mode == "master"
+
+- include: mesos-slave.yml
+  when: mesos_install_mode == "slave"

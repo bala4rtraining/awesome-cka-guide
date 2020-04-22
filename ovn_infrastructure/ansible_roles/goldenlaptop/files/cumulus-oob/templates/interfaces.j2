@@ -1,0 +1,24 @@
+#
+# This is a temporary interface file
+# for OCE OOB
+#
+auto lo
+iface lo inet loopback
+
+#
+# eth0 needs to be configured as
+# a static IP later
+#
+auto eth0
+iface eth0 inet dhcp
+
+auto bridge
+iface bridge 
+   bridge-ports glob swp1-20
+   bridge-stp on
+   bridge-vlan-aware yes
+
+auto bridge.1
+iface bridge.1
+  address 192.168.0.200/24
+

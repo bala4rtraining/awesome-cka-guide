@@ -1,0 +1,10 @@
+{% set node = node[ansible_hostname] %}
+{% if node.dhcp_relay.relay_ip is defined %}
+SERVERS="{{node.dhcp_relay.relay_ip}}"
+{% endif %}
+
+{% if node.dhcp_relay.relay_interfaces is defined -%}
+INTF_CMD="-i {{ node.dhcp_relay.relay_interfaces | join(" -i ")}}"
+{% endif %}
+
+OPTIONS=""

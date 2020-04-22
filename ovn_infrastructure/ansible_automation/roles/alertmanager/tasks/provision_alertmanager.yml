@@ -1,0 +1,67 @@
+---
+- name: check if {{ alertmanager_archive_base }} is already provisioned
+  stat:
+    path: "{{ alertmanager_install_dir }}/{{ alertmanager_archive_base }}"
+  register: alertmanager_provision_status
+
+- name: deploy alertmanger package.
+  unarchive:
+    src: "{{ alertmanager_archive }}"
+    dest: "{{ alertmanager_install_dir }}"
+    owner: "{{ alertmanager_user }}"
+    group: "{{ alertmanager_group }}"
+    mode: 0755
+    copy: no
+  when: alertmanager_provision_status.stat.exists == false
+
+- name: link to alertmanager base directory {{ alertmanager_base_dir }}
+  file:
+    src: "{{ alertmanager_archive_base }}"
+    dest: "{{ alertmanager_base_dir }}"
+    force: yes
+    state: link
+
+- name: create alertmanager data directory {{ alertmanager_data_dir }}
+  file:
+    dest: "{{ alertmanager_data_dir }}"
+    owner: "{{ alertmanager_user }}"
+    group: "{{ alertmanager_group }}"
+    mode: 0750
+    state: directory
+
+- name: deploy alertmanager config
+  template:
+    src: "alertmanager.yml.j2"
+    dest: "{{ alertmanager_base_dir }}/alertmanager.yml"
+    owner: "{{ alertmanager_user }}"
+    group: "{{ alertmanager_group }}"
+    mode: 0644
+  register: alertmanager_config_result
+
+- name: deploy alertmanager service
+  template:
+    src: "alertmanager.service.j2"
+    dest: "/etc/systemd/system/alertmanager.service"
+    owner: "{{ alertmanager_user }}"
+    group: "{{ alertmanager_group }}"
+    mode: 0644
+  register: alertmanager_service_result
+
+- name: reload system service configs.
+  shell: systemctl daemon-reload
+  when: >
+    alertmanager_service_result.changed == true
+
+- name: Restart alertmanager service.
+  service:
+    name: alertmanager
+    state: restarted
+  when: >
+    alertmanager_config_result.changed == true or
+    alertmanager_service_result.changed == true
+
+- name: Ensure alertmanager is started and enabled to start at boot.
+  service:
+    name: alertmanager
+    state: started
+    enabled: yes

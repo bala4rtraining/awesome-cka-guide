@@ -1,0 +1,4 @@
+---
+# handlers file for dhcp
+- name: Restart DHCP server
+  service: name=dhcpd state=restarted enabled=yes

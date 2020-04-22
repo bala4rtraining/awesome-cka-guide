@@ -1,0 +1,45 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=kafka:zookeeper:hadoop_namenodes:kerberos_server
+
+- name: Setting facts for remote datacenter variables
+  hosts: dc1_kafka:dc1_zookeeper:dc1_hadoop_namenodes:dc1_kerberos_server:!localhost
+  tasks:
+  - name: set_facts for dc1 if required
+    set_fact:
+      remote_kafka_members:               "{{ dc2_kafka_members }}"
+      remote_zookeeper_members:           "{{ dc2_zookeeper_members }}"
+      remote_zookeeper_members_nodenames: "{{ dc2_zookeeper_members_nodenames }}"
+      remote_namenode_members:            "{{ dc2_namenode_members }}"
+      remote_kerberos_server_members:     "{{ dc2_kerberos_server_members }}"
+      cacheable: true
+    when: DATACENTER == "dc1"
+
+- name: Setting facts for remote datacenter variables
+  hosts: dc2_kafka:dc2_zookeeper:dc2_hadoop_namenodes:dc2_kerberos_server:!localhost
+  tasks:
+  - name: set_facts for dc2 if required
+    set_fact:
+      remote_kafka_members:               "{{ dc1_kafka_members }}"
+      remote_zookeeper_members:           "{{ dc1_zookeeper_members }}"
+      remote_zookeeper_members_nodenames: "{{ dc1_zookeeper_members_nodenames }}"
+      remote_namenode_members:            "{{ dc1_namenode_members }}"
+      remote_kerberos_server_members:     "{{ dc1_kerberos_server_members }}"
+      cacheable: true
+    when: DATACENTER == "dc2"
+
+- name: Display cached remote variables
+  hosts: all:!localhost
+  tasks:
+  - debug:
+      msg: "Display cached remote-DC variables"
+    run_once: true
+  - debug:
+      var: "{{ item }}"
+    with_items:
+      - CLUSTER
+      - DATACENTER
+      - remote_kafka_members
+      - remote_zookeeper_members
+      - remote_zookeeper_members_nodenames
+      - remote_namenode_members
+      - remote_kerberos_server_members

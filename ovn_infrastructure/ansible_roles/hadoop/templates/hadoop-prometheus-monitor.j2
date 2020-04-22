@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# **********************************************************************
+# This script initializes HADOOP_OPTS environment variables to configure 
+# Prometheus jmx exporter for monitoring JMX metrics for Hadoop daemons
+# jmx exporter can either be run as java agent or as standalone http based 
+# server. This script configures the jmx exproter to run as java agent.
+# This script should be invoked from hadoop-daemon.sh with $@ as arguments
+# Each Hadoop services will be monitored on different TCP ports.
+# Right now we are enabling jmx monitoring for hadoop services as below.
+# namenode = 9104
+# datanode = 9105
+#*************************************************************************
+
+command=$1
+
+case $command in
+    namenode)
+        HADOOP_OPTS="$HADOOP_OPTS -javaagent:"{{ jmx_exporter_base_dir }}/{{ jmx_exporter_jar }}"=127.0.0.1:{{ hadoop_namenode_jmxexporter_port }}:{{ jmx_exporter_config_dir }}/jmx_exporter.yml"
+        ;;&
+
+    datanode)
+        HADOOP_OPTS="$HADOOP_OPTS -javaagent:"{{ jmx_exporter_base_dir }}/{{ jmx_exporter_jar }}"=127.0.0.1:{{ hadoop_datanode_jmxexporter_port }}:{{ jmx_exporter_config_dir }}/jmx_exporter.yml"
+
+        ;;&
+
+        *)
+
+esac
+export HADOOP_OPTS

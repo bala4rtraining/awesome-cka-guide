@@ -1,0 +1,181 @@
+###############################################
+# DHCP configuration template
+# for managing IP addresses
+# 
+# Specific options for Cumulus switch 
+###############################################
+
+#
+# Auto provision a Cumulus switch with a SSH pub key
+#
+option cumulus-provision-url code 239 = text;
+option default-url code 114 = text;
+
+
+#
+# localpool
+#
+
+subnet {{ ovn_cumulus_sw_mgmt_port_subnet_ip }} netmask {{ ovn_cumulus_sw_mgmt_port_subnet_mask }} {
+
+  option subnet-mask {{ ovn_cumulus_sw_subnet_mask }};
+  #option routers {{ ovn_cumulus_sw_subnet_router }};
+  next-server {{ ovn_cumulus_sw_subnet_next_server }};
+  
+  # For future Cumulus switch installation and SSH key provisioning
+  #option default-url ="http://{{ovn_cumulus_sw_subnet_router}}/cumulus/onie-installer";
+  option default-url "http://{{ovn_cumulus_sw_subnet_router}}/cumulus/onie-installer";
+  option cumulus-provision-url "http://{{ovn_cumulus_sw_subnet_router}}/cumulus/cumulus-provisioning.sh";
+
+  class "pxeclients" {
+      match if substring (option vendor-class-identifier, 0, 9) = "PXEClient";
+      next-server {{ ovn_cumulus_sw_subnet_next_server }};
+
+      if option architecture-type = 00:07 {
+        #filename "uefi/shim.efi";
+	filename "uefi/grubx64.efi";
+      } else {
+        filename "pxelinux/pxelinux.0";
+      }
+  }
+
+}
+
+
+#
+# static DHCP assignments for Cumulus management ports
+#
+
+#
+# VMs (Here the host declaration name is the same as host name)
+#
+host {{ global_ovn_switch_name_leaf1 }} {
+  hardware ethernet   {{ global_ovn_switch_leaf1_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_leaf1_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_leaf1 }}";
+}
+
+host {{ global_ovn_switch_name_leaf2 }} {
+  hardware ethernet   {{ global_ovn_switch_leaf2_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_leaf2_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_leaf2 }}";
+}
+
+host {{ global_ovn_switch_name_leaf3 }} {
+  hardware ethernet   {{ global_ovn_switch_leaf3_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_leaf3_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_leaf3 }}";
+}
+
+
+host {{ global_ovn_switch_name_leaf4 }} {
+  hardware ethernet   {{ global_ovn_switch_leaf4_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_leaf4_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_leaf4 }}";
+}
+
+
+
+host {{ global_ovn_switch_name_spine1 }} {
+  hardware ethernet   {{ global_ovn_switch_spine1_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_spine1_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_spine1 }}";
+}
+
+
+host {{ global_ovn_switch_name_spine2 }} {
+  hardware ethernet   {{ global_ovn_switch_spine2_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_spine2_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_spine2 }}";
+}
+
+host {{ global_ovn_switch_name_border_leaf1 }} {
+  hardware ethernet   {{ global_ovn_switch_border_leaf1_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_border_leaf1_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_border_leaf1 }}";
+}
+
+host {{ global_ovn_switch_name_border_leaf2 }} {
+  hardware ethernet   {{ global_ovn_switch_border_leaf2_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_border_leaf2_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_border_leaf2 }}";
+}
+
+#
+# OOB VMs
+#
+host {{ global_ovn_switch_name_oob_mgmt_switch }} {
+  hardware ethernet {{ global_ovn_switch_name_oob_mgmt_switch_mac }};
+  fixed-address     {{ global_ovn_switch_name_oob_mgmt_switch_ip }};
+  option host-name  {{ global_ovn_switch_name_oob_mgmt_switch }};
+}
+
+host {{ global_ovn_switch_name_oob_mgmt_server }} {
+  hardware ethernet {{ global_ovn_switch_name_oob_mgmt_server_mac }};
+  fixed-address     {{ global_ovn_switch_name_oob_mgmt_server_ip }};
+  option host-name  {{ global_ovn_switch_name_oob_mgmt_server }};
+}
+
+
+
+
+#
+# Cumulus Switch HW (Updated by site-specific var file)
+# 
+
+host {{ global_ovn_switch_hw_name_leaf1 }} {
+  hardware ethernet   {{ global_ovn_switch_hw_leaf1_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_leaf1_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_leaf1 }}";
+}
+
+
+host {{ global_ovn_switch_hw_name_leaf2 }} {
+  hardware ethernet   {{ global_ovn_switch_hw_leaf2_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_leaf2_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_leaf2 }}";
+}
+
+host {{ global_ovn_switch_hw_name_leaf3 }} {
+  hardware ethernet   {{ global_ovn_switch_hw_leaf3_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_leaf3_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_leaf3 }}";
+}
+
+
+
+
+host {{ global_ovn_switch_hw_name_spine1 }} {
+  hardware ethernet   {{ global_ovn_switch_hw_spine1_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_spine1_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_spine1 }}";
+}
+
+
+host {{ global_ovn_switch_hw_name_spine2 }} {
+  hardware ethernet   {{ global_ovn_switch_hw_spine2_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_spine2_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_spine2 }}";
+}
+
+
+
+host {{ global_ovn_switch_hw_name_border_leaf1 }} {
+  hardware ethernet   {{ global_ovn_switch_hw_border_leaf1_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_border_leaf1_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_border_leaf1 }}";
+}
+
+
+host {{ global_ovn_switch_hw_name_border_leaf2 }} {
+  hardware ethernet   {{ global_ovn_switch_hw_border_leaf2_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_border_leaf2_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_border_leaf2 }}";
+}
+
+
+host {{ global_ovn_switch_hw_name_oob_mgmt }} {
+  hardware ethernet   {{ global_ovn_switch_hw_name_oob_mgmt_mac }}; 
+  fixed-address       {{ global_ovn_switch_name_oob_mgmt_ip }};
+  option host-name    "{{ global_ovn_switch_name_oob_mgmt }}";
+}

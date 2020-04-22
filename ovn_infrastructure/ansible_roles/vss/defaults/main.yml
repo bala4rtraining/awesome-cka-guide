@@ -1,0 +1,62 @@
+---
+artifactory_rpm_path: "ovn-app-el7"
+vss_binaries_rpm: "vss-{{ vss_binaries_version }}.i686.rpm"
+vsswrapper_rpm: "vsswrapper-{{ vsswrapper_version }}.el7.centos.x86_64.rpm"
+vss_nomad_version: "0.6.0"
+
+vss_nomad_client_path:  "/opt/nomad_{{vss_nomad_version}}/client/nomad"
+vss_nomad_cert_path:  "/opt/nomad_{{vss_nomad_version}}/cert"
+vss_nomad_http_port: "{{ nomad_server_http_port }}"
+vss_fluentd_aggregator: "{{ groups['fluentd_aggregator'][0] }}"
+
+# Playbook default
+vss_username: "was"
+vss_root_path: "/opt/app/vss"
+vsswrapper_root_path: "/opt/app/vsswrapper"
+vsswrapper_log_path: "{{ vsswrapper_root_path }}/log"
+vss_binaries_path: "{{ vss_root_path }}/vssexe"
+vss_mvs_cert_file_pem: "/etc/pki/ca-trust/source/anchors/VICA4Root.pem"
+vss_mvs_cert_file_crt: "/etc/pki/ca-trust/source/anchors/VICA4Root.crt"
+
+vss_file_perm: "0744"
+
+# VSS wrapper template defaults
+vss_ssh_port: 22
+vss_ssh_private_key: "/home/was/.ssh/vss"
+vss_sftp_directory: "/var/vsftpd/ovnext3/ovn_vss"
+vss_sftp_polling_interval: 1000
+vss_sftp_max_attempt: 10
+vss_ftps_hostname: "{{ groups['ftps_server'][0] }}"
+vss_inpa_marker_file: "endOfInpa.txt"
+
+vss_hadoop_conf_directory: "{{ vsswrapper_root_path }}/config/"
+vss_hadoop_username: "hdfs"
+vss_hadoop_directory: "/vss"
+
+vss_local_input_dir: "/opt/app/vss/input"
+vss_local_intermediary_dir: "/opt/app/vss/files"
+vss_local_output_dir: "/opt/app/vss/output"
+vss_inpa_flag_path: "{{ vss_binaries_path }}/startCycleSuccess.txt"
+
+vss_riak_max_connections: 100
+vss_riak_bucket_type: "ovn_settlement"
+vss_riak_bucket_name: "vss"
+
+vss_daily_exec_path: "{{ vss_binaries_path }}/generateReport.sh"
+
+# Nomad job name
+vss_config_init_nomad: "configInitNomad"
+vss_config_run_nomad: "configRunNomad"
+vss_run_vsswrapper: "runVSSWrapper"
+
+#VSS related vars
+vss_ssh_directory: "/home/was/.ssh" 
+vss_ssh_idrsapub_path: "/home/was/.ssh/vss.pub"
+vss_ssh_idrsa_path: "/home/was/.ssh/vss"
+
+# FTPS settings:
+vss_mvs_ftps_port: 21021
+
+nomad_ip: "{{ groups['nomad_server'][0] }}"
+
+enable_tls_nomad: true

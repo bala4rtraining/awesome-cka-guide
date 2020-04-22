@@ -1,0 +1,20 @@
+---
+- name: Ensure firewalld is running
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Disable firewalld log-denied option
+  shell: |
+    firewall-cmd --set-log-denied=off
+  ignore_errors: True
+
+- name: Enable logging of dropped packets via firewalld direct interface.
+  shell: |
+    firewall-cmd --permanent --direct --add-chain ipv4 filter IN_public_drop
+    firewall-cmd --permanent --direct --add-rule ipv4 filter IN_public_drop 0 -m limit --limit 10/min -j LOG --log-prefix 'ofr_drop_'
+    firewall-cmd --permanent --direct --passthrough ipv4 -I IN_public 4 -j IN_public_drop
+    firewall-cmd --reload
+  ignore_errors: True

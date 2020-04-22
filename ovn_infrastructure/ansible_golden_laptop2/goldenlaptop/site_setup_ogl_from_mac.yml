@@ -1,0 +1,247 @@
+---
+#
+# This playbook is run on the Macbook to set up the OGL
+# that should have the proper net access
+#
+# Important assumptions:
+#  - OGL or VM is Centos7 based
+#  - OGL is running and accessible
+#  - OGL has Internet access
+#
+#
+- name: Start playbook to set up OGL
+  hosts: OGL_host
+  gather_facts: yes
+  become: yes
+  
+  vars_files:
+    - site_vars_ogl.yml
+    
+  handlers:
+    - name: Restart networking service  
+      shell: "ifdown {{ogl_mgmt_int_dev_name}} && ifup {{ogl_mgmt_int_dev_name}}"
+
+  tasks:
+
+    #
+    # For OGL interface
+    #
+    - name: Configure an static interface for DHCP management on OGL
+      template: src=ogl_ifcfg_static.j2 dest=/etc/sysconfig/network-scripts/ifcfg-{{ ogl_mgmt_int_dev_name }}
+      notify: Restart networking service
+
+    - name: Copy the host file to OGL_host
+      template: src=ogl_host_file.j2 dest=/etc/hosts
+
+    #
+    # Set up HTTP, TFTP and DHCP servers
+    #
+    - name: Install httpd pacakges
+      yum: name=httpd
+
+    - name: Start HTTP server
+      service: name=httpd state=restarted
+
+
+    - name: Install TFTP server packages
+      yum: name={{item}}
+      with_items: [tftp-server, xinetd ]
+
+    - name: configure TFTP server
+      replace: dest=/etc/xinetd.d/tftp regexp="disable.*=.*yes" replace="disable = no"
+
+
+    - name: Restart TFTP server always
+      service: name=xinetd state=restarted enabled=yes
+
+    - name: Install DHCP pacakges
+      yum: name=dhcp state=present
+      
+    - name: Configure DHCP server
+      template: src=ogl_dhcp.j2 dest=/etc/dhcp/dhcpd.conf
+
+    - name: Restart DHCP server
+      service: name=dhcpd state=restarted enabled=yes
+     
+    #
+    # Set up the ssh public key for OGL
+    #
+
+    - name: Create SSH key on the OGL
+      user: name=root generate_ssh_key=yes 
+
+    - name: Fetch the SSH public key file from the OGL
+      fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/ogl/ flat=yes
+
+    - name: Place the OGL SSH public key to /var/www/html/
+      copy: src=/tmp/ogl/id_rsa.pub dest=/var/www/html/authorized_keys
+      
+    #
+    # For PXE boot of rescue serer (legacy boot)
+    #
+    - name: Copy PXE server files to OGL except for the GRUB
+      copy: src=pxelinux dest={{ ogl_tftpboot_path }}/
+
+    - name: Create pxelinux/pxelinux.cfg directory
+      file: path={{ ogl_tftpboot_path }}/pxelinux/pxelinux.cfg state=directory mode=0755
+      
+    - name: Copy the GRUB loader template to the OGL
+      template: src=grub_legacy.j2 dest={{ ogl_tftpboot_path }}/pxelinux/pxelinux.cfg/default
+
+    - name: Create a directory under /var/www/html on OGL to hold kickstart file
+      file: path=/var/www/html/{{ogl_legacy_ks_dir}} state=directory mode=0755
+
+    - name: Copy the kickstart file to the OGL
+      template: src=ogl_ks.j2 dest=/var/www/html/{{ogl_legacy_ks_dir}}/{{ogl_legacy_ks_file}}
+
+    - name: Create a diretory under /var/www/html on OGL to hold Centos7 Install source 
+      file: path=/var/www/html/{{ogl_legacy_install_src_dir}} state=directory mode=0755
+
+    # The following two steps are for simulation only
+
+    - name: Copy the Centos7 ISO to OGL (This file will later be copied to rescue from ogl)
+      #synchronize: src={{ ogl_centos_local_path }}/{{ ogl_centos_image_name }} dest=/root
+      copy: src={{ ogl_centos_local_path }}/{{ ogl_centos_image_name }} dest=/root
+      tags:
+        - image
+
+    - name: Mount the Centos7 ISO for installation
+      mount: name=/var/www/html/{{ogl_legacy_install_src_dir}} src=/root/{{ ogl_centos_image_name }} fstype=iso9660 opts=ro state=mounted
+      tags:
+        - image
+
+
+   #
+   # For UEFI Secureboot
+   #
+
+    - name: Create uefi directory under /var/lib/tftpboot
+      file: path={{ ogl_tftpboot_path }}/uefi state=directory mode=0755
+      tags:
+        - sb
+
+    - name: Create directories to hold repos
+      file: path=/var/www/html/{{item}} state=directory mode=0755
+      with_items:
+        - repo/centos
+        - repo/visa
+        - ks
+      tags:
+        - sb
+
+
+    - name: Copy the efi tarball (contains GRUB loader) to the OGL (efi)
+      unarchive: src=secureboot/efi dest={{ ogl_tftpboot_path }}/uefi mode=0755 copy=yes
+      tags:
+        - sb
+            
+    - name: Copy the secureboot KS template for OGL (DONT use kickstart.tar.gz here)
+      template: src=ogl_ks_sb.j2 dest=/var/www/html/ks/{{ogl_centos_secureboot_ks_file}}
+      tags:
+        - sb
+                  
+                
+    - name: Copy the Centos repo for SB (centos7_1511)
+      unarchive: src=secureboot/centos dest=/var/www/html/repo/centos mode=0755 copy=yes
+      tags:
+        - sb
+                  
+    - name: Copy the Visa CentosLiveOS to overwrite the squashfs for SB (centos_liveos)
+      unarchive: src=secureboot/squashfs dest=/var/www/html/repo/centos  mode=0755 copy=yes
+      tags:
+        - sb
+
+    - name: Copy the Visa repo (visa_repo)
+      unarchive: src=secureboot/visa dest=/var/www/html/repo/visa mode=0755 copy=yes
+      tags:
+        - sb
+                  
+        
+   #
+   # Install Ansible and netaddr packages on rescue
+   #
+    - name: Copy all Ansible RPMs to target host
+      #synchronize: 
+      copy: 
+        src: "{{ ogl_ansible_local_path }}/ansible-packages2"
+        dest: /root
+      tags:
+        - ansible
+        
+    - name: Install Ansible
+      shell: yum -C -y install /root/ansible-packages2/*.rpm --skip-broken
+      tags:
+        - ansible
+
+
+    - name: Copy all netadd packages to target host
+      #synchronize:
+      copy:
+        src: "{{ ogl_ansible_local_path }}/netadd-packages2"
+        dest: /root
+      tags:
+        - netadd
+     
+    - name: Install Netadd
+      shell: yum -C -y install /root/netadd-packages2/*.rpm --skip-broken
+      tags:
+        - netadd
+
+   ####################################################
+   # Copy files to OGL for later copying to rescue
+   ####################################################
+
+    - name: Copy orange2 files to OGL
+      copy:
+       src: ../orange2
+       dest: /root
+
+    - name: Create directory to hold secureboot files OGL
+      file:
+        path: /root/secureboot
+        state: directory
+        mode: 0755
+      tags:
+        - sb
+
+    - name: Copy secureboot files to OGL
+      copy:
+        src: "{{item.src}}"
+        dest: "/root/secureboot/{{item.dest}}"
+      with_items:
+        - src: secureboot/centos
+          dest: centos7_1511.tar.gz
+        - src: secureboot/efi
+          dest: efi.tar.gz
+#        - src: secureboot/ks
+#          dest: kickstart.tar.gz
+        - src: secureboot/squashfs
+          dest: centos_liveos.tar.gz
+        - src: secureboot/visa
+          dest: visa_repo.tar.gz
+        - src: files/rescue_ks_sb.j2.file
+          dest: rescue_ks_sb.j2
+      tags:
+        - sb
+        
+
+      
+  #
+  # Copy ansible.cfg, host file and playbook for OGL
+  #
+    - name: Copy ansible.cfg for OGL
+      copy:
+        src: ansible.cfg.ogl
+        dest: /root/ansible.cfg
+    - name: Copy host file for OGL
+      copy:
+        src: host.ogl
+        dest: /root/host
+
+    - name: Copy playbook for OGL
+      copy:
+        src: site_copy_files_from_ogl_to_rescue.yml.ogl
+        dest: /root/site_copy_files_from_ogl_to_rescue.yml
+
+
+

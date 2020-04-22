@@ -1,0 +1,156 @@
+###############################################
+#   OVN Indo Switch and server definitions
+#
+#   Update: 1/24 new spine 6010
+#           1/24 new 4th rack
+#           2/16 for OOB
+#
+################################################
+
+graph vx {
+
+
+##################################
+#     Switch/Server Definitions
+##################################
+ "dci-ovn-leaf1" [function="leaf" os="CumulusCommunity/cumulus-vx" memory="1024" version="3.2.1" ports="10" config="./helper_scripts/extra_switch_config.sh"]
+ "dci-ovn-leaf2" [function="leaf" os="CumulusCommunity/cumulus-vx" memory="1024" version="3.2.1" ports="10" config="./helper_scripts/extra_switch_config.sh"]
+ "dci-ovn-leaf3" [function="leaf" os="CumulusCommunity/cumulus-vx" memory="1024" version="3.2.1" ports="10" config="./helper_scripts/extra_switch_config.sh"]
+ "dci-ovn-leaf4" [function="leaf" os="CumulusCommunity/cumulus-vx" memory="1024" version="3.2.1" ports="10" config="./helper_scripts/extra_switch_config.sh"]
+ "dci-ovn-spine1" [function="spine" os="CumulusCommunity/cumulus-vx" memory="1024" version="3.2.1" config="./helper_scripts/extra_switch_config.sh"]
+ "dci-ovn-spine2" [function="spine" os="CumulusCommunity/cumulus-vx" memory="1024" version="3.2.1" config="./helper_scripts/extra_switch_config.sh"]
+ "dci-ovn-border-leaf1" [function="exit" os="CumulusCommunity/cumulus-vx" memory="1024" version="3.2.1" ports="10" config="./helper_scripts/extra_switch_config.sh"]
+ "dci-ovn-border-leaf2" [function="exit" os="CumulusCommunity/cumulus-vx" memory="1024" version="3.2.1" ports="10" config="./helper_scripts/extra_switch_config.sh"]
+ "dci-ovn-asr-tun1" [function="exit" os="CumulusCommunity/cumulus-vx" memory="1024" version="3.2.1" config="./helper_scripts/extra_switch_config.sh"]
+ "dci-ovn-asr-tun2" [function="exit" os="CumulusCommunity/cumulus-vx" memory="1024" version="3.2.1" config="./helper_scripts/extra_switch_config.sh"]
+
+ "dci-ovn-node-1-1" [function="host" os="centos/7" memory="1024" pxehost="True"]
+ "dci-ovn-node-2-1" [function="host" os="centos/7" memory="1024" pxehost="True"]
+ "dci-ovn-node-3-1" [function="host" os="centos/7" memory="1024" pxehost="True"]
+ "dci-ovn-node-4-1" [function="host" os="centos/7" memory="1024" pxehost="True"]
+
+ "dci-oob-sw" [function="oob-switch" os="CumulusCommunity/cumulus-vx" version="3.2.1" ports="32" memory="1024" config="./helper_scripts/extra_switch_config.sh"]
+ "dci-oob-serv" [function="oob-switch" os="CumulusCommunity/cumulus-vx" version="3.2.1" ports="32" memory="1024" config="./helper_scripts/extra_switch_config.sh"]
+
+ #
+ # OVN manager (Assume installed )
+ #
+ "dci-ovnmgr" [function="host" os="centos/7" memory="1024" config="./helper_scripts/extra_server_config.sh"]
+
+ #
+ #  Golden laptop  (To be installed from Macbook)
+ #
+ "dci-oob-ogl" [function="oob-server" os="centos/7" memory="400" config="./helper_scripts/extra_server_config.sh"]
+
+ #
+ #  Rescue server (To be installed by Goldenlaptop) (Bootstraps all switches and all servers minus the golden laptop)
+ #  To simply the problem of interface renaming, we are not using se PXEboot for rescue server in simulation at this time
+
+ #"dci-rescue" [function="host" os="centos/7" memory="1024"  pxehost="True"]
+ "dci-rescue" [function="host" os="centos/7" memory="1024"  config="./helper_scripts/extra_server_config.sh"]
+
+ #
+ # For Haproxy servers (To be installed by Golden server)
+ #
+ "dci-HA1" [function="host" os="centos/7" memory="1024" pxehost="True"]
+ "dci-HA2" [function="host" os="centos/7" memory="1024" pxehost="True"]
+
+
+
+
+
+################################################
+# Cabling
+################################################
+#
+# spine to leaf
+#
+ "dci-ovn-leaf1":"swp49" -- "dci-ovn-spine1":"swp1"
+ "dci-ovn-leaf2":"swp49" -- "dci-ovn-spine1":"swp2"
+ "dci-ovn-leaf3":"swp49" -- "dci-ovn-spine1":"swp3"
+ "dci-ovn-leaf4":"swp49" -- "dci-ovn-spine1":"swp4"
+ "dci-ovn-leaf1":"swp50" -- "dci-ovn-spine2":"swp1"
+ "dci-ovn-leaf2":"swp50" -- "dci-ovn-spine2":"swp2"
+ "dci-ovn-leaf3":"swp50" -- "dci-ovn-spine2":"swp3"
+ "dci-ovn-leaf4":"swp50" -- "dci-ovn-spine2":"swp4"
+
+#
+# border leaf to spine connections
+#
+ "dci-ovn-border-leaf1":"swp49" -- "dci-ovn-spine1":"swp5"
+ "dci-ovn-border-leaf2":"swp49" -- "dci-ovn-spine1":"swp6"
+ "dci-ovn-border-leaf1":"swp50" -- "dci-ovn-spine2":"swp5"
+ "dci-ovn-border-leaf2":"swp50" -- "dci-ovn-spine2":"swp6"
+
+#
+# border leaf to border leaf connections
+#
+ "dci-ovn-border-leaf1":"swp51" -- "dci-ovn-border-leaf2":"swp51"
+ "dci-ovn-border-leaf1":"swp52" -- "dci-ovn-border-leaf2":"swp52"
+
+#
+# border leaf to asr connections
+#
+ "dci-ovn-border-leaf1":"swp1" -- "dci-ovn-asr-tun1":"swp2"
+ "dci-ovn-border-leaf2":"swp1" -- "dci-ovn-asr-tun1":"swp3"
+ "dci-ovn-border-leaf1":"swp2" -- "dci-ovn-asr-tun2":"swp2"
+ "dci-ovn-border-leaf2":"swp2" -- "dci-ovn-asr-tun2":"swp3"
+
+#
+# server to leaf
+#
+ "dci-ovn-node-1-1":"eno49" -- "dci-ovn-leaf1":"swp1" [left_mac="080027331111"]
+ "dci-ovn-node-2-1":"eno49" -- "dci-ovn-leaf2":"swp1" [left_mac="080027332211"]
+ "dci-ovn-node-3-1":"eno49" -- "dci-ovn-leaf3":"swp1" [left_mac="080027333311"]
+ "dci-ovn-node-4-1":"eno49" -- "dci-ovn-leaf4":"swp1" [left_mac="080027334411"]
+
+#
+# OVN manager to borders
+#
+ "dci-ovnmgr":"om1" -- "dci-ovn-border-leaf1":"swp7"
+ "dci-ovnmgr":"om2" -- "dci-ovn-border-leaf2":"swp7"
+
+#
+# HAproxy to borders
+#
+ "dci-HA1":"eno49" -- "dci-ovn-border-leaf1":"swp5" [left_mac="080027000020"]
+ "dci-HA2":"eno49" -- "dci-ovn-border-leaf2":"swp5" [left_mac="080027000021"]
+
+#
+# Rescue
+#
+ "dci-rescue":"eno49" -- "dci-ovn-border-leaf1":"swp6"
+ "dci-rescue":"eno1" -- "dci-oob-ogl":"eno1" [left_mac="080027000001"]
+ "dci-rescue":"eno2" -- "dci-oob-sw":"eth0" [right_mac="64006ad60ba0"]
+ "dci-rescue":"eno3" -- "dci-oob-sw":"swp1"
+ "dci-rescue":"eno4" -- "dci-oob-serv":"swp1"
+
+##################################################################
+# OOB management switch setup
+# MAC addresses are used by DHCP to assign IP addressses and
+# should reflect MACs used in production hardware
+##################################################################
+#
+# OOB1 to OOB2 (OOB for servers): eth0
+# TBD: MAC address for OOB serv
+#
+ "dci-oob-sw":"swp2" -- "dci-oob-serv":"eth0" [right_mac="64006ad60bb0"]
+
+#
+# oob-sw to switches
+#
+ "dci-ovn-leaf1":"eth0" -- "dci-oob-sw":"swp3" [left_mac="f48e3856b0f6"]
+ "dci-ovn-leaf2":"eth0" -- "dci-oob-sw":"swp4" [left_mac="f48e3856bef6"]
+ "dci-ovn-leaf3":"eth0" -- "dci-oob-sw":"swp5" [left_mac="f48e3856b6f6"]
+ "dci-ovn-leaf4":"eth0" -- "dci-oob-sw":"swp6" [left_mac="f48e3856bff6"]
+
+ "dci-ovn-spine1":"eth0" -- "dci-oob-sw":"swp7" [left_mac="f48e38194e0a"]
+ "dci-ovn-spine2":"eth0" -- "dci-oob-sw":"swp8" [left_mac="f48e3819528a"]
+
+ "dci-ovn-border-leaf1":"eth0" -- "dci-oob-sw":"swp9"  [left_mac="f48e3856b5f6"]
+ "dci-ovn-border-leaf2":"eth0" -- "dci-oob-sw":"swp10" [left_mac="f48e3856b3f6"]
+
+ "dci-ovn-asr-tun1":"eth0" -- "dci-oob-sw":"swp11"  [left_mac="080027115511"]
+ "dci-ovn-asr-tun2":"eth0" -- "dci-oob-sw":"swp12" [left_mac="080027115522"]
+
+}

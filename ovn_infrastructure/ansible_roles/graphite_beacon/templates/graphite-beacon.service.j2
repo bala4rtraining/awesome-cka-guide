@@ -1,0 +1,13 @@
+[Unit]
+Description=graphite-beacon
+After=multi-user.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/lib/graphite-beacon
+ExecStart=/usr/bin/graphite-beacon --config=/var/lib/graphite-beacon/config.json
+User=grbeacon
+Group=grbeacon
+
+[Install]
+WantedBy=multi-user.target

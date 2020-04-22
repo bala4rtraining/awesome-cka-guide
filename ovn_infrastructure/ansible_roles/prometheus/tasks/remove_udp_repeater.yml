@@ -1,0 +1,13 @@
+---
+- name: ensure udp_repeater service is stopped and disabled on boot
+  service: name=udp_repeater state=stopped enabled=no
+
+- name: remove udp_repeater systemd configuration
+  file: 
+    path: "/etc/systemd/system/udp_repeater.service"
+    state: "absent"
+
+- name: remove udp_repeater to installation directory
+  file: 
+      path: "{{ udp_repeater_base_dir }}"
+      state: "absent"

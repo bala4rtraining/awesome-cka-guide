@@ -1,0 +1,10 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=zookeeper
+
+- name: update jdk to jre on zookeeper nodes
+  serial: 1
+  hosts: zookeeper
+  roles:
+    - { role: zk, dispatch: ['stopzookeeper']}
+    - { role: java, dispatch: ['openjdk-to-oraclejre-update']} # Playbook is used to dispatch openjdk to oraclejre update
+    - { role: zk, dispatch: ['startzookeeper']}

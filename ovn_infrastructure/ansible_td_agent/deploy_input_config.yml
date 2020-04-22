@@ -1,0 +1,79 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_vss_servers,ftps_server,kafka,zookeeper,hadoop_namenodes,hadoop_datanodes,ovn_xdc_sync,nomad_client,fluentd_aggregator
+
+- name: deploy td-agent forwarder configuration for collection jobs and nomad jobs
+  hosts: nomad_client:ovn_vss_servers
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "collectionjobs", when: "'collectionjobs' in fluentd_input_config_list" }
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "nomadjobs", when: "'nomadjobs' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for hadoop
+  hosts: hadoop_namenodes:hadoop_datanodes
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "hadoop", when: "'hadoop' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for kafka
+  hosts: kafka:zookeeper
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "kafka", when: "'kafka' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for syslog
+  hosts: all:!localhost:!cumulus_switch:!ovn_manager
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "syslog", when: "'syslog' in fluentd_input_config_list " }
+
+- name: deploy td-agent forwarder configuration for vsftp
+  hosts: ftps_server
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "vsftp", when: "'vsftp' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for vss logs
+  hosts: ovn_vss_servers
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "vss", when: "'vss' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for xdc_sync
+  hosts: ovn_xdc_sync
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "xdc_sync", when: "'xdc_sync' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for elasticsearch
+  hosts: elasticsearch
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "elasticsearch", when: "'elasticsearch' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for erlangservices
+  hosts: ovn_mediator_servers:ovn_switch_servers:ovn_riak_servers:ovn_multidc_sync:ovn_umf_broker:ovn_umf_delivery:ovn_vitalsigns_delivery
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "erlangservices", when: "'erlangservices' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for yummirror
+  hosts: yum_mirror_servers
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "yummirror", when: "'yummirror' in fluentd_input_config_list" }
+
+
+- name: deploy td-agent forwarder configuration for vss and vsswrapper logs
+  hosts: all:!localhost:!cumulus_switch:!ovn_manager
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "in_forward", when: "'in_forward' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for cron job monitoring
+  hosts: all:!localhost:!cumulus_switch:!ovn_manager
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "cronmonitor", when: "'cronmonitor' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for nginx log monitoring
+  hosts: all:!localhost:!cumulus_switch:!ovn_manager
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "nginx", when: "'nginx' in fluentd_input_config_list" }
+
+- name: deploy td-agent forwarder configuration for nginx log monitoring
+  hosts: kibana:grafana:prometheus:alertmanager:nomad_ui
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "ovn_nginx_auth", when: "'ovn_nginx_auth' in fluentd_input_config_list" }
+    
+- name: deploy td-agent forwarder configuration for Yum Mirrors monitoring
+  hosts: yum_mirror_servers
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "yum_mirrors_monitor", when: "'yum_mirrors_monitor' in fluentd_input_config_list" }

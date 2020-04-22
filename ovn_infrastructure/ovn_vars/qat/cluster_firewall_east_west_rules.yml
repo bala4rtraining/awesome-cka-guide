@@ -1,0 +1,12 @@
+---
+#######
+# These are east-west firewall rules for the `TEST` (test1, test2) cluster only.
+#
+# The rules are the same as for the `firewall_east_west_rule.yml`
+# except the rules defined here only applies to this cluster.
+#
+# One should consider twice before adding rules here.
+# That is one should consult with others and add the rule to the global
+# `east_west_firewall_rules` before coming here to add the rule.
+#######
+cluster_east_west_firewall_rules:

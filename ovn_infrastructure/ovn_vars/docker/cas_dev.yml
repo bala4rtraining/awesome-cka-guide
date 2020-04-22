@@ -1,0 +1,6 @@
+aftp_selection_query: "CMD=SSND APPL=B FILEMODE=T"
+aftp_file_mode: "Testing"
+aftp_pullkey1: "CERT"
+
+# Clearing collection and delivery
+client_ea_cas_port: 50111

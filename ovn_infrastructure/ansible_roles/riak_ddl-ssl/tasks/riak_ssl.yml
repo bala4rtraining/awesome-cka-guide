@@ -1,0 +1,33 @@
+---
+
+- name: create directory for storing certs
+  file: >
+    path=/etc/pki/tls/riak-server
+    state=directory
+    owner=riak
+    group=riak
+
+- name: Copy bundler certificate
+  copy: content={{ riak_server_bundler_cert }} dest={{ riak_cacertfile }} owner=riak group=riak mode=0644
+
+- name: Copy client certiticate
+  copy: content={{ riak_server_cert }} dest={{ riak_server_ssl_cert }} owner=riak group=riak mode=0644
+
+- name: Copy private key
+  copy: content={{ riak_server_private_key }} dest={{ riak_server_ssl_key }} owner=riak group=riak mode=0600
+
+- name: update the riak.conf with ssl properties
+  blockinfile:
+    dest: "/etc/riak/riak.conf"
+    block: |
+      ssl.certfile = {{ riak_server_ssl_cert }}
+      ssl.keyfile = {{ riak_server_ssl_key }}
+      ssl.cacertfile = {{ riak_cacertfile }}
+    insertafter: EOF
+
+- name: Update riak.config to not check the certificate revocation list
+  lineinfile:
+    path: /etc/riak/riak.conf
+    line: 'check_crl = off'
+    state: present
+    insertafter: EOF

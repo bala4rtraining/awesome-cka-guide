@@ -1,0 +1,62 @@
+# Defautls for cas_ui installation
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+cas_ui_name: "cas-ui"
+cas_ui_username: "was"
+cas_ui_install_dir: "/opt/app/cas_ui"
+cas_ui_http_host: "localhost"
+cas_ui_scheme: "http"
+cas_ui_version: "0.3.14"
+cas_ui_platform: "linux-amd64"
+cas_ui_tarball: "ovn_cas_ui-v{{ cas_ui_version }}-{{ cas_ui_platform }}.tar.gz"
+release_artifactory_url: "https://artifactory.trusted.visa.com/ovn/repo"
+cas_ui_tar_location: "{{ release_artifactory_url }}/{{ cas_ui_tarball }}"
+cas_ui_http_port: "7443"
+cas_ui_cas_tool_host: "sl73ovnapd073.visa.com"
+cas_ui_cas_tool_port: "7443"
+cas_tools_location: "https://{{ cas_ui_cas_tool_host }}:{{ cas_ui_cas_tool_port }}"
+
+#TLS related default configurations
+cas_ui_server_cert: "localhost.crt"
+cas_ui_server_key: "localhost.key"
+cas_ui_server_root_ca_certs:
+  - "ca.crt"
+cas_ui_client_root_ca_certs:
+  - "ca.crt"
+cas_ui_ciphers:
+  - "TLS_RSA_WITH_AES_128_CBC_SHA256"
+  - "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+  - "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+  - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+  - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+  - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+  - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+  - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+  - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
+
+cas_ui_tls_min_version: "1.0"
+
+# Logger
+cas_ui_file_logger_level: "info"
+cas_ui_file_logger_path: "/var/log/{{ cas_ui_name }}"
+cas_ui_file_logger_prefix: "{{ cas_ui_name }}"
+
+cas_ui_sys_logger_level: "info"
+cas_ui_sys_logger_prefix: "{{ cas_ui_name }}"
+#Logger related default configurations
+
+cas_ui_log_level: "info"
+
+ovn_cas_admin: "ovn_dev_cas_admin"
+ovn_cas_viewer: "ovn_dev_cas_viewer"
+ovn_cas_editor: "ovn_dev_cas_editor"
+
+cas_tool_version: "0.3.14"
+dc_name: "test"

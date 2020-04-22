@@ -1,0 +1,27 @@
+---
+  - name: check if grub2-mkconfig exists 
+    stat:
+      path: /sbin/grub2-mkconfig 
+    register: p
+
+  - name: check if /boot/grub2/grub.cfg exists
+    stat:
+      path: /boot/grub2/grub.cfg
+    register: f 
+
+  - name: check if /boot/grub2/grub.cfg.bak exists
+    stat:
+      path: /boot/grub2/grub.cfg.bak
+    register: b
+
+  - name: delete back up file /boot/grub2/grub.cfg.bak
+    command: rm -f /boot/grub2/grub.cfg.bak
+    when: b.stat.exists
+
+  - name: back up existing /boot/grub2/grub.cfg  
+    command: cp -p /boot/grub2/grub.cfg  /boot/grub2/grub.cfg.bak
+    when: f.stat.exists
+
+  - name: set audit flag  
+    command: grub2-mkconfig -o /boot/grub2/grub.cfg   
+    when: p.stat.exists

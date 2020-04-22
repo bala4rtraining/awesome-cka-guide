@@ -1,0 +1,42 @@
+---
+- name: set ingress services fact
+  set_fact: envoy_ingress_services="{{ envoy_ingress_services|default([]) + [ service.key ] }}"
+  with_dict: "{{ envoy_services }}"
+  when: service.value.group_name in group_names
+  loop_control:
+    loop_var: service
+
+- name: ensure envoy group exists
+  group: name="{{ envoy_group }}" state=present
+
+- name: ensure envoy user exists
+  user: name="{{ envoy_user }}" groups="{{ envoy_group }}" state="present"
+
+- name: ensure envoy installed
+  yum: name="{{ envoy_rpm }}" state=present update_cache=true
+
+- name: deploy envoy systemd configuration
+  template:
+    src: systemd-envoy.sysconfig.j2
+    dest: /etc/sysconfig/envoy
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - reload envoy
+
+- name: deploy envoy configuration
+  template:
+    src: envoy.yaml.j2
+    dest: /etc/envoy/envoy.yaml
+    owner: "{{ envoy_user }}"
+    group: "{{ envoy_group }}"
+    mode: 0640
+  notify:
+  - reload envoy
+
+- name: ensure envoy is running
+  systemd: name=envoy state=started
+
+- name: validate envoy admin is up
+  wait_for: port={{ envoy_admin_port }} delay=2 timeout=5

@@ -1,0 +1,18 @@
+---
+- include: "../ovn_vars.yml"
+
+# Use this playbook to outfit your servers/machines with the roles they need to perform.
+- name: Gather facts about consul
+  hosts: ovn_cluster_consul_nodes
+  gather_facts: yes
+
+- name: Install and config Hashicorp Vault
+  hosts: ovn_cluster_vault_nodes
+  gather_facts: yes
+  become: yes
+  become_method: sudo
+  roles:
+    - { role: hashicorp_vault, dispatch: ['provision'] }
+  vars:
+    vault_backend_consul_tls_ca_certificate: "{{hostvars[groups['ovn_cluster_consul_nodes'][0]].ansible_local.consul_facts.issuing_ca}}"
+    vault_backend_consul_tls_certificate: "{{hostvars[groups['ovn_cluster_consul_nodes'][0]].ansible_local.consul_facts.certificate}}"

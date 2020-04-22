@@ -1,0 +1,52 @@
+---
+##############
+# THIS FILE SHOULD NOT EXIST!
+# IF YOU ARE PLACING CONFIGS HERE, THEN YOU ARE DOING SOMETHING WRONG! :)
+#
+# The only reason this file exist is we don't know how to categorize these
+# config vars.
+# 
+# Ansible config vars should be categorized properly into a separate file
+# that represent the category.
+##############
+
+pull_key: "TEST"
+processor_identity: "{{ local_instance }}"
+remote_instances: "[{ {{remote_instance}}, to_instance_{{remote_instance}} }]"
+
+nomad_port: "{{ nomad_server_http_port }}"
+
+#
+# The following two random cookies are 20 bytes long each and
+# are generated from
+#    openssl OpenSSL 1.0.1e-fips 11 Feb 2013.
+# command: openssl rand
+#
+# This is encrypted by Ansible Vault (AES256) for OVN cert and prod
+# environment. It stays in clear for test and dev env.
+#
+ovn_erlang_cookie: 'a671943dfe7540b5387f46e0e826afba9a2c81ba'
+ovn_riak_cookie: '70a3cdb336e4bbac407d26ec9205d8dcb8dd6d6e'
+
+consul_certificate_common_name: "visa.com"
+vault_listener_tcp_tls_certificate_common_name: "visa.com"
+
+
+# VIP CDB EF sync parms
+# The space after the first single quote is required for domain
+vip_ef_sync_domain: ' ["Cambodia"]'
+vip_ef_sync_sequence_prefix: "S"
+#vip_ef_sync_domain: ' ["Indonesia"]'
+#vip_ef_sync_sequence_prefix: "SE"
+
+
+curator_log_patterns: {"syslog-*" : 90, "elasticsearch-*" : 90}
+nomad_bootstrap_expect: 0
+
+environment_name: "dev"
+#AD Groups
+ovn_nginx_admin: "ovn_test_admin"
+ovn_nginx_viewer: "ovn_test_viewer"
+ovn_nginx_editor: "ovn_test_editor"
+
+hdfs_set_etc_hosts: false

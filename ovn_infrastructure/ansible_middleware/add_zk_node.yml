@@ -1,0 +1,8 @@
+---
+- include: mware_vars.yml
+
+- name: Install Zookeeper on nodes
+  hosts: "{{ node }}"
+#  hosts: zookeeper
+  roles:
+    - { role: zk, dispatch: ['install'] }

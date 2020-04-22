@@ -1,0 +1,55 @@
+#
+# This file holds the site-specific
+# parameters for OVN Orange server, e.g. IP
+#
+# The IP needs to be in sync to the site specific
+# variable file in cumulus-bgp/bpg-vars.yml
+#
+
+
+
+
+#
+# DNS domain names
+#
+dns_domain_rack1_fwd: rack1.ovn
+dns_domain_rack2_fwd: rack2.ovn
+dns_domain_rack3_fwd: rack3.ovn
+
+
+
+#
+# DHCP compute nodes MAC and hostname assignment
+# (excluding orange servers)
+#
+
+#
+# nodes are indexed by orange server hostnames
+#
+
+
+nodes:
+  ovn-orange-1:
+         subnet_servers: ["14:02:ec:7a:a9:98;ovn-node-occ-1-1",
+                      "14:02:ec:7a:ad:a0;ovn-node-occ-1-2",
+                      "14:02:ec:79:cf:78;ovn-node-occ-1-3",
+                      "00:D0:FA:04:CD:3C;ovn-occprod-hsm-1",
+                      "08:00:27:33:11:11;ovn-node-sw-1-1"]
+
+
+
+  ovn-orange-2:
+         subnet_servers: ["14:02:ec:79:cb:24;ovn-node-occ-2-1",
+                      "14:02:ec:79:cb:c8;ovn-node-occ-2-2",
+                      "14:02:ec:79:cb:dc;ovn-node-occ-2-3",
+                      "00:D0:FA:04:CE:7C;ovn-occprod-hsm-2",
+                      "08:00:27:33:22:11;ovn-node-sw-2-1"]
+
+
+
+  ovn-orange-3:
+         subnet_servers: ["14:02:ec:79:cf:c0;ovn-node-occ-3-1",
+                      "14:02:ec:7a:ba:cc;ovn-node-occ-3-2",
+                      "14:02:ec:7a:b0:28;ovn-node-occ-3-3",
+                      "00:D0:FA:04:CE:BC;ovn-occprod-hsm-3",
+                      "08:00:27:33:33:11;ovn-node-sw-3-1"]

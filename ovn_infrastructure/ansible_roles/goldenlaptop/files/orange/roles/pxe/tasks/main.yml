@@ -1,0 +1,80 @@
+---
+# tasks file for pxe boot stuff on the orange server
+#
+# For now we keep both legacy and secure PXE boot servers on the orange
+# server as Virtualbox can't handle UEFI PXEboot yet
+#
+#
+
+- name: Create pxelinux/pxelinux.cfg directory
+  file: path=/var/lib/tftpboot/pxelinux/pxelinux.cfg state=directory mode=0755
+
+- name: Copy PXE server files to orange server except for the GRUB
+  copy: src=pxeserver/pxelinux dest=/var/lib/tftpboot/
+
+- name: Copy the GRUB loader template to the orange server
+  template: src=orange_grub_legacy.j2 dest=/var/lib/tftpboot/pxelinux/pxelinux.cfg/default
+
+- name: Create a directory under /var/www/html on the orange server to hold kickstart file
+  file: path=/var/www/html/{{orange_ks_dir}} state=directory mode=0755
+
+- name: Copy the kickstart file to the orange server
+  template: src=orange_ks.j2 dest=/var/www/html/{{orange_ks_dir}}/{{orange_ks_file}}
+
+- name: Create a diretory under /var/www/html to hold Centos7 Install source
+  file: path=/var/www/html/{{orange_install_src_dir}} state=directory mode=0755
+
+
+#
+# For legacy BIOS boot
+#
+- name: Copy the Centos7 ISO to Orange
+  #copy: src=/tmp/CentOS-7-x86_64-DVD-1503-01.iso dest=/tmp
+  synchronize: src=/tmp/CentOS-7-x86_64-DVD-1503-01.iso dest=/tmp
+  
+- name: Mount the Centos7 ISO for installation
+  mount: name=/var/www/html/{{orange_install_src_dir}} src=/tmp/CentOS-7-x86_64-DVD-1503-01.iso fstype=iso9660 opts=ro state=mounted
+
+
+#
+# For secureboot of regular OVN nodes served by this orange server
+#
+- name: Create uefi directory under /var/lib/tftpboot to hold GRUB and kernel files
+  file: path={{ orange_tftpboot_path }}/uefi state=directory mode=0755
+
+- name: Create directories to hold repoes and ks file
+  file: path=/var/www/html/{{item}} state=directory mode=0755
+  with_items:
+    - repo/centos
+    - repo/visa
+    - ks
+
+- name: Copy the efi tarball to the orange server
+  unarchive: src=secureboot/efi.tar.gz dest={{ orange_tftpboot_path }}/uefi mode=0755 copy=yes
+
+#- name: Choose one of the signed GRUB loader for this orange server
+#  command: mv {{orange_tftpboot_path}}/uefi/{{servers[ansible_hostname].secureboot_grub_file}} {{orange_tftpboot_path}}/uefi/grub.cfg
+  
+#- name: Choose one of the GRUB loader signature file for this orange server
+#  command: mv {{orange_tftpboot_path}}/uefi/{{servers[ansible_hostname].secureboot_grub_file_sig}} {{orange_tftpboot_path}}/uefi/grub.cfg.sig
+
+- name: Copy the secureboot KS template to the orange server (min-ks.cfg)
+  template: src=orange_ks_sb.j2 dest=/var/www/html/ks/{{orange_secureboot_ks_file}} mode=0755
+
+- name: Copy Centos7 repo tar file to the orange server (centos7_1511)
+  unarchive: src=secureboot/{{orange_centos_repo_file}} dest=/var/www/html/repo/centos mode=0755 copy=yes
+
+- name: Copy the Visa Centos LiveOS file to the orange server to overwrite the squashfs in Centos repo (centos_liveos)
+  unarchive: src=secureboot/{{orange_visa_centos_liveos_file}} dest=/var/www/html/repo/centos mode=0755 copy=yes
+  
+- name: Copy Visa repo tar file to the orange server (visa_repo)
+  unarchive: src=secureboot/{{orange_visa_repo_file}} dest=/var/www/html/repo/visa mode=0755 copy=yes
+
+
+- name: Start httpd server
+  service: name=httpd state=restarted enabled=yes
+  
+
+  
+
+

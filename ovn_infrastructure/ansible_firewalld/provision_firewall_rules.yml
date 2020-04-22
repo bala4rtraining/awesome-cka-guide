@@ -1,0 +1,13 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,localhost,!cumulus_switch
+
+- name: Process firewall rules
+  hosts: localhost
+  roles:
+  - { role: firewall_rules, dispatch: [ 'generate_uniq_src_port_by_dest_ip' ] }
+  - { role: firewall_rules, dispatch: [ 'generate_rich_rules' ] }
+
+- name: Provision firewall rules
+  hosts: all:!cumulus_switch:!localhost
+  roles:
+  - { role: firewall_rules, dispatch: [ 'provision_rules' ] }

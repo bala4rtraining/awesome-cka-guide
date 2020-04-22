@@ -1,0 +1,40 @@
+#-----------DataStax OpsAgent - Verify; download; untar; and softlink --------------------
+
+- name: <1-7 dse agent> check if datastax tar file exists --{{ovn_datastax['agent']['tar_path']}}
+  stat: path="{{ovn_datastax['agent']['tar_path']}}"
+  register: tar_agent_status
+
+- name: <2-7 dse agent> download at {{ovn_datastax['agent']['download_foldr']}} via {{ ovn_datastax['agent']['tar_url'] }}
+  command: "wget --directory-prefix={{ovn_datastax['agent']['download_foldr']}} {{ ovn_datastax['agent']['tar_url'] }}"
+  when: not tar_agent_status.stat.exists
+
+- name: <3-7 dse agent> check if datastax tar file exists --{{ovn_datastax['agent']['tar_path']}}
+  stat: path="{{ovn_datastax['agent']['tar_path']}}"
+  register: tar_agent_status
+
+- name: <4-7 dse agent> download dsc opscenter url={{ ovn_datastax['agent']['tar_url']  }} downladpath={{ovn_datastax['agent']['download_foldr']}}
+  get_url:
+    url: "{{ ovn_datastax['agent']['tar_url'] }}"
+    dest: "{{ ovn_datastax['agent']['download_foldr'] }}"
+    validate_certs: false
+    mode: 0644
+  when: not tar_agent_status.stat.exists
+
+- name: <5-7 dse agent> re-check if datastax tar file exists -- {{ ovn_datastax['agent']['tar_path'] }}
+  stat: path="{{ ovn_datastax['agent']['tar_path'] }}"
+  register: tar_agent_status
+
+#-------Now go ahead tar --
+- name: <6-7 dse agent> untar the tar -> {{ovn_datastax ['agent']['tar_path']}}
+  unarchive:
+    src: "{{ ovn_datastax ['agent']['tar_path'] }}"
+    dest: "{{ovn_datastax ['agent']['wrking_foldr']}}"
+    copy: no
+
+- name: <7-7 dse agent> setup a soft link {{ovn_datastax ['agent']['installed_foldr']}}
+  file:
+    src: "{{ovn_datastax ['agent']['installed_foldr']}}"
+    dest: "{{ovn_datastax ['agent']['lnk_to_install']}}"
+    owner: "{{ ovn_datastax ['agent']['user'] }}"
+    group: "{{ ovn_datastax ['agent']['group'] }}"
+    state: link

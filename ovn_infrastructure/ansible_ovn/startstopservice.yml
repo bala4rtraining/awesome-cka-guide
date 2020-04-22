@@ -1,0 +1,19 @@
+---
+#==============================================================================#
+#
+#
+# group: host group for the particular service
+# servicename: "riak", "kafka", "nomad", etc.
+# newstate: "started", "stopped"
+# 
+#
+#==============================================================================#
+
+- name: Start "{{servicename}}" service
+  hosts: "{{group}}"
+  tasks:
+    - service:
+        name:  "{{servicename}}"
+        state:  "{{newstate}}"
+
+    

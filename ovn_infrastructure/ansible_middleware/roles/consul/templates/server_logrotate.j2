@@ -1,0 +1,11 @@
+{{ consul_server_log_file }} {
+        weekly
+        create 0644 {{ consul_user }} {{ consul_group }}
+        rotate 10
+        size 50M
+        copytruncate
+        compress
+        postrotate                
+          chown -R {{ consul_user }}.{{ consul_group }} {{ consul_log_dir }}
+        endscript
+}

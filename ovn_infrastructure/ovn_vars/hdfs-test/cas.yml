@@ -1,0 +1,37 @@
+#Cas tools related environement variables
+
+#To start cas-tool in secure manner.
+#cas_tool_scheme: "https"
+
+#To start cas-tool in non-secure manner
+cas_tool_scheme: "https"
+cas_tool_tls_server_cert: "/etc/pki/tls/certs/{{ inventory_hostname }}.pem"
+cas_tool_tls_server_key: "/etc/pki/tls/private/{{ inventory_hostname }}.pem"
+cas_tool_root_ca_certs:
+    - "/etc/pki/tls/certs/root.pem"
+    - "/etc/pki/tls/certs/intermediate.pem"
+#Required this for setting up mutual ssl
+#Uncomment below variable to enable mutual ssl
+cas_tool_client_root_ca_certs:
+    - "/etc/pki/tls/certs/root.pem"
+    - "/etc/pki/tls/certs/intermediate.pem"    
+cas_tool_config_artifactory_url: "https://artifactory.trusted.visa.com/ovn-snapshots/com/visa/ovn/ovn_clearing_jobs_2.11/1.0/ovn_clearing_jobs_2.11-1.0.jar"
+cas_tool_kafka_topic: "{{ xdc_state_kafka_topic }}"
+
+
+#clearing_jobs
+bridge_ea: "{{ bridge_ea_servers[0] }}"
+bridge_ftp_user: "ftpuser"
+bridge_ftp_password: "Inovant2018"
+aftp_selection_query: "CMD=SSND APPL=B FILEMODE=T"
+aftp_file_mode: "Testing"
+
+ssl_trustStorePath : "/etc/pki/ca-trust/extracted/java/cacerts"
+ssl_keyStorePath : "/usr/java/default/jre/lib/security/cacerts"
+
+xdc_sync_src_namenodes: "{{ groups.hadoop_namenodes }}"
+xdc_sync_dest_namenodes: "{{ groups.hadoop_namenodes }}"
+xdc_sync_riak: "{{ groups.ovn_riak_servers }}"
+xdc_sync_kafka: "{{ groups.kafka }}"
+xdc_sync_kakfa_topic: "{{remote_xdc_state_kafka_topic}}"
+dc_name: 'hdfs-test'

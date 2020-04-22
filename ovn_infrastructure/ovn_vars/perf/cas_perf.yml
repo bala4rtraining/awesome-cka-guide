@@ -1,0 +1,8 @@
+#clearing_jobs
+aftp_selection_query: "CMD=SSND APPL=B FILEMODE=P"
+aftp_file_mode: "PRODUCTION"
+aftp_pullkey1: "PROD"
+
+# Clearing collection and delivery
+client_ea_cas_port: 50111
+

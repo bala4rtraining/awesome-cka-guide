@@ -1,0 +1,8 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+
+# playbook for removing the searchguard role.
+- name: run the searchguard playbook to remove searchguard plugin from elasticsearch
+  hosts: elasticsearch
+  roles:
+     - {role: elasticsearch, dispatch: ['remove_searchguard']}

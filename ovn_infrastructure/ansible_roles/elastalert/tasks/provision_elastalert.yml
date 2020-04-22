@@ -1,0 +1,144 @@
+
+- name: includes overrides specific to the distribution+version (e.g., CentOS 7)
+  include_vars: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
+## Create elastalert user
+- name: create elastalert group
+  group:
+    name: elastalert
+    state: present
+
+- name: create elastalert user
+  user:
+    name: elastalert
+    group: elastalert
+    system: yes
+    home: /var/lib/elastalert
+    shell: /bin/false
+    state: present
+
+## [Part 1] RPM installs
+
+- name: install pre-requisite package (gcc) used for blist
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{elastalert_pkgs}}"
+  tags:
+    - provision
+
+- name: install rpms
+  yum:
+    name: "{{ elastalert_rpm_download_path }}/{{ item }}"
+    state: present
+  with_items: "{{elastalert_rpms}}"
+  tags:
+    - provision
+
+## [Part 2] Python package installs
+
+- name: download pypi tarballs to local /tmp
+  get_url:
+    url: "{{ elastalert_tarball_download_path }}/pypi/{{ item }}"
+    dest: /tmp/{{ item }}
+    use_proxy: no
+  with_items: "{{ elastalert_pypi }}"
+  tags:
+    - provision
+
+- name: install pypi packages
+  pip:
+    name: /tmp/{{ item }}
+    state: present
+    umask: '022'
+  with_items: "{{ elastalert_pypi }}"
+  tags:
+    - provision
+
+- name: delete uploaded pypi tarballs (remote)
+  file:
+    dest: /tmp/{{ item }}
+    state: absent
+  with_items: "{{ elastalert_pypi }}"
+  tags:
+    - provision
+
+
+## [Part 3] Netcool plugin installs
+
+- name: Netcool-plugin | get python sitemap path
+  command: python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
+  register: py_path
+
+- name: Netcool-plugin | set elastalert_install_dir name
+  set_fact:
+    elastalert_install_dir: "{{ py_path.stdout }}/elastalert"
+
+- name: create site-packages directory if it does not exist since netcool patch would fail without it
+  file:
+     path: "{{ py_path.stdout }}/elastalert"
+     state: directory
+     owner: elastalert
+     group: elastalert
+  tags:
+    - provision
+
+- name: Netcool-plugin | install Netcool plugin
+  template:
+    src: netcool.py.j2
+    dest: "{{ elastalert_install_dir }}/netcool.py"
+    mode: 0644
+
+- name: Netcool-plugin | register Netcool plugin with ElastAlert
+  template:
+    src: config.py.j2
+    dest: "{{ elastalert_install_dir }}/config.py"
+    mode: 0644
+
+- name: Netcool-plugin | install global configs for netcool
+  template:
+    src: config_visa.yaml.j2
+    dest: "{{ elastalert_config_dir }}/config_visa.yaml"
+    mode: 0644
+
+## [Part 4] Configuration files
+- name: clear any previous rules from directory
+  file:
+    path: /var/lib/elastalert/rules/
+    state: absent
+
+- name: ensure config+rules directory exists
+  file:
+    path: "{{ item }}"
+    owner: elastalert
+    group: elastalert
+    mode: 0755
+    state: directory
+  with_items:
+    - /var/lib/elastalert
+    - /var/lib/elastalert/rules
+
+- name: apply elastalert config template
+  template:
+    src: config.yaml.j2
+    dest: /var/lib/elastalert/config.yaml
+    owner: elastalert
+    group: elastalert
+    mode: 0664
+
+
+## [Part 5] Install and start elastalert as a service
+- name: install elastalert service template
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items:
+   - "{{ service_template }}"
+
+
+# [Part 6] Start elastalert as a service
+- name: start elastalert service
+  systemd:
+    name: elastalert
+    state: restarted
+    daemon_reload: yes

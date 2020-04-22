@@ -1,0 +1,73 @@
+---
+- name: JMX Server Insecure Configuration Remote Code Execution Vulnerability fixes for HDFS
+  hosts: hdfs_HA_All_nodes
+  vars: 
+    - hadoop_jmx: false
+  tasks:
+    - name: validate the content of the file before running the Hadoop task
+      shell: "cat /usr/lib/hadoop/libexec/hadoop-prometheus-monitor.sh"
+      register: hdfs_in
+      ignore_errors: "true"
+      when: hadoop_jmx == "true"
+      
+    - debug: var=hdfs_in.stdout_lines
+      when: hadoop_jmx == "true"
+
+    - name: Binding to localhost 
+      replace:
+         path: /usr/lib/hadoop/libexec/hadoop-prometheus-monitor.sh
+         regexp: 'jmx_prometheus_javaagent.jar"=9'
+         replace: 'jmx_prometheus_javaagent.jar"=127.0.0.1:9'
+      ignore_errors: "true"
+      when: hadoop_jmx == "true" 
+
+    - name: Removing jmx configurations from usr/lib
+      lineinfile: 
+         dest: /usr/lib/hadoop/libexec/hadoop-prometheus-monitor.sh
+         regexp: '^(.*)Dcom.sun.management.jmxremote.authenticate(.*)$'
+         state: absent
+      ignore_errors: "true"
+      when: hadoop_jmx == "true"
+   
+    - name: Removing jmx configurations from service file
+      lineinfile:
+         dest: "{{item}}"
+         regexp: '^(.*)Dcom.sun.management.jmxremote(.*)$'
+         state: absent
+      when: hadoop_jmx == "true"
+      with_items: ["/etc/rc.d/init.d/hadoop-hdfs-journalnode", "/etc/rc.d/init.d/hadoop-hdfs-namenode", "/etc/rc.d/init.d/hadoop-hdfs-zkfc", "/etc/rc.d/init.d/hadoop-hdfs-datanode"]
+
+    - name: validate the content of the file after running Hadoop the task
+      shell: "cat /usr/lib/hadoop/libexec/hadoop-prometheus-monitor.sh"
+      register: hdfs_out
+      ignore_errors: "true"
+      when: hadoop_jmx == "true"
+    
+    - debug: var=hdfs_out.stdout_lines
+      when: hadoop_jmx == "true"
+
+- name: JMX Server Insecure Configuration Remote Code Execution Vulnerability fixes for Kafka
+  hosts: kafka
+  vars: 
+    - kafka_jmx: false
+  tasks:
+     - name: validate the content of the file before running the Kafka task
+       shell: "cat /etc/systemd/system/kafka.service"
+       register: kafka_in
+       when: kafka_jmx == "true"
+     - debug: var=kafka_in.stdout_lines
+       when: kafka_jmx == "true"
+
+     - name: Removing jmx insecure configurations
+       replace: 
+          path: /etc/systemd/system/kafka.service
+          regexp: -Dcom.sun.management.jmxremote.authenticate=false
+          replace: -Dcom.sun.management.jmxremote.authenticate=true
+       when: kafka_jmx == "true"
+
+     - name: validate the content of the file after running the Kafka task
+       shell: "cat /etc/systemd/system/kafka.service"
+       register: kafka_out
+       when: kafka_jmx == "true"
+     - debug: var=kafka_out.stdout_lines
+       when: kafka_jmx == "true"

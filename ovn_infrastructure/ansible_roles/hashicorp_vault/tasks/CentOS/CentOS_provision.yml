@@ -1,0 +1,11 @@
+---
+# tasks file for vault (CentOS 7 specific)
+
+- name: Create Vault systemd configuration
+  template: >
+    src=vault.service.j2
+    dest={{ vault_systemd_dir }}/{{ vault_service_name }}.service
+    owner=root
+    group=root
+    mode=0644
+#    notify: restart vault

@@ -1,0 +1,28 @@
+#!/bin/bash
+# assumes iptables has whitelisted IP ranges in place for input and output
+
+iptables -t security -F
+
+iptables -t security -A INPUT -p tcp --dport {{ ub_dev_port_range }} -j SECMARK --selctx system_u:object_r:ub_dev_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ub_qa_port_range }} -j SECMARK --selctx system_u:object_r:ub_qa_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ cdb_devqa_mng_port }} -j SECMARK --selctx system_u:object_r:cdb_devqa_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ cdb_devqa_control_port }} -j SECMARK --selctx system_u:object_r:cdb_devqa_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ cdb_devqa_port_range }} -j SECMARK --selctx system_u:object_r:cdb_devqa_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ rsi_port }} -j SECMARK --selctx system_u:object_r:rsiapf_qa_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ apf_port }} -j SECMARK --selctx system_u:object_r:rsiapf_qa_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ vmg_qa_control_port_range }} -j SECMARK --selctx system_u:object_r:vmg_qa_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ vmg_qa_data_port_range }} -j SECMARK --selctx system_u:object_r:vmg_qa_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_mgr_test_port }} -j SECMARK --selctx system_u:object_r:ovn_mgr_test_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_mediator_port }} -j SECMARK --selctx system_u:object_r:ovn_mediator_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_switch_port }} -j SECMARK --selctx system_u:object_r:ovn_switch_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_payment_hsm_port }} -j SECMARK --selctx system_u:object_r:ovn_paymenthsm_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_eas_port }} -j SECMARK --selctx system_u:object_r:ovn_eas_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_riak_port }} -j SECMARK --selctx system_u:object_r:ovn_riak_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_kibana_port }} -j SECMARK --selctx system_u:object_r:ovn_kibana_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_elasticsearch_port }} -j SECMARK --selctx system_u:object_r:ovn_elasticsearch_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_graphite_port }} -j SECMARK --selctx system_u:object_r:ovn_graphite_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_grafana_port }} -j SECMARK --selctx system_u:object_r:ovn_grafana_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_vault_port }} -j SECMARK --selctx system_u:object_r:ovn_vault_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_consul_port }} -j SECMARK --selctx system_u:object_r:ovn_consul_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_zookeeper_port }} -j SECMARK --selctx system_u:object_r:ovn_zookeeper_if_t:s0
+iptables -t security -A INPUT -p tcp --dport {{ ovn_kafka_port }} -j SECMARK --selctx system_u:object_r:ovn_kafka_if_t:s0

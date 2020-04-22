@@ -1,0 +1,55 @@
+---
+- name: ensuring the folder is existing at destination machine
+  file:
+    path: "{{ tripwire_install_dir }}"
+    state: directory
+    mode: 0755
+    
+- name: create download folder if not existing.
+  file:
+    path: "{{ tripwire_download_dir }}"
+    state: directory
+    mode: 0755
+
+- name: verify tarfile (tgz) is existing in the path
+  stat:
+    path: "{{ tripwire_download_dir }}/tgz_file_name"
+  register: file_status
+
+- name: download the tripwire tarball from artifact url location with rw permissions
+  get_url:
+    url: "{{ tripwire_artifact_url }}"
+    dest: "{{ tripwire_download_dir }}"
+    validate_certs: false
+    mode: 0644
+  when: not file_status.stat.exists
+
+- name: re-verify tarball existance at the path to check if we have downloaded
+  stat:
+    path: "{{ tripwire_download_dir }}"
+  register: file_status
+
+- name: untar the tar(tgz) file to the destination. Ansible unarchive is failing, and hence the tar command.
+  command: "tar zxvf {{ tripwire_download_dir }}/{{ tripwire_tgz_file_name }} -C {{ tripwire_install_dir }} --strip-components=1 --overwrite"
+
+- name: Check if tripwire is running
+  stat: path="/etc/init.d/{{ tripwire_service_name }}"
+  register: service_status
+
+- name: stop old tripwire service first, incase it is installed
+  service:
+    name: "{{ tripwire_service_name }}"
+    state: stopped
+  when: service_status.stat.exists
+
+- name: uninstall old tripwire
+  command: "{{ tripwire_uninstall_cmd }} "
+  when: service_status.stat.exists  
+
+- name: install new tripwire
+  command: "{{ tripwire_install_dir }}/te_agent.bin --eula accept --silent --server-host {{ tripwire_server_host }} --server-port {{ tripwire_server_port }} --passphrase {{ tripwire_passphrase_to_use }} --rtmport {{ tripwire_rtm_port }} --install-dir {{ tripwire_install_dir }}"
+
+- name: run start the deamon service
+  service:
+    name: "{{ tripwire_service_name }}"
+    state: started

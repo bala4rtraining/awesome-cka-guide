@@ -1,0 +1,3 @@
+[ovn-node-haproxy]
+ovn-mgmt-ha1
+ovn-mgmt-ha2

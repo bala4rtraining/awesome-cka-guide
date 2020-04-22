@@ -1,0 +1,7 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: install pushgateway_exporter
+  hosts: prometheus_pushgateway
+  roles:
+    - { role: prometheus, dispatch: ['pushgateway_exporter'] }

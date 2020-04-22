@@ -1,0 +1,11 @@
+# WARNING: It will flush all hadoop data. USE IT CAREFULLY.
+# * Requires hadoop_reinstall to be True
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=hadoop_namenodes,hadoop_datanodes
+
+# Stops all hadoop services and delete all data.
+- name: clean the environment
+  #hosts: hdfs_HA_All_nodes
+  hosts: hadoop_datanodes:hadoop_namenodes:journalnodes
+  roles:
+     - {role: hadoop, dispatch: ['clean']}

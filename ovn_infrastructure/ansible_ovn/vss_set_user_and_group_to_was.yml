@@ -1,0 +1,8 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_vss_servers
+
+- name: Change group and user of vss and vsswrapper root folder to was
+  hosts: ovn_vss_servers
+  roles:
+     - { role: vss, dispatch: ['set_user_and_group_to_was'] }
+

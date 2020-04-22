@@ -1,0 +1,66 @@
+#
+# Template for deploying HAproxy configuration file
+# to a Centos7 server in the OVN cluster
+#
+# Right now it's written for mediator
+# only.
+
+
+#
+# Global parameters
+#
+
+global
+
+    log 127.0.0.1 local2
+    log-send-hostname
+    user    haproxy
+    group   haproxy
+    nbproc  {{ haproxy_global_nbproc }}
+    maxconn {{ haproxy_global_maxconn }}
+    daemon
+    # Opening socket to emit metrics to haproxy exporter only when monitor_haproxy_using_prometheus is true
+    {% if monitor_haproxy_using_prometheus == true -%}
+        stats socket /run/admin.sock group {{ prometheus_group }} mode 660 level admin
+    {%- endif %}
+    
+#
+# Default parameters
+#
+
+
+defaults
+
+    mode                    tcp
+    log                     global
+    retries                 {{ haproxy_default_retries }}
+    timeout connect         {{ haproxy_default_timeout_conn }}
+    timeout client          {{ haproxy_default_timeout_client }}
+    timeout server          {{ haproxy_default_timeout_server }}
+    timeout check           {{ haproxy_default_timeout_check }}
+
+
+
+#
+# Frontend parameters
+#
+
+frontend {{ haproxy_frontend_mediator_name }}
+    mode tcp
+    bind *:{{ haproxy_frontend_mediator_port }}
+    bind *:{{ haproxy_frontend_mediator_tls_port }} ssl crt {{ haproxy_ssl_certificate_file }}
+    default_backend {{ haproxy_backend_mediator_name }}
+    option tcplog
+    option logasap
+
+#
+# Backend parameters
+#
+
+
+backend {{ haproxy_backend_mediator_name }}
+    balance {{ haproxy_backend_mediator_algo }}
+    mode tcp
+{% for item in groups.ovn_mediator_servers %}
+    server node_{{ hostvars[item].ansible_fqdn }} {{ hostvars[item].ansible_fqdn }}:{{ netiso_port }} check
+{% endfor %}

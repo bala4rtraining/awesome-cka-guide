@@ -1,0 +1,32 @@
+---
+#Install Openjdk from older to newer version
+- name: Get java type
+  shell: java -version 2>&1 |awk 'NR==1{ gsub(/"/,""); print $1}'
+  register: name_of_java
+
+- debug: msg="{{ name_of_java.stdout_lines }}"
+  when: ((name_of_java.stdout.find("java") != -1) or (name_of_java.stdout.find("openjdk") != -1))
+
+- name: Get Java version
+  shell: java -version 2>&1 | grep version | awk '{print $3}' | sed 's/"//g'
+  register: version_of_java
+
+#this task will skip when java or openjdk is not installed in machine
+- debug: msg="{{ version_of_java.stdout_lines }}"
+  when: ((name_of_java.stdout.find("java") != -1) or (name_of_java.stdout.find("openjdk") != -1))
+
+- name: uninstall openjdk old version "{{ OpenJdk_older_version }}"
+  yum:
+   name: "{{ OpenJdk_older_version }}"
+   state: absent
+  when: (( OpenJdk_latest_version_number != version_of_java ) or (version_of_java == ''))
+
+- name: Install latest openjdk version "{{ OpenJdk_latest_version }}"
+  yum:
+   name: "{{ OpenJdk_latest_version }}"
+   state: present
+
+- name: select the Openjdk using alternatives
+  alternatives:
+    name: java
+    path: /usr/lib/jvm/{{ OpenJdk_latest_name }}/jre/bin/java

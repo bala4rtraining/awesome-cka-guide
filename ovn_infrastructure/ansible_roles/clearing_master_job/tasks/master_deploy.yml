@@ -1,0 +1,50 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: create the cas_tools data directory
+  file : 
+    dest: "{{cas_tools_install_dir}}/ovn_cas_tools"
+    state: directory
+    mode: 0755
+    recurse: no
+
+- name: create the cas_tools app directory
+  file : 
+    dest: "{{cas_tools_install_dir}}/ovn_cas_tools/app"
+    state: directory
+    mode: 0755
+    recurse: no
+
+- name: get the local artifact status 
+  stat:
+    path: "{{local_ovn_cas_tools_path}}/app/{{ovn_cas_tools_tarball}}-{{ovn_cas_tools_version}}.tar.gz"
+  register: st
+
+- name: get the artifact from server 
+  get_url:
+    url: "{{ovn_cas_tools_artifact_url}}"
+    dest: "{{local_ovn_cas_tools_path}}/app"
+  when: not st.stat.exists 
+
+- name: unarchive the downloaded package
+  unarchive:
+    src: "{{local_ovn_cas_tools_path}}/app/{{tar_file_name}}"
+    dest: "{{local_ovn_cas_tools_path}}"
+    owner: "{{cas_tools_username}}"
+    copy: no 
+    mode: u+rwx 
+  when: not st.stat.exists 
+
+- name: generate json file to run clearing master job 
+  shell: "{{ nomad_client_path }} run  -ca-cert={{nomad_cert_path}}/nomad-ca.pem -client-cert={{nomad_cert_path}}/cli.pem -client-key={{nomad_cert_path}}/cli-key.pem -address=https://{{ ansible_nodename }}:{{ nomad_server_http_port }} -output {{cas_tools_install_dir}}/ovn_cas_tools/cas-tools-cli.hcl > {{cas_tools_install_dir}}/ovn_cas_tools/cas-tools-cli.json"
+
+- name: generate nomad main job config file cas_tools_cli.yaml file  
+  template: 
+    src: cas-tools.yaml.j2
+    dest: "{{cas_tools_install_dir}}/ovn_cas_tools/cas-tools.yaml"

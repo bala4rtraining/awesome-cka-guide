@@ -1,0 +1,7 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!localhost
+
+- name: Provision firewall drop logs
+  hosts: all:!cumulus_switch:!localhost
+  roles:
+  - { role: firewall_rules, dispatch: [ 'provision_drop_log' ] }

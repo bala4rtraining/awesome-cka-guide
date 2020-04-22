@@ -1,0 +1,109 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts }}"
+
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+
+- name: set common variables
+  hosts: "{{ target_hosts }}"
+
+  vars_files:
+    - "roles/ovn/defaults/main.yml"
+
+  tasks:
+    - name: Gather facts on hosts outside of play
+      setup:
+      delegate_to: "{{ item }}"
+      delegate_facts: yes
+      with_flattened:
+        - "{{ groups['ovn_mediator_servers'] }}"
+        - "{{ groups['ovn_switch_servers'] }}"
+        - "{{ groups['kafka'] }}"
+        - "{{ groups['ovn_riak_servers'] }}"
+
+    - name: Set new facts based on those discrovered from outside hosts
+      set_fact:
+        riak_endpoints_pooler_config: >
+          {% set comma = joiner() %}
+          {% for item in groups.ovn_riak_servers -%}
+            {{ comma() }}[{name, 'riak_{{ hostvars[item].ansible_fqdn }}'}, {group, riak},
+                          {max_count, {{ ovn_opdb_max_pool_size}} }, {init_count, {{ ovn_opdb_initial_pool_size}} },
+                          {start_mfa, {ovn_opdb_worker, start_link, [ "{{ hostvars[item].ansible_fqdn }}", {{riak_port}} ]}}
+                        ]
+          {%- endfor %}
+        mediator_endpoints_pooler_config: >
+          {% set comma = joiner() %}
+          {% for item in groups.ovn_switch_servers -%}
+            {{ comma() }}[{name, 'to_ovn_switch_{{ hostvars[item].ansible_fqdn }}'}, {group, to_ovn_switch},
+                          {max_count, {{ to_ovn_switch_max_pool_size}} }, {init_count, {{ to_ovn_switch_initial_pool_size}} },
+                          {start_mfa, {ovn_yoke_worker, start_link, [ ovn_yoke_tcp, "{{ hostvars[item].ansible_fqdn }}", {{switch_acceptor_port_for_mediator}}, to_ovn_switch]}}
+                        ]
+          {%- endfor %}
+        forward_handlers_pooler_config: >
+          {% set comma = joiner() %}
+          {% for item in remote_forward_handler_endpoints -%}
+            {{ comma() }}[{name,'to_instance_{{remote_instance}}_{{ item }}'},
+                         {group, to_instance_{{remote_instance}}},
+                         {max_count, 5}, {init_count, 5},
+                         {start_mfa, {ovn_yoke_worker,
+                                     start_link, [
+                                         ovn_yoke_tcp,
+                                         "{{ item }}",
+                                         {{forward_handler_port}},
+                                         to_instance_{{remote_instance}}]
+                                    }
+                         }
+                       ]
+          {%- endfor %}
+        switch_endpoints_pooler_config: >
+          {% set comma = joiner() %}
+          {% for item in groups.ovn_mediator_servers -%}
+            {{ comma() }}[{name, 'to_ovn_mediator_{{ hostvars[item].ansible_fqdn }}'}, {group, to_ovn_mediator},
+                          {max_count, {{ to_ovn_mediator_max_pool_size}} }, {init_count, {{ to_ovn_mediator_initial_pool_size}} },
+                          {start_mfa, {ovn_yoke_worker, start_link, [ ovn_yoke_tcp, "{{ hostvars[item].ansible_fqdn }}", {{mediator_acceptor_port_for_switch}}, to_ovn_mediator, {{ to_ovn_mediator_yoke_return_strategy }} ]}}
+                        ]
+          {%- endfor %}
+        vip_endpoints_pooler_config: >
+          {% set comma = joiner() %}
+          {% for item in groups.ovn_switch_servers -%}
+            {{ comma() }}[{name, 'to_ovn_switch_{{ hostvars[item].ansible_fqdn }}'}, {group, to_ovn_switch},
+                          {max_count, {{ to_ovn_switch_max_pool_size}} }, {init_count, {{ to_ovn_switch_initial_pool_size}} },
+                          {start_mfa, {ovn_yoke_worker, start_link, [ ovn_yoke_tcp, "{{ hostvars[item].ansible_fqdn }}", {{switch_acceptor_port_for_vip}}, to_ovn_switch]}}
+                        ]
+          {%- endfor %}
+        mediator_nodes: >
+          {% set comma = joiner() %}
+          [{% for item in groups.ovn_mediator_servers -%}
+            {{ comma() }}'{{ hostvars[item].ansible_hostname }}@{{ hostvars[item].ansible_fqdn }}'
+          {%- endfor %}]
+        switch_nodes: >
+          {% set comma = joiner() %}
+          [{% for item in groups.ovn_switch_servers -%}
+            {{ comma() }}'{{ hostvars[item].ansible_hostname }}@{{ hostvars[item].ansible_fqdn }}'
+          {%- endfor %}]
+        kafka_endpoints: >
+          {% set comma = joiner() %}
+          [{% for item in groups['kafka'] -%}
+            {{ comma() }}{ "{{ hostvars[item].ansible_fqdn }}", {{kafka_port_for_switch}} }
+          {%- endfor %}]

@@ -1,0 +1,103 @@
+#!/bin/bash
+## {{ ansible_managed }}
+### BEGIN INIT INFO
+# Provides:          hekad
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Runs hekad daemon
+# Description: Heka is a high performance general purpose data acquisition and processing engine.
+### END INIT INFO
+
+# Process name
+NAME=hekad
+DESC="heka daemon"
+PROG="/etc/init.d/hekad"
+
+# Configure location of hekad bin
+hekad_BIN=/usr/bin
+
+# PID Info
+PID_FOLDER=/var/run/hekad/
+PID_FILE=/var/run/hekad/$NAME.pid
+LOCK_FILE=/var/lock/subsys/$NAME
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:$hekad_BIN
+DAEMON=$hekad_BIN/$NAME
+
+# Configure User to run daemon process
+DAEMON_USER=heka
+# Configure logging location
+hekad_LOG=/var/log/hekad/hekad.log
+hekad_CONF="-config=/etc/heka.d"
+
+# Begin Script
+RETVAL=0
+
+if [ `id -u` -ne 0 ]; then
+        echo "You need root privileges to run this script"
+        exit 1
+fi
+
+# Function library
+. /etc/init.d/functions
+ 
+start() {
+        echo -n "Starting $DESC : "
+
+	pid=`pidofproc -p $PID_FILE hekad`
+        if [ -n "$pid" ] ; then
+                echo "Already running."
+                exit 0
+        else
+        # Start Daemon
+		if [ ! -d "$PID_FOLDER" ] ; then
+                        mkdir $PID_FOLDER
+                fi
+		daemon --user=$DAEMON_USER --pidfile=$PID_FILE $DAEMON $hekad_CONF 1>"$hekad_LOG" 2>&1 &
+                sleep 2
+                pidofproc hekad > $PID_FILE
+                RETVAL=$?
+                [[ $? -eq 0 ]] && success || failure
+		echo
+                [ $RETVAL = 0 ] && touch $LOCK_FILE
+                return $RETVAL
+        fi
+}
+
+reload()
+{
+    echo "Reload command is not implemented for this service."
+    return $RETVAL
+}
+
+stop() {
+        echo -n "Stopping $DESC : "
+        killproc -p $PID_FILE $DAEMON
+        RETVAL=$?
+	echo
+        [ $RETVAL = 0 ] && rm -f $PID_FILE $LOCK_FILE
+}
+ 
+case "$1" in
+  start)
+        start
+	;;
+  stop)
+        stop
+        ;;
+  status)
+        status -p $PID_FILE $DAEMON
+        RETVAL=$?
+        ;;
+  restart)
+        stop
+        start
+        ;;
+  reload)
+	reload
+	;;
+  *)
+	# Invalid Arguments, print the following message.
+        echo "Usage: $0 {start|stop|status|restart}" >&2
+	exit 2
+        ;;
+esac

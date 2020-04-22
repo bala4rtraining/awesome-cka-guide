@@ -1,0 +1,21 @@
+---
+#####
+# PLEASE DO NOT MODIFY THIS FILE.
+#
+# All OVN configs for this environment defined by the below `CLUSTER` config
+# is located under the `ovn_vars` directory in the `onv_infrasture` repo.
+#
+# `ovn_vars` is organized as follows:
+#
+#   - All config that is common across all environments or CLUSTERs are defined in the config files
+#     directly inside the `ovn_vars` folder.
+#
+#   - configs that are specific to the CLUSTER or overridden values are defined in the `ovn_vars/CLUSTER`
+#     directory.
+#
+#   - configs that are specific to the DATACENTER within the CLUSETER or overridden values are defined
+#     in the `ovn_vars/CLUSTER/DATACENTER` directory.
+#####
+
+CLUSTER: perf
+DATACENTER: dc1

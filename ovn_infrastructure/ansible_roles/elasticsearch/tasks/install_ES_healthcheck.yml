@@ -1,0 +1,16 @@
+---
+
+- name: copy the python script which the cron job will invoke
+  template:
+    src: check_ES_health.py.j2
+    dest: /etc/elasticsearch/check_ES_health.py
+    mode: "0755"
+  when: hostvars[inventory_hostname].eserv_type == "lbonly"
+
+- name: create cron job to check ES health
+  cron:
+    name: "Check ES health"
+    minute: "0"
+    hour: "*"
+    job: "python /etc/elasticsearch/check_ES_health.py"
+  when: hostvars[inventory_hostname].eserv_type == "lbonly"

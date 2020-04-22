@@ -1,0 +1,47 @@
+---
+- name: create nginx group if not created
+  group:
+    name: nginx
+    state: present
+
+- name: create '{{ nginx_user }}' userid if not created
+  user:
+    name: '{{ nginx_user }}'
+    group: nginx
+    state: present
+
+- name: create nginx directory
+  file:
+    path: '{{ item.name }}'
+    owner: root
+    group: root
+    mode: '{{ item.mode }}'
+    state: directory
+  with_items:
+    - { name: '{{ nginx_home }}', mode: '0755' }
+    - { name: '{{ nginx_home }}/cert', mode: '0700' }
+    - { name: '{{ nginx_home }}/conf.d', mode: '0755' }
+    - { name: '{{ nginx_home }}/log', mode: '0755' }
+
+- name: Ensure nginx is installed.
+  yum:
+    name: "{{ nginx_package_name }}"
+    state: installed
+
+- name: Add nginx logrotation file.
+  template:
+    src: 'nginx.logrotate.j2'
+    dest: /etc/logrotate.d/nginx
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+
+- name: install nginx self-signed cert and systemd configs
+  include: nginx_deploy.yml
+  
+- name: Ensure nginx is started and enabled to start at boot.
+  service:
+    name: nginx
+    state: started
+    enabled: yes

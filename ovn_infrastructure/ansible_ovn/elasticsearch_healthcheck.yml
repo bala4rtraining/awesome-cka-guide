@@ -1,0 +1,9 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+
+# playbook for restarting ES LB node when JVM heap size is more than 75%
+- name: installs a cron job, which runs on elasticsearch loadbalancer to check ES health
+  gather_facts: yes
+  hosts: elasticsearch
+  roles:
+    - { role: elasticsearch, dispatch: ['install_ES_healthcheck']}

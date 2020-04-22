@@ -1,0 +1,19 @@
+---
+- name: Ensures vault system config directory exists
+  file:
+    path: "{{dir.system}}"
+    owner: "{{vault.user}}"
+    group: "{{vault.group}}"
+    state: directory
+
+- name: Create Vault systemd configuration
+  template:
+    src: vault.service.j2
+    dest: "{{ dir.system }}/vault.service"
+    owner: root
+    group: root
+    mode: 0600
+  notify:
+    - restart vault
+
+#- meta: flush_handlers

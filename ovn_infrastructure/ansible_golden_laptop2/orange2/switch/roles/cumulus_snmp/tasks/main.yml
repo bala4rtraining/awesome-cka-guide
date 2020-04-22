@@ -1,0 +1,34 @@
+- name: create config folder locally
+  file: path=config/{{ ansible_hostname }} state=directory recurse=yes
+  delegate_to: localhost
+  tags:
+    - snmp_setup
+    - local
+  when: global.save_local is defined and global.save_local == "enable"
+
+- name: create rendered flat-file /etc/snmp/snmpd.conf locally
+  template: src=snmpd.conf.j2  dest=config/{{ ansible_hostname }}/snmpd.conf
+  delegate_to: localhost
+  tags:
+    - local
+    - snmp_setup
+  when: global.save_local is defined and global.save_local == "enable" and node[ansible_hostname].snmp is defined
+
+# This writes configuration to the snmpd.conf configuration file using the
+# information in group_vars/all.
+- name: configure snmpd.conf configuration (no mgmt vrf)
+  template: src=snmpd.conf.j2 dest=/etc/snmp/snmpd.conf
+  notify:
+    - restart snmpd
+    - enable snmpd
+  tags:
+    - snmp_setup
+  when: (node[ansible_hostname].snmp is defined and node.{{ansible_hostname}}.interfaces.eth0.vrfmgmt is undefined) or (node[ansible_hostname].snmp is defined and node.{{ansible_hostname}}.interfaces.eth0.vrfmgmt is defined and node.{{ansible_hostname}}.interfaces.eth0.vrfmgmt != "enable")
+
+- name: configure snmpd.conf configuration (with mgmt vrf)
+  template: src=snmpd.conf.j2 dest=/etc/snmp/snmpd.conf
+  notify:
+    - restart snmpd mgmt vrf
+  tags:
+    - snmp_setup
+  when: node[ansible_hostname].snmp is defined and node.{{ansible_hostname}}.interfaces.eth0.vrfmgmt is defined and node.{{ansible_hostname}}.interfaces.eth0.vrfmgmt == "enable"

@@ -1,0 +1,63 @@
+---
+# defaults file for goldenlaptop
+
+#
+# vars related to the managment interface 
+# on the OGL (The one connected to the rescue
+# server)
+#
+
+ogl_mgmt_int_ip: 192.168.0.1
+ogl_mgmt_int_ip_len: 24
+#ogl_mgmt_int_dev_name: enp0s8
+ogl_mgmt_int_dev_name: eno1
+
+
+#
+# DHCP
+#
+ogl_dhcp_def_lease_time: 108000 # OGLlease time: 6 hrs
+ogl_dhcp_def_max_lease_time: 108000
+ogl_dhcp_subnet_ip: 192.168.0.0
+ogl_dhcp_subnet_ip_mask: 255.255.255.0
+
+ogl_dhcp_rescue_ip: 192.168.0.2
+ogl_dhcp_rescue_mac: "94:18:82:77:84:78" # M2
+#ogl_dhcp_rescue_mac: "94:18:82:77:84:78" # TBD DCI
+#ogl_dhcp_rescue_mac: "94:18:82:77:84:78" # TBD Telin
+ogl_dhcp_rescue_hostname: "ovn-rescue-dci"
+#ogl_dhcp_rescue_hostname: "ovn-rescue-telin"
+
+#
+# PXE boot
+#
+
+ogl_legacy_ks_dir: pxe-install-source-ks
+ogl_legacy_ks_file: legacy-install-ks.cfg
+ogl_legacy_install_src_dir: pxe-install-source
+
+ogl_tftpboot_path: /var/lib/tftpboot
+#ogl_orange_secureboot_ks_file: min-ks.cfg
+
+#
+# Centos legacy ISO
+# (It's locally stored where this playbook is run one-time only)
+# (It needs to be Visa SOE image in the future)
+#
+ogl_centos_local_path: /Users/weili/Shared
+ogl_centos_image_name: CentOS-7-x86_64-DVD-1503-01.iso
+
+
+#
+# Secure boot
+#
+ogl_centos_secureboot_local_path: /Users/weili/workspace/ovn/images/secureboot
+ogl_centos_secureboot_image_name: CentOS-7-x86_64-DVD-1511.iso
+ogl_centos_secureboot_ks_file: min-ks.cfg
+
+
+
+#
+# Ansible and netaddr pkgs
+#
+ogl_ansible_local_path: /Users/weili/workspace/ovn/images

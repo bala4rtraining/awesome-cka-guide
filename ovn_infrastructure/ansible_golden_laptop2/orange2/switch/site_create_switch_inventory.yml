@@ -1,0 +1,29 @@
+#
+# Generate group vars based on site specific variables
+# for each role
+#
+# This is called from top level playbook site.yml
+#
+
+- name: Create inventory for switches
+  hosts: localhost
+  become: yes
+  vars_files:
+    - ../ovn_common_dci.yml
+  tasks:
+    - name: create switch inventory 
+      template:
+        src: hosts.j2
+        dest: ./hosts
+
+
+
+
+    
+    
+
+
+
+
+
+

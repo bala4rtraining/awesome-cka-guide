@@ -1,0 +1,17 @@
+[Unit]
+Description=Cas-UI server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+Restart=always
+RestartSec=3
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+ExecStart={{cas_ui_install_dir}}/cas-ui-server -config={{cas_ui_install_dir}}/cas-ui.yaml
+
+[Install]
+WantedBy=multi-user.target

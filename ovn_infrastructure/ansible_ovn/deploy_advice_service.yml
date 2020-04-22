@@ -1,0 +1,6 @@
+---
+
+- name: install and configure advice servers
+  hosts: ovn_advice_servers
+  roles: 
+    - ovn_advice

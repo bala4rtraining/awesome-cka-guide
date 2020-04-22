@@ -1,0 +1,60 @@
+---
+- name: Creates backup directory for alertmanager config
+  file:
+    path: "{{ alertmanager_config_dir }}/backup/"
+    state: directory
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0750"
+
+- name: copy alertmanager config file to backup directory
+  copy:
+    src: "{{ alertmanager_config_dir }}/alertmanager.yml"
+    dest: "{{ alertmanager_config_dir }}/backup/"
+    mode: "0644"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    remote_src: true
+    
+- name: copy alertmanager email template files to backup directory
+  copy:
+    src: "{{ alertmanager_config_dir }}/{{ dir_val.src }}"
+    dest: "{{ alertmanager_config_dir }}/backup/"
+    mode: "{{ dir_val.mode }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    remote_src: true
+  with_items: "{{ alertmanager_template_files }}"
+  loop_control:
+    loop_var: dir_val
+
+- name: install template files in {{ alertmanager_config_dir }} for email
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  with_items: "{{ alertmanager_template_files }}"
+
+- name: deploy alertmanager config
+  template:
+    src: "alertmanager.yml.j2"
+    dest: "{{ alertmanager_config_dir }}/alertmanager.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+  register: alertmanager_config_result
+
+- name: Restart alertmanager service.
+  service:
+    name: alertmanager
+    state: restarted
+  when: >
+    alertmanager_config_result.changed == true
+
+- name: Ensure alertmanager is started and enabled to start at boot.
+  service:
+    name: alertmanager
+    state: started
+    enabled: yes

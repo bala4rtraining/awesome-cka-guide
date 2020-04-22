@@ -1,0 +1,435 @@
+#########
+# DC2 datacenter (QA staging environment B)
+#########
+[sl73ovnapq176]
+10.207.222.144
+[sl73ovnapq177]
+10.207.218.149
+[sl73ovnapq178]
+10.207.218.150
+[sl73ovnapq179]
+10.207.218.151
+[sl73ovnapq180]
+10.207.222.145
+[sl73ovnapq181]
+10.207.222.146
+[sl73ovnapq182]
+10.207.222.147
+[sl73ovnapq183]
+10.207.218.153
+[sl73ovnapq184]
+10.207.218.152
+[sl73ovnapq185]
+10.207.222.148
+[sl73ovnapq186]
+10.207.222.149
+[sl73ovnapq187]
+10.207.222.150
+[sl73ovnapq188]
+10.207.218.154
+[sl73ovnapq189]
+10.207.222.151
+[sl73ovnapq190]
+10.207.222.152
+[sl73ovnapq191]
+10.207.222.153
+[sl73ovnapq192]
+10.207.218.155
+[sl73ovnapq193]
+10.207.222.154
+[sl73ovnapq194]
+10.207.218.156
+[sl73ovnapq195]
+10.207.222.155
+[sl73ovnapq196]
+10.207.222.156
+[sl73ovnapq197]
+10.207.218.158
+[sl73ovnapq198]
+10.207.218.157
+[sl73ovnapq199]
+10.207.218.159
+
+## VARS FOLLOW
+
+[sl73ovnapq196:vars]
+prometheus_mode='active'
+eserv_type='default'
+curator_cron='disabled'
+
+[sl73ovnapq197:vars]
+prometheus_mode='standby'
+eserv_type='default'
+curator_cron='enabled'
+
+[sl73ovnapq198:vars]
+eserv_type='default'
+curator_cron='disabled'
+prometheus_mode='lt-active'
+
+[sl73ovnapq199:vars]
+prometheus_mode='lt-standby'
+eserv_type='default'
+curator_cron='disabled
+
+
+## DC2 OVN Components
+
+# (Business Zone)
+[dc2_ovn_mediator_servers:children]
+sl73ovnapq176
+sl73ovnapq177
+sl73ovnapq178
+
+# (Restricted Zone)
+[dc2_ovn_switch_servers:children]
+sl73ovnapq179
+sl73ovnapq180
+sl73ovnapq181
+ 
+# (Restricted Zone)
+[dc2_kafka:children]
+sl73ovnapq182
+sl73ovnapq183
+sl73ovnapq184
+sl73ovnapq185
+sl73ovnapq186
+
+# (Restricted Zone)
+[dc2_kafka_mirror_maker:children]
+sl73ovnapq182
+
+# (Restricted Zone)
+[dc2_ovn_multidc_sync:children]
+sl73ovnapq182
+
+# (Restricted Zone)
+[dc2_hadoop_namenodes:children]
+sl73ovnapq187
+sl73ovnapq188
+
+# (Restricted Zone)
+[dc2_hadoop_datanodes:children]
+sl73ovnapq189
+sl73ovnapq190
+sl73ovnapq191
+
+# (Restricted Zone)
+[dc2_nomad_server:children]
+sl73ovnapq189
+sl73ovnapq190
+sl73ovnapq191
+
+# (Restricted Zone)
+[dc2_nomad_client:children]
+sl73ovnapq189
+sl73ovnapq190
+sl73ovnapq191
+
+# (Restricted Zone) 
+[dc2_ovn_riak_servers:children]
+sl73ovnapq192
+sl73ovnapq193
+sl73ovnapq194
+sl73ovnapq195
+sl73ovnapq196
+
+# (Restricted Zone)
+[dc2_zookeeper:children]
+sl73ovnapq192
+sl73ovnapq193
+sl73ovnapq194
+sl73ovnapq195
+sl73ovnapq196
+
+# (Restricted Zone)
+[dc2_journalnodes:children]
+sl73ovnapq192
+sl73ovnapq193
+sl73ovnapq194
+sl73ovnapq195
+sl73ovnapq196
+
+# (Restricted Zone)
+[dc2_ftps_server:children]
+sl73ovnapq196
+
+# (Restricted Zone)
+[dc2_ovn_vitalsigns_delivery:children]
+sl73ovnapq196
+
+# (Restricted Zone)
+[dc2_ovn_umf_broker:children]
+sl73ovnapq197
+
+# (Restricted Zone)
+[dc2_ovn_umf_delivery:children]
+sl73ovnapq197
+
+# (Restricted Zone)
+[dc2_elasticsearch:children]
+sl73ovnapq196
+sl73ovnapq197
+sl73ovnapq198
+sl73ovnapq199
+
+# (Restricted Zone)
+[dc2_kibana:children]
+sl73ovnapq197
+
+# (Restricted Zone)
+[dc2_grafana:children]
+sl73ovnapq196
+
+# (Restricted Zone)
+[dc2_graphite:children]
+sl73ovnapq196
+
+[dc2_tsung:children]
+sl73ovnapq197
+
+[dc2_haproxy:children]
+sl73ovnapq197
+
+# (Restricted Zone)
+[dc2_prometheus_server:children]
+sl73ovnapq196
+sl73ovnapq197
+sl73ovnapq198
+sl73ovnapq199
+
+# (Restricted Zone)
+[dc2_prometheus_alertmanager:children]
+sl73ovnapq198
+sl73ovnapq199
+
+# (Restricted Zone)
+[dc2_prometheus_pushgateway:children]
+dc2_nomad_client
+dc2_ovn_vss_servers
+
+# (Restricted Zone)
+[dc2_ovn_xdc_sync:children]
+sl73ovnapq182
+
+# (Restricted Zone)
+[dc2_fluentd_aggregator:children]
+sl73ovnapq198
+sl73ovnapq199
+
+[dc2_yum_mirror_servers:children]
+sl73ovnapq190
+sl73ovnapq191
+
+[dc2_cas_tool:children]
+sl73ovnapq189
+
+[dc2_ovn_mp:children]
+sl73ovnapq189
+
+[dc2_ovn_vss_servers:children]
+sl73ovnapq189
+
+[dc2_nomad_ui:children]
+sl73ovnapq189
+
+[dc2_kerberos_server:children]
+sl73ovnapq179
+
+[dc2_elastalert:children]
+sl73ovnapq196
+
+[elastalert:children]
+dc2_elastalert
+
+# all application in the dc2 datacenter
+[dc2_ovn_application:children]
+dc2_ovn_mediator_servers
+dc2_ovn_switch_servers
+dc2_ovn_multidc_sync
+dc2_ovn_vitalsigns_delivery
+dc2_ovn_umf_broker
+dc2_ovn_umf_delivery
+dc2_ovn_xdc_sync
+dc2_ovn_vss_servers
+dc2_ovn_mp
+ 
+# all infrastructure in the dc2 datacenter
+[dc2_ovn_infrastructure:children]
+dc2_kafka
+dc2_kafka_mirror_maker
+dc2_hadoop_namenodes
+dc2_hadoop_datanodes
+dc2_nomad_server
+dc2_nomad_client
+dc2_ovn_riak_servers
+dc2_zookeeper
+dc2_ftps_server
+dc2_elasticsearch
+dc2_kibana
+dc2_grafana
+dc2_graphite
+dc2_haproxy
+dc2_prometheus_server
+dc2_prometheus_alertmanager
+dc2_prometheus_pushgateway
+dc2_journalnodes
+dc2_fluentd_aggregator
+dc2_yum_mirror_servers
+dc2_kerberos_server
+
+# all nodes in the dc2 datacenter
+[dc2:children]
+dc2_ovn_application
+dc2_ovn_infrastructure
+
+# all hdfs components in dc2
+[dc2_hdfs_HA_All_nodes:children]
+dc2_zookeeper
+dc2_journalnodes
+dc2_hadoop_namenodes
+dc2_hadoop_datanodes
+
+######
+# OVN Components
+######
+
+# Business Zone
+[ovn_mediator_servers:children]
+dc2_ovn_mediator_servers
+
+#
+# Restricted Zone
+[ovn_switch_servers:children]
+dc2_ovn_switch_servers
+
+# Restricted Zone
+[kafka:children]
+dc2_kafka
+
+# Restricted Zone
+[kafka_mirror_maker:children]
+dc2_kafka_mirror_maker
+
+# Restricted Zone
+[ovn_multidc_sync:children]
+dc2_ovn_multidc_sync
+
+# Restricted Zone
+[hadoop_namenodes:children]
+dc2_hadoop_namenodes
+
+# Restricted Zone
+[hadoop_datanodes:children]
+dc2_hadoop_datanodes
+
+# Restricted Zone
+[nomad_server:children]
+dc2_nomad_server
+
+# Restricted Zone
+[nomad_client:children]
+dc2_nomad_client
+
+# Restricted Zone
+[ovn_riak_servers:children]
+dc2_ovn_riak_servers
+
+# Restricted Zone
+[zookeeper:children]
+dc2_zookeeper
+
+# Restricted Zone
+[journalnodes:children]
+dc2_journalnodes
+
+# Restricted Zone
+[ftps_server:children]
+dc2_ftps_server
+
+# Restricted Zone
+[ovn_vitalsigns_delivery:children]
+dc2_ovn_vitalsigns_delivery
+
+# Restricted Zone
+[ovn_umf_broker:children]
+dc2_ovn_umf_broker
+
+# Restricted Zone
+[ovn_umf_delivery:children]
+dc2_ovn_umf_delivery
+
+# Restricted Zone
+[elasticsearch:children]
+dc2_elasticsearch
+
+# Restricted Zone
+[kibana:children]
+dc2_kibana
+
+# Restricted Zone
+[grafana:children]
+dc2_grafana
+
+# Restricted Zone
+[graphite:children]
+dc2_graphite
+
+# Perimeter Zone
+[haproxy:children]
+dc2_haproxy
+
+[tsung:children]
+dc2_tsung
+
+# Restricted Zone
+[prometheus_server:children]
+dc2_prometheus_server
+
+# (Restricted Zone)
+[prometheus_alertmanager:children]
+dc2_prometheus_alertmanager
+
+# (Restricted Zone)
+[prometheus_pushgateway:children]
+dc2_prometheus_pushgateway
+
+# (Restricted Zone)
+[ovn_xdc_sync:children]
+dc2_ovn_xdc_sync
+
+# (Restricted Zone)
+[fluentd_aggregator:children]
+dc2_fluentd_aggregator
+
+[datacenter:children]
+dc2
+
+[hdfs_HA_All_nodes:children]
+dc2_hdfs_HA_All_nodes
+
+[nomad_ui:children]
+dc2_nomad_ui
+
+[cas_tool:children]
+dc2_cas_tool
+
+[ovn_vss_servers:children]
+dc2_ovn_vss_servers
+
+[ovn_mp:children]
+dc2_ovn_mp
+
+[yum_mirror_servers:children]
+dc2_yum_mirror_servers
+
+[kerberos_server:children]
+dc2_kerberos_server
+
+# Below hosts are non-prod environment to support docker based EA for CPT testing (cannot be on riak servers)
+[dc2_ea_docker_hosts:children]
+sl73ovnapq189
+sl73ovnapq190
+
+[ea_docker_hosts:children]
+dc2_ea_docker_hosts

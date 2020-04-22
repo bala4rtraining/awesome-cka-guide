@@ -1,0 +1,23 @@
+---
+# vars file for graphite  (only used for CENTOS-7)
+
+# graphite needed a special patch or it would be incompatible with Django 1.6 and later
+apply_graphite_patch: true
+python_lib: /usr/lib/python2.7/
+
+# these were downloaded at the EPEL7 level + base grafana
+graphite_rpms:
+ - python-django-bash-completion-1.6.11-3.el7.noarch
+ - python-django-1.6.11-3.el7.noarch
+ - python-django-tagging-0.3.1-11.el7.noarch
+
+# the package selection changed a little with CENTOS7
+graphite_pkgs:
+  - libfontenc
+  - python-twisted-core
+  - mod_wsgi
+  - pycairo
+  - pyparsing
+
+service_templates:
+ - { src: carbon-cache.service.j2, dest: /usr/lib/systemd/system/carbon-cache.service, mode: '0644' }

@@ -1,0 +1,50 @@
+---
+kibana_png: "kibanaOvnTEST.png"
+carbon_host: "10.207.189.39"
+
+kibana_reverse_proxy_enabled: true
+kibana_nginx_enable_ssl: "false"
+kibana_basepath: "/kibana-test"
+kibana_reverse_proxy_path: "kibana-test"
+
+grafana_reverse_proxy_enabled: true
+grafana_auth_proxy_enabled: false
+grafana_nginx_enable_ssl: "false"
+grafana_reverse_proxy_url: "https://ovntest.visa.com/grafana-test/"
+grafana_reverse_proxy_path: "grafana-test"
+
+nginx_enable_ssl: "false"
+enable_nginx_ssl: "false"
+elasticsearch_client_ssl_enabled: "true"
+elasticsearch_client_use_fqdn: "false"
+
+graphite_url: "http://10.207.189.39:5603"
+graphite_beacon_env: 'TEST'
+graphite_beacon_email: ""
+
+prometheus_datacenter_id: "PERF"
+
+#Elastic search index retention period after which the indices will be deleted
+curator_log_patterns: {"syslog-*" : 90, "elasticsearch-*" : 90}
+
+alertmanager_context_path: "alertmanager-test"
+alertmanager_app_context_path: "alertmanager-test-app"
+prometheus_context_path: "prometheus-test"
+prometheus_app_context_path: "prometheus-test-app"
+vss_output_context_path: "vss-output-test"
+#This will be used for constructing the link/URL back to prometheus source pages from alertmanager pages via reverse proxy(ovnmanager).
+prometheus_external_host: "ovntest.visa.com"
+#This is added to support IP based deployment of prometheus for CERT and PERF environment. Hostname and fqdn does not work well in CERT and PERF environment
+prometheus_use_fqdn: "false"
+elasticsearch_use_fqdn: "false"
+nginx_enable_ssl: "false"
+elasticsearch_client_use_fqdn: "false"
+
+#elastalert related defines
+elasticsearch_port: 9200
+elastalert_config_use_ssl: False
+elastalert_config_es_url_prefix: '""'
+elastalert_env: "PERF"
+
+#HSM
+hsm_address: "10.207.189.104:1500"

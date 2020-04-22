@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!DOCTYPE tsung SYSTEM "/usr/local/share/tsung/tsung-1.0.dtd">
+<tsung loglevel="notice">
+  <clients>
+    {% for item in groups['tsung'] -%}
+      <client host="{{ hostvars[item]['ansible_hostname'] }}" maxusers="900">
+        <ip value="{{ hostvars[item]['ansible_'+default_iface]['ipv4']['address'] }}"></ip>
+      </client>
+    {%- endfor %}
+  </clients>
+
+  <servers>
+    <server host="{{ hostvars[groups['ovn_mediator_servers'][0]]['ansible_fqdn']}}" port="7070" type="tcp"/>
+  </servers>
+
+  <load>
+    <arrivalphase phase="1" duration="30" unit="minute">
+      <users arrivalrate="1" unit="second"></users>
+    </arrivalphase>
+  </load>
+
+  <sessions>
+    <session probability="40" name="ovn-transaction-replay-mode" type="ts_ovn">
+        <set_option type="ts_ovn" name="mode" value="replay"/>
+        <transaction name="replay_mode">
+          <request><ovn entity="acquirer" action="send"/></request>
+          <request><ovn entity="issuer"   action="receive"/></request>
+          <request><ovn entity="issuer"   action="send"/></request>
+          <request><ovn entity="acquirer" action="receive"/></request>
+        </transaction>
+    </session>
+    <session probability="60" name="ovn-transaction-accepted" type="ts_ovn">
+        <set_option type="ts_ovn" name="mode" value="auto"/>
+        <set_option type="ts_ovn" name="transaction_result" value="approved"/>
+        <transaction name="auto_mode_approval">
+          <request><ovn entity="acquirer" action="send"/></request>
+          <request><ovn entity="issuer"   action="receive"/></request>
+          <request><ovn entity="issuer"   action="send"/></request>
+          <request><ovn entity="acquirer" action="receive"/></request>
+        </transaction>
+    </session>
+ </sessions>
+</tsung>

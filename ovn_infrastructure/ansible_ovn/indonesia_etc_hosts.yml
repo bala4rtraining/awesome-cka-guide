@@ -1,0 +1,18 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=datacenter
+
+#
+# the indonesia /etc/hosts file expect visa_dns_domain variable
+# to be defined or will use the default visa domain `ap.visa.net` assigned to
+# the Indonesia.
+# 
+# This playbook must be run with `-i .../inventories/indonesia` in order to
+# generate /etc/hosts file that includes all hosts in DCI and Telin
+#
+- hosts: datacenter
+  gather_facts: yes
+
+- name: Install /etc/hosts file
+  hosts: datacenter
+  roles:
+    - hosts_file

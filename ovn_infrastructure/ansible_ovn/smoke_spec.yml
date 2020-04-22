@@ -1,0 +1,13 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_mediator_servers,ovn_switch_servers,localhost
+
+- name: run the ansible setup role to gather facts about all hosts
+  hosts: ovn_mediator_servers:ovn_switch_servers
+  gather_facts: yes
+
+- name: generate spec for smoke test
+  hosts: localhost
+  tasks:
+    - template: src=./roles/ovn/templates/spec.j2  dest=/tmp/ovn_smoke_test.spec
+  vars:
+    ansible_group_names: [ovn_mediator_servers, ovn_switch_servers]

@@ -1,0 +1,59 @@
+#!/usr/bin/perl 
+use lib "/usr/lib/systemd/system";
+use repo;
+
+#@repos = ('ovn-extra-el7','ovn-app-el7','ovn-epel-el7','ovn-centos-extras-el7','ovn-centos-updates-el7','ovn-centos-base-el7','ovn-app-temp-el7');
+$version="1";
+chomp($hostname=`hostname`);
+$application="YumMirror";
+$pid=$$;
+$messageid="RepoSync";
+$structuredata="-";
+$repo_names = $repo::repos;
+$repo_names =~ s/\[//g;
+$repo_names  =~ s/\]//g;
+@repos = split(/\,/, $repo_names);
+
+
+$filename = '/var/log/syslog';
+open( $LOGFL, '>>', $filename) or die "Could not open file '$filename' $!";
+
+
+foreach $repo(@repos){
+    $messageid="RepoSync_".$repo;
+    @output = ();
+    chomp(@output = `/usr/bin/reposync --delete --repoid=$repo --download_path=/opt/app/yum-mirror --downloadcomps --download-metadata`);
+    chomp(@output1 = `/bin/createrepo --update /opt/app/yum-mirror/$repo`);
+    push @output,@output1;
+
+	foreach  $line(@output){
+    		chomp($line);
+    		$line =~ s/^\s+//;
+    		$line =~ s/\s+$//;
+    		$line =~  s/\R//g;
+		$timestamp = getLoggingTime();
+		if ( $line =~ m/FAILED/gi ) 
+			{   
+					    $status=6;
+        				print $LOGFL  "$status\t$version\t$timestamp\t$hostname\t$application\t$pid\t$messageid\t$structuredata\t$line\n"; 
+			}
+		else
+			{
+        				$status=4;
+        				print $LOGFL  "$status\t$version\t$timestamp\t$hostname\t$application\t$pid\t$messageid\t$structuredata\t$line\n"; 
+        		}
+   	}
+	sleep $repo::sleep_time;
+
+}
+
+
+close $LOGFL;
+
+sub getLoggingTime {
+
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime(time);
+    my $ret_timestamp = sprintf ( "%04d-%02d-%02dT%02d:%02d:%02dz",
+                                   $year+1900,$mon+1,$mday,$hour,$min,$sec);
+    return $ret_timestamp;
+}

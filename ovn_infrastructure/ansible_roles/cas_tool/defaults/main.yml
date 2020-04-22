@@ -1,0 +1,80 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+# Defaults for CAS-tool deployment
+release_artifactory_url: "https://artifactory.trusted.visa.com/ovn/repo"
+cas_tool_name: "cas-tool"
+cas_tool_username: "was"
+cas_tool_groupname: "was"
+cas_tool_server_install_dir: "/opt/app/cas_tool/server"
+cas_tool_cli_install_dir: "/opt/app/cas_tool/cli"
+cas_tool_host: "0.0.0.0"
+cas_tool_scheme: "https"
+cas_tool_cas_ui_mutual_auth: false
+cas_tool_version: "0.1.0"
+cas_tool_platform: "linux-amd64"
+cas_tool_tarball: "ovn_cas_tools-v{{ cas_tool_version }}-{{ cas_tool_platform }}.tar.gz"
+cas_tool_tar_location: "{{ release_artifactory_url }}/{{ cas_tool_tarball }}"
+cas_tool_http_port: "7443"
+cas_tool_clearing_profile_path: "/opt/profile/clearing.profile"
+
+cas_tool_exception_bucketname: "exception_monitor"
+cas_tool_jobhistory_bucketname: "job_history"
+cas_tool_file_metadata_bucket: "file_metadata"
+cas_tool_clearing_config_bucket: "clearing_config"
+cas_tool_clearing_override_bucket: "clearing_override"
+cas_tool_relative_path: "local/j.jar"
+cas_tool_local_path: "local/"
+cas_tool_config_artifactory_url: "https://artifactory.trusted.visa.com/ovn-snapshots/com/visa/ovn/ovn_clearing_jobs_2.11/1.0/ovn_clearing_jobs_2.11-1.0.jar"
+cas_tool_kafka_topic: "xdc_sync"
+
+# Logger
+cas_tool_file_logger_level: "info"
+cas_tool_file_logger_path: "/var/log/{{ cas_tool_name }}"
+cas_tool_file_logger_prefix: "{{ cas_tool_name }}"
+
+cas_tool_sys_logger_level: "info"
+cas_tool_sys_logger_prefix: "{{ cas_tool_name }}"
+
+cas_tool_console_logger_level: "info"
+
+ovn_cas_admin: "ovn_dev_cas_admin"
+ovn_cas_viewer: "ovn_dev_cas_viewer"
+ovn_cas_editor: "ovn_dev_cas_editor"
+
+kafka_enable_tls: false
+nomad_enable_tls: false
+riak_enable_tls: false
+
+cas_tool_host_cert_location: "/etc/pki/tls/cas_tool"
+cas_tool_cert_location: "{{ cas_tool_host_cert_location }}/certs"
+cas_tool_key_location:  "{{ cas_tool_host_cert_location }}/private"
+
+# CAS_tool related certificates
+cas_tool_tls_cert_name:   "cas_tool_cert.pem"
+cas_tool_tls_key_name:    "cas_tool_key.pem"
+cas_tool_tls_ca_name:     "cas_tool_ca_cert.pem"
+
+# CAS tool CA related certificates
+cas_tool_ca_cert: ""
+cas_tool_client_ca_certs: []
+cas_tool_root_ca_certs: []
+
+# Nomad related certificates
+cas_tool_nomad_cert_name:         "cas_tool_nomad_cert.pem"
+cas_tool_nomad_key_name:          "cas_tool_nomad_key.pem"
+cas_tool_nomad_ca_cert_name:      "cas_tool_nomad_ca_cert.pem"
+
+## CAS_Tool riak related certificates
+# cas_riak_ca_cert: "cas_riak_ca_cert.pem"
+# cas_riak_client_cert: "cas_riak_cert.pem"
+# cas_riak_cert_key: "cas_riak_key.pem"
+
+# cas_riak_ca_cert_data: "{{riak_client_cas_bundler_cert}}"
+# cas_riak_cert_data: "{{riak_client_cas_cert}}"
+# cas_riak_key_data: "{{riak_client_cas_private_key}}"

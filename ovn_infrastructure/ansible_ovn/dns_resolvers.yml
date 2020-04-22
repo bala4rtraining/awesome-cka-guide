@@ -1,0 +1,47 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!orange,!ovn_manager
+
+- name: update dns resolvers
+  hosts: all:!cumulus_switch:!orange:!ovn_manager
+  tasks:
+    - name: disable NetworkManager
+      service:
+        name: NetworkManager
+        state: stopped
+        enabled: no
+
+    - name: remove duplicate nameserver entries
+      lineinfile:
+        dest: /etc/resolv.conf
+        line: 'nameserver {{item}}'
+        state: absent
+      with_items:
+        - '{{ visa_dns_servers }}'
+
+    - name: remove ansible managed line
+      lineinfile:
+        dest: /etc/resolv.conf
+        line: '^# Ansible managed: .*'
+        state: absent
+
+    - name: add ansible managed line
+      lineinfile:
+        dest: /etc/resolv.conf
+        line: '# Ansible managed:  This file is managed by Ansible.  Please do not edit!!!'
+        insertbefore: BOF
+        state: present
+        backup: yes
+
+    - name: comment out old nameservers
+      replace:
+        dest: /etc/resolv.conf
+        regexp: '(^nameserver .*|^search .*)'
+        replace: '# \1'
+
+    - name: add visa dns servers
+      lineinfile:
+        dest: /etc/resolv.conf
+        line: 'nameserver {{item}}'
+        state: present
+      with_items:
+        - '{{ visa_dns_servers }}'

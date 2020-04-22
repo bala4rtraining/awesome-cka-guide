@@ -1,0 +1,8 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+
+# simple playbook for running the elasticsearch role.
+- name: run the playbook to do upgrade java in elastic search
+  hosts: elasticsearch 
+  roles:
+   - {role: elasticsearch, dispatch: [ 'shutdownelastic' , 'jreupgrade']}

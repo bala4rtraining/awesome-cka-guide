@@ -1,0 +1,104 @@
+---
+# WARNING: It will delete all data
+
+# Stop all hadoop services
+- name: reinstall fresh | stop all hadoop services
+  include: stop-all.yml
+  when: hadoop_reinstall
+
+# Wait for services to stop
+- name: reinstall fresh | wait a few seconds for service stop all
+  wait_for:
+    timeout: 30
+  when: hadoop_reinstall
+
+- name: check if hdfs user is not used by any other non-hadoop process
+  command: ps -u hdfs
+  ignore_errors: yes
+  changed_when: false
+  register: user_status
+
+- name: Report of failed status of hdfs user
+  fail: msg="hdfs user is used by process {{ user_status.stdout_lines[1].split()[0] }}. Please Stop it before proceeding to delete hdfs user"
+  when: user_status | success
+
+# Remove hdfs user. This step will fail in case ids are set globally using sssd or using AD integration, so they aren't available in local for deletion; so ignore_error is used
+- name: reinstall fresh | remove hdfs user. This step will fail in case ids are set globally using sssd or using AD integration, so they aren't available in local for deletion; so ignore_error is used
+  user:
+    name: hdfs
+    state: absent
+  ignore_errors: yes
+  when: hadoop_reinstall
+
+# Remove hdfs group. This step will fail in case ids are set globally using sssd or using AD integration, so they aren't available in local for deletion; so ignore_error is used
+- name: reinstall fresh | remove hdfs group. This step will fail in case ids are set globally using sssd or using AD integration, so they aren't available in local for deletion; so ignore_error is used
+  group:
+    name: hdfs
+    state: absent
+  ignore_errors: yes
+  when: (hadoop_reinstall)
+
+# Uninstall hadoop rpms
+- name: uninstall hadoop rpms
+  yum:
+     name: "{{ rpm }}"
+     state: absent
+  with_items: "{{ hadoop_rpms }}"
+  loop_control:
+    loop_var: rpm
+  when: hadoop_reinstall
+
+# Remove common data directories
+- name: reinstall fresh | remove data directories
+  file:
+    path: "{{ directory }}"
+    state: absent
+  with_items:
+    - "{{hadoop_dfs_data_dir}}"
+    - "{{hadoop_dfs_name_dir}}"
+    - "{{hadoop_dfs_home_dir}}"
+    - "{{hadoop_logs_dir}}"
+    - "{{hadoop_pid_dir}}"
+    - /etc/hadoop/conf/log4j.properties
+    - /usr/lib/hadoop/etc/hadoop/core-site.xml
+    - /usr/lib/hadoop/etc/hadoop/hdfs-site.xml
+    - /usr/lib/hadoop/libexec/hadoop-prometheus-monitor.sh
+    - /usr/lib/hadoop/sbin/hadoop_deamon.sh
+  when: hadoop_reinstall
+  loop_control:
+    loop_var: directory
+
+# Remove common hadoop_datanodes directories
+- name: remove common hadoop_datanodes directories
+  file:
+    path: "{{ directory }}"
+    state: absent
+  with_items:
+    - /var/lib/jmxtrans/hadoop-basicjvm.json
+    - /var/lib/jmxtrans/hadoop-hdfs-datanode.json
+  when: (hadoop_reinstall) and (inventory_hostname in groups['hadoop_datanodes'])
+  loop_control:
+    loop_var: directory
+
+# Remove hadoop_namenodes data directories
+- name: remove hadoop_namenodes data directories
+  file:
+    path: "{{ directory }}"
+    state: absent
+  with_items:
+    - /usr/lib/hadoop/etc/hadoop/slaves
+    - /var/lib/jmxtrans/hadoop-hdfs-namenode.json
+    - /var/lib/jmxtrans/hadoop-basicjvm.json
+  when: (hadoop_reinstall) and (inventory_hostname in groups['hadoop_namenodes'])
+  loop_control:
+    loop_var: directory
+
+# Remove hdfs_HA_All_nodes from /etc/hosts entries on all hadoop nodes.
+- name: Delete hdfs_HA_All_nodes from /etc/hosts file with hadoop components
+  lineinfile:
+    dest: /etc/hosts
+    line: "{{hostvars[item].ansible_default_ipv4.address}}  {{hostvars[item].ansible_nodename}} {{hostvars[item].ansible_hostname}}"
+    state: absent
+  with_items: '{{ groups["hdfs_HA_All_nodes"] }}'
+  ignore_errors: yes
+  when: hadoop_reinstall

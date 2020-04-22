@@ -1,0 +1,62 @@
+---
+
+## Assuming all our application are either on SSL or without SSL
+- include: ../ovn_vars.yml ovn_vars_hosts=all:!cumulus_switch:!ovn_manager
+
+## This is for prometheus_exporter config used by prometheus to exporter communication
+- name: install nginx for prometheus exporters with ssl enabled
+  hosts: all:!cumulus_switch:!ovn_manager
+  roles:
+    - { role: nginx, when: nginx_enable_ssl == "true" }
+  vars:
+    - prometheus_nginx_ssl_certificate_path: "/etc/pki/tls/certs/{{ inventory_hostname }}.pem"
+    - prometheus_nginx_ssl_certificate_key_path: "/etc/pki/tls/private/{{ inventory_hostname }}.pem"
+    - prometheus_nginx_ssl_client_certificate: "/etc/pki/tls/certs/bundle.pem"
+    - nginx_sites:
+        prometheus_exporter:
+          - listen {{ nginx_exporter_port }} ssl
+          - server_name localhost
+          - ssl_certificate {{ prometheus_nginx_ssl_certificate_path }}
+          - ssl_certificate_key {{ prometheus_nginx_ssl_certificate_key_path }}
+          - ssl_client_certificate {{ prometheus_nginx_ssl_client_certificate }}
+          - ssl_verify_depth 2
+          - ssl_verify_client on
+
+- name: install nginx for prometheus exporters without ssl enabled
+  hosts: all:!cumulus_switch:!ovn_manager
+  roles:
+    - { role: nginx, when: nginx_enable_ssl == "false" }
+  vars:
+    - nginx_sites:
+        prometheus_exporter:
+          - listen {{ nginx_exporter_port }}
+          - server_name localhost
+
+### This is for default site config used by all our applications
+- name: install nginx default conf with ssl enabled
+  hosts: kibana:nomad_ui:fluentd_aggregator:prometheus:prometheus_alertmanager:grafana
+  roles:
+    - { role: nginx, when: nginx_enable_ssl == "true" }
+  vars:
+    - nginx_ssl_certificate_path: "/etc/pki/tls/certs/{{ inventory_hostname }}.pem"
+    - nginx_ssl_certificate_key_path: "/etc/pki/tls/private/{{ inventory_hostname }}.pem"
+    - nginx_ssl_client_certificate: "/etc/pki/tls/certs/bundle.pem"
+    - nginx_sites:
+        default:
+          - listen {{ nginx_default_port }} ssl
+          - server_name localhost
+          - ssl_certificate {{ nginx_ssl_certificate_path }}
+          - ssl_certificate_key {{ nginx_ssl_certificate_key_path }}
+          - ssl_client_certificate {{ nginx_ssl_client_certificate }}
+          - ssl_verify_depth 2
+          - ssl_verify_client on
+
+- name: install nginx default conf without ssl enabled
+  hosts: kibana:nomad_ui:fluentd_aggregator:prometheus:prometheus_alertmanager:grafana
+  roles:
+    - { role: nginx, when: nginx_enable_ssl == "false" }
+  vars:
+    - nginx_sites:
+        default:
+          - listen {{ nginx_default_port }} 
+          - server_name localhost

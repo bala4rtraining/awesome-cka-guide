@@ -1,0 +1,57 @@
+---
+- name: perform a synced flush, its a best effort operation ignore the failure
+  uri:
+    url: http://{{inventory_hostname}}:{{ elasticsearch_port }}/_flush/synced
+    method: POST
+    return_content: yes
+    status_code: 200
+  register: response
+  until: response.status == 200
+  retries: 5
+  delay: 5
+  ignore_errors: true
+  when: elasticsearch_ssl == "false"
+
+- name: Disable shard allocation 
+  uri:
+    url: http://{{inventory_hostname}}:{{ elasticsearch_port }}/_cluster/settings
+    method: PUT
+    body: '{ "transient": {  "cluster.routing.allocation.enable" : "none"} }'
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+  ignore_errors: true
+  when: elasticsearch_ssl == "false"
+
+- name: perform a synced flush, its a best effort operation ignore the failure
+  uri:
+    url: https://{{inventory_hostname}}:{{ elasticsearch_port }}/_flush/synced
+    method: POST
+    return_content: yes
+    status_code: 200
+    client_cert: "{{ elasticsearch_client_cert_path }}"
+    client_key: "{{ elasticsearch_client_key_path }}"
+    validate_certs: no
+  register: response
+  until: response.status == 200
+  retries: 5
+  delay: 5
+  ignore_errors: true
+  when: elasticsearch_ssl == "true"
+
+- name: Disable shard allocation 
+  uri:
+    url: https://{{inventory_hostname}}:{{ elasticsearch_port }}/_cluster/settings
+    method: PUT
+    body: '{ "transient": {  "cluster.routing.allocation.enable" : "none"} }'
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+    client_cert: "{{ elasticsearch_client_cert_path }}"
+    client_key: "{{ elasticsearch_client_key_path }}"
+    validate_certs: no
+  ignore_errors: true
+  when: elasticsearch_ssl == "true"
+
+- name: Stop elasticsearch service
+  service: name=elasticsearch state=stopped

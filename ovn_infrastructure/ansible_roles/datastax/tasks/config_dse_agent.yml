@@ -1,0 +1,18 @@
+---
+# Configure OpsAgent
+- name: <1-1 DSE_agent> embed configured address.yaml and copy to  {{ovn_datastax ['agent']['conf_foldr_path']}}
+  template:
+    src:   "address.yaml.j2"
+    dest:  "{{ ovn_datastax ['agent']['conf_foldr_path'] }}/address.yaml"
+    owner: "{{ ovn_datastax ['agent']['user'] }}"
+    group: "{{ ovn_datastax ['agent']['group'] }}"
+    mode: '0775'
+
+- name: <1b-1 DSE_agent> configure agent service and copy to {{ovn_datastax ['agent']['system_service_foldr']}}
+  template:
+    src: "datastax_agent.service.j2"
+    dest: "{{ovn_datastax ['agent']['system_service_foldr']}}/datastax_agent.service"
+    owner: "{{ovn_datastax['agent']['user']}}"
+    group: "{{ovn_datastax['agent']['group']}}"
+    mode: "0644"
+

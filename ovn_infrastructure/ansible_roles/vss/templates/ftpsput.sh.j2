@@ -1,0 +1,130 @@
+#!/bin/bash
+
+# Pushes generated VSS files back to MVS
+
+cd {{ vss_root_path }}/output
+USER='{{vss_mvs_username}}'
+PASSWORD='{{vss_mvs_password}}'
+lftp -p {{vss_mvs_ftps_port}} {{vss_mvs_hostname}}  << EOF 2> {{ vss_binaries_path }}/lftpOutput.txt
+user $USER $PASSWORD   
+pwd
+ cd ..
+ pwd
+ cd ..
+ pwd
+ 
+ SITE CYL;SITE PRI=25 SITE SEC=5
+
+{% if CLUSTER == 'dev' and DATACENTER == 'dc1' %}
+
+put -a VS_Crc.Vtrs.txt -o FBA.VSS.LINUX.REPORTS.CRCVTRS(+1)
+put -a VS_PCR.Vtrs.txt -o FBA.VSS.LINUX.REPORTS.pcrvtrs(+1)
+put -a VS_SRE.Vtrs.txt -o FBA.VSS.LINUX.REPORTS.srevtrs(+1)
+put -a VS_SSID.Vtrs.txt -o FBA.VSS.LINUX.REPORTS.ssidvtrs(+1)
+put -a VS_Crc.VsPlt.OCW.txt -o FBA.VSS.LINUX.REPORTS.crcvsplt.ocw(+1)
+put -a VS_Crc.VsPlt.OCE.txt -o FBA.VSS.LINUX.REPORTS.crcvsplt.oce(+1)
+put -a VS_SRE.VsPlt.OCE.txt -o FBA.VSS.LINUX.REPORTS.srevsplt.oce(+1)
+put -a VS_SSID.VsPlt.OCE.txt -o FBA.VSS.LINUX.REPORTS.ssvsplt.oce(+1)
+put -a VS_SSID.VsJes.txt -o FBA.VSS.LINUX.REPORTS.ssvsjes(+1)
+put -a VS_SSID.VsNdm.txt -o FBA.VSS.LINUX.REPORTS.ssvsndm(+1)
+put -a VS_SSID.VsVftso.txt -o FBA.VSS.LINUX.REPORTS.ssvftso(+1)
+
+put -a VS_DIST.VsJes.Sorted.txt -o "'FBA.VSS.LINUX.REPORTS.SORT.vsjes(+1)'"
+put -a VS_DIST.VsNdm.Sorted.txt -o "'FBA.VSS.LINUX.REPORTS.SORT.vsndm(+1)'"
+put -a VS_DIST.Platform.Sorted.txt -o "'FBA.VSS.LINUX.REPORTS.SORT.pltfm(+1)'"
+put -a VS_DIST.VsVtrs.Sorted.txt -o "'FBA.VSS.LINUX.REPORTS.SORT.vtrs(+1)'"
+
+{% elif CLUSTER == 'dev' and DATACENTER == 'dc2' %}
+
+put -a VS_Crc.Vtrs.txt -o FBA.VSS.LINUX2.REPORTS.CRCVTRS(+1)
+put -a VS_PCR.Vtrs.txt -o FBA.VSS.LINUX2.REPORTS.pcrvtrs(+1)
+put -a VS_SRE.Vtrs.txt -o FBA.VSS.LINUX2.REPORTS.srevtrs(+1)
+put -a VS_SSID.Vtrs.txt -o FBA.VSS.LINUX2.REPORTS.ssidvtrs(+1)
+put -a VS_Crc.VsPlt.OCW.txt -o FBA.VSS.LINUX2.REPORTS.crcvsplt.ocw(+1)
+put -a VS_Crc.VsPlt.OCE.txt -o FBA.VSS.LINUX2.REPORTS.crcvsplt.oce(+1)
+put -a VS_SRE.VsPlt.OCE.txt -o FBA.VSS.LINUX2.REPORTS.srevsplt.oce(+1)
+put -a VS_SSID.VsPlt.OCE.txt -o FBA.VSS.LINUX2.REPORTS.ssvsplt.oce(+1)
+put -a VS_SSID.VsJes.txt -o FBA.VSS.LINUX2.REPORTS.ssvsjes(+1)
+put -a VS_SSID.VsNdm.txt -o FBA.VSS.LINUX2.REPORTS.ssvsndm(+1)
+put -a VS_SSID.VsVftso.txt -o FBA.VSS.LINUX2.REPORTS.ssvftso(+1)
+
+put -a VS_DIST.VsJes.Sorted.txt -o "'FBA.VSS.LINUX2.REPORTS.SORT.vsjes(+1)'"
+put -a VS_DIST.VsNdm.Sorted.txt -o "'FBA.VSS.LINUX2.REPORTS.SORT.vsndm(+1)'"
+put -a VS_DIST.Platform.Sorted.txt -o "'FBA.VSS.LINUX2.REPORTS.SORT.pltfm(+1)'"
+put -a VS_DIST.VsVtrs.Sorted.txt -o "'FBA.VSS.LINUX2.REPORTS.SORT.vtrs(+1)'"
+
+{% elif CLUSTER == 'test' %}
+
+put -a VS_Crc.Vtrs.txt -o FBA.VSS.LINUX2.TESTING.CRCVTRS(+1)
+put -a VS_PCR.Vtrs.txt -o FBA.VSS.LINUX2.TESTING.pcrvtrs(+1)
+put -a VS_SRE.Vtrs.txt -o FBA.VSS.LINUX2.TESTING.srevtrs(+1)
+put -a VS_SSID.Vtrs.txt -o FBA.VSS.LINUX2.TESTING.ssidvtrs(+1)
+put -a VS_Crc.VsPlt.OCW.txt -o FBA.VSS.LINUX2.TESTING.crcvsplt.ocw(+1)
+put -a VS_Crc.VsPlt.OCE.txt -o FBA.VSS.LINUX2.TESTING.crcvsplt.oce(+1)
+put -a VS_SRE.VsPlt.OCE.txt -o FBA.VSS.LINUX2.TESTING.srevsplt.oce(+1)
+put -a VS_SSID.VsPlt.OCE.txt -o FBA.VSS.LINUX2.TESTING.ssvsplt.oce(+1)
+put -a VS_SSID.VsJes.txt -o FBA.VSS.LINUX2.TESTING.ssvsjes(+1)
+put -a VS_SSID.VsNdm.txt -o FBA.VSS.LINUX2.TESTING.ssvsndm(+1)
+put -a VS_SSID.VsVftso.txt -o FBA.VSS.LINUX2.TESTING.ssvftso(+1)
+
+put -a VS_DIST.VsJes.Sorted.txt -o "'FBA.VSS.LINUX2.TESTING.SORT.vsjes(+1)'"
+put -a VS_DIST.VsNdm.Sorted.txt -o "'FBA.VSS.LINUX2.TESTING.SORT.vsndm(+1)'"
+put -a VS_DIST.Platform.Sorted.txt -o "'FBA.VSS.LINUX2.TESTING.SORT.pltfm(+1)'"
+put -a VS_DIST.VsVtrs.Sorted.txt -o "'FBA.VSS.LINUX2.TESTING.SORT.vtrs(+1)'"
+
+{% elif CLUSTER == 'cert' and DATACENTER == 'dc1' %}
+
+put -a VS_DIST.VsJes.Sorted.txt -o "'PVSV.OVN.INDO.VSJES(+1)'"
+put -a VS_DIST.VsNdm.Sorted.txt -o "'PVSV.OVN.INDO.VSNDM(+1)'"
+put -a VS_DIST.Platform.Sorted.txt -o "'PVSV.OVN.INDO.VSPLT(+1)'"
+put -a VS_DIST.VsVtrs.Sorted.txt -o "'PVSV.OVN.INDO.VSVTRS(+1)'"
+
+{%  elif CLUSTER == 'indonesia' %}
+
+put -a VS_DIST.VsJes.Sorted.txt -o "'PVS.OVN.INDO.VSJES(+1)'"
+put -a VS_DIST.VsNdm.Sorted.txt -o "'PVS.OVN.INDO.VSNDM(+1)'"
+put -a VS_DIST.Platform.Sorted.txt -o "'PVS.OVN.INDO.VSPLT(+1)'"
+put -a VS_DIST.VsVtrs.Sorted.txt -o "'PVS.OVN.INDO.VSVTRS(+1)'"
+
+{% else %}
+
+{% endif %}
+
+
+ echo "Finished upload files"
+bye
+EOF
+
+#backup those report files after ftp transfer only on full success.
+
+FAILURES=$(wc -l {{ vss_binaries_path }}/lftpOutput.txt | head -n1 | awk '{print $1;}')
+
+if [ $(($FAILURES)) -eq 0 ]; then
+	tar cfzv {{ vss_root_path }}/archive/output/VS_Crc.Vtrs.`date +%Y%m%d_%H%M%S`.tar VS_Crc.Vtrs.txt
+#	tar cfzv {{ vss_root_path }}/archive/output/VS_PCR.Vtrs.`date +%Y%m%d_%H%M%S`.tar VS_PCR.VsVtrs.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_PCR.Vtrs.`date +%Y%m%d_%H%M%S`.tar VS_PCR.Vtrs.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_SRE.Vtrs.`date +%Y%m%d_%H%M%S`.tar VS_SRE.Vtrs.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_SSID.Vtrs.`date +%Y%m%d_%H%M%S`.tar VS_SSID.Vtrs.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_Crc.VsPlt.OCW.`date +%Y%m%d_%H%M%S`.tar VS_Crc.VsPlt.OCW.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_Crc.VsPlt.OCE.`date +%Y%m%d_%H%M%S`.tar VS_Crc.VsPlt.OCE.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_SRE.VsPlt.OCE.`date +%Y%m%d_%H%M%S`.tar VS_SRE.VsPlt.OCE.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_SSID.VsPlt.OCE.`date +%Y%m%d_%H%M%S`.tar VS_SSID.VsPlt.OCE.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_SSID.VsJes.`date +%Y%m%d_%H%M%S`.tar VS_SSID.VsJes.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_SSID.VsNdm.`date +%Y%m%d_%H%M%S`.tar VS_SSID.VsNdm.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_SSID.VsVftso.`date +%Y%m%d_%H%M%S`.tar VS_SSID.VsVftso.txt
+	
+	tar cfzv {{ vss_root_path }}/archive/output/VS_DIST.VsJes.Sorted.`date +%Y%m%d_%H%M%S`.tar VS_DIST.VsJes.Sorted.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_DIST.VsNdm.Sorted.`date +%Y%m%d_%H%M%S`.tar VS_DIST.VsNdm.Sorted.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_DIST.Platform.Sorted.`date +%Y%m%d_%H%M%S`.tar VS_DIST.Platform.Sorted.txt
+	tar cfzv {{ vss_root_path }}/archive/output/VS_DIST.VsVtrs.Sorted.`date +%Y%m%d_%H%M%S`.tar VS_DIST.VsVtrs.Sorted.txt
+	
+	echo "backed up files"
+else
+	echo "$FAILURES errors occured during lftp session. Will not archive until corrected."
+	cat {{ vss_binaries_path }}/lftpOutput.txt
+	exit 1
+fi
+
+rm {{ vss_binaries_path }}/lftpOutput.txt
+
+exit 0

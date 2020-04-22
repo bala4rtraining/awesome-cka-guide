@@ -1,0 +1,47 @@
+---
+#######
+# These are east-west firewall rules for the `DEV` (dev1, dev2) cluster only.
+#
+# The rules are the same as for the `firewall_east_west_rule.yml`
+# except the rules defined here only applies to this cluster.
+#
+# One should consider twice before adding rules here.
+# That is one should consult with others and add the rule to the global
+# `east_west_firewall_rules` before coming here to add the rule.
+#######
+cluster_east_west_firewall_rules:
+
+# Kerberos Server
+# Since `kerberos_server` is valid for Dev environment only, we can't add firewall rules to global ones. 
+# Once its available for other environments, we will move this rules to global firewall_east_west_rule.yml
+- src: "{{ groups.hdfs_HA_All_nodes }}"
+  dest: "{{ groups.kerberos_server }}"
+  ports:
+  - { port: "{{ kerberos_kdc_port }}", protocol: "udp" }
+  - { port: "{{ kerberos_kdc_port }}", protocol: "tcp" }
+  - { port: "{{ kerberos_kadmind_port }}", protocol: "udp" }
+  - { port: "{{ kerberos_kadmind_port }}", protocol: "tcp" }
+
+- src: "{{ groups.ovn_mediator_servers }}"
+  dest: "{{ groups.ovn_switch_servers }}"
+  ports:
+  - { port: "{{ envoy_http_ingress_port }}", protocol: "tcp" }
+  - { port: "{{ envoy_http_ingress_port }}", protocol: "tcp" }
+
+- src: "{{ groups.ovn_switch_servers }}"
+  dest: "{{ groups.ovn_mediator_servers }}"
+  ports:
+  - { port: "{{ envoy_http_ingress_port }}", protocol: "tcp" }
+  - { port: "{{ envoy_http_ingress_port }}", protocol: "tcp" }
+
+- src: "{{ groups.ovn_switch_servers }}"
+  dest: "{{ groups.ovn_switch_servers }}"
+  ports:
+  - { port: "{{ envoy_http_ingress_port }}", protocol: "tcp" }
+  - { port: "{{ envoy_http_ingress_port }}", protocol: "tcp" }
+
+- src: "{{ groups.ovn_mediator_servers }}"
+  dest: "{{ groups.ovn_mediator_servers }}"
+  ports:
+  - { port: "{{ envoy_http_ingress_port }}", protocol: "tcp" }
+  - { port: "{{ envoy_http_ingress_port }}", protocol: "tcp" }

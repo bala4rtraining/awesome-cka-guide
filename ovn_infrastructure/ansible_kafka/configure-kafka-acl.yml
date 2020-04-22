@@ -1,0 +1,17 @@
+---
+# This playbook will confiure kafka ACL .
+# This assumes SSL and ACL  has been enabled and working fine
+# in KAFKA cluster
+
+- include: ../ovn_vars.yml ovn_vars_hosts=kafka
+
+- name: gather zk facts about hosts outside of this play
+  hosts: zookeeper
+  gather_facts: true
+
+- name: confgiure acl in the kafka cluster 
+  hosts: kafka
+  serial: 1
+  gather_facts: true
+  roles:
+    - { role: kafka, dispatch: ['configure-kafka-acls']}

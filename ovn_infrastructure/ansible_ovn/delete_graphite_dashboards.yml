@@ -1,0 +1,8 @@
+---
+# This playbook allows us to delete graphite dashboards using the grafana api.
+- include: ../ovn_vars.yml ovn_vars_hosts=grafana
+
+- name: Delete Graphite dashboard
+  hosts: grafana
+  roles:
+    - { role: grafana, dispatch: ['delete_graphite_dashboards']}

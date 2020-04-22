@@ -1,0 +1,41 @@
+#{# Python script to update threshold for OVN Services in dashboard json files fetch from artifactory #}
+
+import json
+import sys
+import subprocess
+
+dashboard_file_name = 'OVN_Summary.json'
+found =[0,0,0,0,0,0,0,0,0,0]
+lookupval=['Mediator','Switch','Nomad-Server','Kafka-Server','Riak','Zookeeper','ElasticSearch','Prometheus','Hadoop Datanode','Hadoop NameNode']
+threshold=['1,{{ mediator_healthy_instances }}','1,{{ switch_healthy_instances }}','1,{{ nomad_healthy_instances }}',\
+'1,{{ kafka_healthy_instances }}','1,{{ riak_healthy_instances }}','1,{{ zookeeper_healthy_instances }}',\
+'1,{{ elastic_healthy_instances }}','1,{{ prometheus_healthy_instances }}','1,{{ hadoop_datanode_healthy_instances }}','1,{{ hadoop_namenode_healthy_instances }}']
+
+dashboard_json_object = json.load(open('{{grafana_dashboard_json_path}}/{{grafana_dashboard_archive_base}}/'+dashboard_file_name))
+
+def update_singlestat_threshold(dashboard_json_object,lookupvalue,setthreshold,index):
+		if type(dashboard_json_object)==(dict):
+				for key in dashboard_json_object.keys():
+						if dashboard_json_object[key] == lookupvalue:
+								dashboard_json_object['thresholds']=setthreshold
+								found[index] = 1
+								return 1
+						else:
+								update_singlestat_threshold(dashboard_json_object[key],lookupvalue,setthreshold,index)
+
+		elif type(dashboard_json_object)==(list):
+						for dlist in dashboard_json_object:
+								update_singlestat_threshold(dlist,lookupvalue,setthreshold,index)
+
+		else:
+				return
+
+for index in range(len(lookupval)):
+		update_singlestat_threshold(dashboard_json_object,lookupval[index],threshold[index],index)
+		if found[index]==0:
+				print "Failed to update threshold for OVN Service: %s" %lookupval[index]
+				sys.exit("Update failure")
+		else:
+			print "Update threshold successful for OVN Service %s with threshold %s" %(lookupval[index],threshold[index])	
+
+json.dump(dashboard_json_object, open('{{grafana_dashboard_json_path}}/{{grafana_dashboard_archive_base}}/'+dashboard_file_name, 'wb'))

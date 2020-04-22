@@ -1,0 +1,5 @@
+---
+####
+# clear rules
+####
+east_west_firewall_rules: []

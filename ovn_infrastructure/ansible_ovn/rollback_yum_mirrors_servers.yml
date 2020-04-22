@@ -1,0 +1,14 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts | default('yum_mirror_servers') }}"
+
+# rollback yum mirror servers
+- name: rollback yum mirror servers
+  hosts: "{{ target_hosts | default('yum_mirror_servers') }}"
+  roles:
+    - { role: yum_mirrors, dispatch: ['rollback_servers']}
+
+# validate yum mirror servers
+- name: validate yum mirror servers
+  hosts: "{{ target_hosts | default('yum_mirror_servers') }}"
+  roles:
+    - { role: yum_mirrors, dispatch: ['validate_servers']}

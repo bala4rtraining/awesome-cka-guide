@@ -1,0 +1,66 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  # quick shorthand for defining groups of machines and some of their vm provider customizations
+  MACHINES = [{
+    :group => "ovn_riak_servers",
+    :instances => 2,
+    :box => "correcthorse/Centos-7.1",
+    :memory => 1024,
+    :cpus => 1
+  }]
+
+  # container for building an object in the shape that the ansible provisioner expects for machine groups
+  inventory_groups = { "vagrant_all" => [] }
+
+  # until we have keys specifically for dev VMs, this makes sure that the same insecure key is loaded
+  # onto every VM provisioned by this Vagrantfile
+  config.ssh.insert_key = false
+  # go through machines collection and create named configs for each machine instance and build up
+  # the inventory_groups collection
+  MACHINES.each do |opts|
+    inventory_groups[opts[:group]] = []
+
+    # for num instances in a group
+    (1..opts[:instances]).each do |i|
+      name = opts[:group]+"-"+i.to_s
+
+      inventory_groups[opts[:group]].push(name)
+      inventory_groups["vagrant_all"].push(name)
+
+      config.vm.define name do |instance|
+        instance.vm.hostname = "riak" + i.to_s + ".vagrant.dev"
+        instance.vm.box = opts[:box]
+        instance.vm.box_url = opts[:box_url]
+        instance.vm.network "private_network", type:"dhcp"
+
+        if i == 1
+          instance.vm.network "forwarded_port", guest: 5601, host: 5601
+        end
+
+        instance.vm.provider "virtualbox" do |vb|
+          vb.name = name
+          vb.memory = opts[:memory]
+          vb.cpus = opts[:cpus]
+        end
+
+        # defer provisioning until the very last VM is setup so ansible handles host matching.
+        if opts == MACHINES.last && i == opts[:instances]
+          instance.vm.provision "ansible" do |ansible|
+            ansible.playbook = "provision.yml"
+            ansible.verbose = "v"
+            ansible.groups = inventory_groups
+            ansible.limit = "all"
+            ansible.extra_vars = {
+               default_iface: "enp0s8" # the default nic for the private network in CentOS 7
+            }
+          end
+        end
+      end
+    end
+  end
+end

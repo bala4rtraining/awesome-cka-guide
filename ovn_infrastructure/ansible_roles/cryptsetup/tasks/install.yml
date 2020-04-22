@@ -1,0 +1,59 @@
+---
+# Tasks to install, configure and prepare dm_crypt encrypted filesystem and directories
+
+- name: Add the OS specific varaibles
+  include_vars: '{{ ansible_os_family }}.yml'
+
+- name: Install cryptsetup
+  include: 'osplatform/{{ ansible_os_family }}_install.yml'
+
+- name: Create mount directory for cryptsetup device
+  file:
+    path: "{{ cryptmntdir }}"
+    state: directory
+    mode: 0755
+
+- name: Copy sdlayout file
+  template:
+    src: sdlayout.j2
+    dest: /tmp/sdlayout
+    owner: root
+    group: root
+    mode: 0644
+    
+- name: Copy ovn_cryptsetup.sh shell script
+  template:
+    src: ovn_cryptsetup.sh.j2
+    dest: /tmp/ovn_cryptsetup.sh
+    owner: root
+    group: root
+    mode: 0744
+
+- name: Check to see if cryptdevice is present
+  command: cryptsetup status "{{ cryptlvname }}"
+  register: result
+  ignore_errors: yes # ignore error next task will be executed on failure 
+    
+- name: Execute ovn_cryptsetup.sh shell script
+  command: /tmp/ovn_cryptsetup.sh
+  when: result|failed
+
+- name: Tighten up file permission of keyfile
+  file:
+    path: "{{ cryptkeyfiledirname }}"
+    owner: root
+    group: root
+    mode: 0640
+  
+- name: Copy crypttab file
+  template:
+    src: crypttab.j2
+    dest: /etc/crypttab
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Append to fstab file
+  lineinfile:
+    dest: /etc/fstab
+    line: "/dev/mapper/{{ cryptlvname }}      {{ cryptmntdir }}               {{ cryptfstype }}    defaults  0  2"

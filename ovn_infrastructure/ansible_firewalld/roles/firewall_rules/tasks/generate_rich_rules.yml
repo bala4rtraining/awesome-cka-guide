@@ -1,0 +1,48 @@
+######
+# This script generates firewalld public.xml zone rules file.
+# 
+# 1. The first pass is performed by `generate_src_port_by_dest_ip.yml`
+# 2. The second pass is performed by `generate_uniq_src_port_by_dest_ip.yml`
+# 3. The third pass produce the firewalld rich rules ready to be deployed to the target destination.
+######
+
+- name: Reconstitute `_firewall_rules_var`
+  include_vars:
+    file: "{{ _firewall_rules_vars_file }}"
+
+- file:
+    state: absent
+    dest: "{{ _workdir }}"
+  delegate_to: 127.0.0.1
+
+- file:
+    state: directory
+    dest: "{{ _workdir }}"
+  delegate_to: 127.0.0.1
+
+- name: generate firewalld public.xml zone
+  copy:
+    content: |
+      {{ default_public_firewall_rule }}
+      {% if dest.rules is iterable %}
+      {% for rule in dest.rules | sort(attribute='port') | sort(attribute='src') %}
+      firewall-cmd --permanent --zone=public 
+      {%- if rule.state == 'enabled' %}
+       --add-rich-rule='
+      {%- else %}
+       --remove-rich-rule='
+      {%- endif -%}
+      rule family="ipv4"
+      {%- if rule.src != '' %}
+       source address="{{ rule.src }}"
+      {%- endif %}
+       port port="{{ rule.port }}" protocol="{{ rule.protocol }}" log prefix="{{ default_log_prefix }}" level="{{ default_log_level }}" limit value="{{ default_log_limit }}" {{ rule.action }}'
+      {% endfor %}
+      {% endif %}
+    dest: "{{ _workdir }}/{{ dest.ip }}.sh"
+    backup: yes
+  with_items:
+    - "{{ _firewall_rules_var }}"
+  loop_control:
+    loop_var: dest
+  delegate_to: 127.0.0.1

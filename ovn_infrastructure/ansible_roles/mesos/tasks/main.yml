@@ -1,0 +1,11 @@
+---
+- include_vars: yum.repos.yml
+  when: ansible_os_family == "RedHat"
+
+- include: yum.repos.yml
+  when: ansible_os_family == "RedHat"
+
+- include: mesos.yml
+
+- include: chronos.yml
+  when: chronos

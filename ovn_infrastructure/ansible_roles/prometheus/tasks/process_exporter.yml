@@ -1,0 +1,82 @@
+---
+- name: create Prometheus group
+  group: name={{ prometheus_group }}  state=present
+
+- name: create Prometheus user
+  user:
+    name: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    createhome: no
+    comment: "Prometheus User"
+    state: present
+
+- name: create process_exporter install directory {{ exporter_install_dir }}
+  file:
+    dest: "{{ dir_val }}"
+    state: directory
+    recurse: yes
+    mode: "0750"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  with_items:
+    - "{{ exporter_install_dir }}"
+    - "{{ process_exporter_config_dir }}"
+  loop_control:
+    loop_var: dir_val
+
+- name: check if {{ process_exporter_archive_base }} is already provisioned
+  stat:
+    path: "{{ exporter_install_dir }}/{{ process_exporter_archive_base }}"
+  register: process_exporter_provision_status
+
+- name: deploy process_exporter package
+  unarchive:
+    src: "{{ process_exporter_archive }}"
+    dest: "{{ exporter_install_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    copy: no
+  when: process_exporter_provision_status.stat.exists == false
+
+- name: link to process_exporter directory {{ process_exporter_base_dir }}
+  file:
+    src: "{{ process_exporter_archive_base }}"
+    dest: "{{ process_exporter_base_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+
+- name: deploy process_exporter mapping config
+  template:
+    src: "process_mapping.yml.j2"
+    dest: "{{ process_exporter_config_dir }}/process_mapping.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+  register: process_config_result
+
+- name: deploy process_exporter service
+  template:
+    src: "process_exporter.service.j2"
+    dest: "/etc/systemd/system/process_exporter.service"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+  register: process_exporter_service_result
+
+- name: reload system service configs.
+  shell: systemctl daemon-reload
+  when: process_exporter_service_result.changed == true
+
+- name: enable and start process_exporter package.
+  service:
+    name: process_exporter
+    state: restarted
+  when: process_exporter_service_result.changed == true or process_config_result.changed == true
+
+- name: ensure process_exporter is started and enabled to start at boot.
+  service:
+    name: process_exporter
+    state: started
+    enabled: yes

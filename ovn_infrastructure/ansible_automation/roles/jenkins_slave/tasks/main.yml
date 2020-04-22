@@ -1,0 +1,23 @@
+- name: add '{{ jenkins_user }}' to docker group
+  user:
+    name: '{{ jenkins_user }}'
+    groups: docker
+    append: yes
+    state: present
+
+- name: install '{{ jenkins_user }}' ssh public key
+  authorized_key:
+    user: '{{ jenkins_user }}'
+    key: '{{ item.pubkey }}'
+    state: present
+  with_items:
+    - '{{ jenkins_ssh_keys }}'
+
+- name: create '{{ jenkins_home }}' directory
+  file:
+    path: '{{ jenkins_home }}'
+    owner: '{{ jenkins_user }}'
+    group: '{{ jenkins_user }}'
+    mode: 'u=rwx,g=rx'
+    state: directory
+    

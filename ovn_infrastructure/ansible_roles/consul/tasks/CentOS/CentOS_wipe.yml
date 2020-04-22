@@ -1,0 +1,7 @@
+---
+# tasks file for consul (CentOS 7 specific)
+
+- name: Remove Consul systemd configuration
+  file: >
+    path={{ consul_systemd_dir }}/{{ consul_service_name }}.service
+    state=absent

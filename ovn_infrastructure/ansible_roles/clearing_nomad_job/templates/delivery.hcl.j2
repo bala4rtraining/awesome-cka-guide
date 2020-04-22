@@ -1,0 +1,35 @@
+
+job "delivery_job" {
+  
+  datacenters = ["{{ vic_identity | regex_replace(' $', '') }}"]
+  type = "{{hcl_job_type}}"
+
+  constraint {
+    attribute = "${node.class}"
+    value     = "cpt"
+  }
+  
+  periodic {
+    cron             = "{{ nomad_cron_string }}"
+    prohibit_overlap = true
+  }
+  
+  group "g1" {
+     task "t1" {
+        driver = "raw_exec"
+        resources {
+           memory = 512
+        }
+        config {
+          command = "{{hcl_cmd}}"
+          args = ["{{ hcl_opt }}","{{hcl_arg}}"]
+        }
+        user = "{{ ovn_clearing_user }}"
+    }
+     restart {
+          attempts = 3
+          delay = "10s"
+          mode = "fail"
+    }
+  }
+}

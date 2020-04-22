@@ -1,0 +1,22 @@
+---
+#######
+# These are north-south firewall rules for the `PERF` cluster only.
+#
+# The rules are the same as for the `firewall_north_south_rule.yml`
+# except the rules defined here only applies to this cluster.
+#
+# One should consider twice before adding rules here.
+# That is one should consult with others and add the rule to the global
+# `north_south_firewall_rules` before coming here to add the rule.
+#######
+cluster_north_south_firewall_rules:
+
+#
+# This is temporary for O&I to test spacewalk proxy for
+# remote cluster patch service.
+- src: "10.207.189.70"
+  dest: "10.207.189.39"
+  ports:
+  - port: "8088"
+  - port: "443"
+  

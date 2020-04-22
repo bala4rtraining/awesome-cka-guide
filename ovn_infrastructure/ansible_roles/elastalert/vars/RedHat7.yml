@@ -1,0 +1,57 @@
+# vars file for elastalert  (only used for Redhat-7)
+
+elastalert_pkgs:
+  - sendmail
+
+# these were downloaded at the EPEL7 level
+elastalert_rpms:
+  - python-backports-1.0-8.el7.x86_64.rpm
+  - python-backports-ssl_match_hostname-3.4.0.2-4.el7.noarch.rpm
+  - python-devel-2.7.5-34.el7.x86_64.rpm
+  - python-2.7.5-34.el7.x86_64.rpm
+  - python-libs-2.7.5-34.el7.x86_64.rpm
+  - python-setuptools-0.9.8-4.el7.noarch.rpm
+  - python-pip-7.1.0-1.el7.noarch.rpm
+
+elastalert_pypi:
+#PRE-REQs first
+  - setuptools-21.0.0.tar.gz
+  - six-1.10.0.tar.gz
+  - jmespath-0.9.0.tar.gz
+  - python-dateutil-2.4.2.tar.gz
+  - requests-2.10.0.tar.gz
+  - vcversioner-2.14.0.0.tar.gz
+  - docutils-0.12.tar.gz
+  - oauthlib-1.0.3.tar.gz
+  - requests-oauthlib-0.6.0.tar.gz
+  - pbr-1.8.0.tar.gz
+  - tlslite-0.4.9.tar.gz
+#
+  - argparse-1.4.0.tar.gz
+  - aws-requests-auth-0.2.1.tar.gz
+  - blist-1.3.6.tar.gz
+  - boto-2.39.0.tar.gz
+  - botocore-1.3.23.tar.gz
+  - configparser-3.5.0b2.tar.gz
+  - croniter-0.3.12.tar.gz
+  - funcsigs-0.4.tar.gz
+  - functools32-3.2.3-2.tar.gz
+  - jira-0.32.tar.gz
+  - jsonschema-2.5.1.tar.gz
+  - mock-1.3.0.tar.gz
+  - ordereddict-1.1.tar.gz
+  - py-1.4.31.tar.gz
+  - PyStaticConfiguration-0.9.0.tar.gz
+  - pytest-2.8.7.tar.gz
+  - PyYAML-3.11.tar.gz
+  - requests-toolbelt-0.5.1.tar.gz
+  - simplejson-3.8.1.tar.gz
+  - urllib3-1.14.tar.gz
+  - elasticsearch-2.3.0.tar.gz
+  - elastalert-0.0.80beta.tar.gz
+
+service_template:
+  - src: elastalert.service.j2
+    dest: /usr/lib/systemd/system/elastalert.service
+    mode: "0644"
+

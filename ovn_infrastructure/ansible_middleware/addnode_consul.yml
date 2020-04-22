@@ -1,0 +1,7 @@
+---
+- include: mware_vars.yml ../ovn_vars.yml
+- name: Install and configure Consul node(s)
+  hosts: "{{ target_hosts | default('consul') }}"
+  gather_facts: yes
+  roles:
+    - { role: consul, dispatch: ['addnode'] }

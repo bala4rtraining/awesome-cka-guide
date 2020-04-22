@@ -1,0 +1,6 @@
+---
+# Bridge EA
+ovn_cas_admin: 'ovn_prod_cas_admin'
+ovn_cas_viewer: 'ovn_prod_cas_viewer'
+ovn_cas_editor: 'ovn_prod_cas_editor'
+dc_name: 'dci'

@@ -1,0 +1,66 @@
+# Removing unwanted configurations
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+
+- name: remove unwanted configs
+  file:
+    path: "{{nginx_conf_dir}}/{{ item[1] }}.conf"
+    state: absent
+  with_items: "{{ nginx_remove_configs }}"
+  notify:
+    - reload nginx
+
+# Removing unwanted sites
+- name: remove unwanted sites
+  file:
+    path: "{{nginx_conf_dir}}/{{ item[1] }}.conf"
+    state: absent
+  with_items: "{{ nginx_remove_sites }}"
+  notify:
+    - reload nginx
+
+# Deploying site configs
+- name: deploy site configs
+  template:
+    src: "{{ item.value.template | default('site.conf.j2') }}"
+    dest: "{{ nginx_conf_dir }}/{{ item.key }}.conf"
+  with_dict: "{{ nginx_sites }}"
+  when: item.key not in nginx_remove_sites
+  notify:
+    - reload nginx
+
+# Creating config dir for individual sites
+- name: create site configs dir
+  file:
+    path: "{{ nginx_conf_dir }}/{{ item.key }}"
+    state: directory
+  with_dict: "{{ nginx_sites }}"
+  when: item.key not in nginx_remove_sites
+  notify:
+    - reload nginx
+
+# Deploying site location configs
+- name: deploy site location configs
+  template:
+    src: location.conf.j2
+    dest: "{{ nginx_conf_dir }}/{{ item.0.site }}/{{ item.1.name }}.conf"
+  with_subelements:
+    - "{{ nginx_locations }}"
+    - locations
+  notify:
+    - reload nginx
+
+# Creating nginx configs
+- name: create nginx configs
+  template:
+    src: config.conf.j2
+    dest: "{{ nginx_conf_dir }}/{{ item.key }}.conf"
+  with_dict: "{{ nginx_configs }}"
+  notify:
+    - reload nginx

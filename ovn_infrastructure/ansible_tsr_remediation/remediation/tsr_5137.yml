@@ -1,0 +1,34 @@
+---
+
+- name: backup user home directory which have group and world writeable permissions 
+  shell: |
+      while IFS=: read _ _ _ _ _ home _; do
+      [[ -d $home && ! -L "$home" ]] || continue # skip directories that do not actually exist
+      find "$home" -maxdepth 0 -perm -go+w
+      done </etc/passwd | tee /tmp/group-world-writable-dirs
+
+- name: backup user home directory which have group writeable permissions 
+  shell: |
+      while IFS=: read _ _ _ _ _ home _; do
+      [[ -d $home && ! -L "$home" ]] || continue # skip directories that do not actually exist
+      find "$home" -maxdepth 0 -perm -g+w
+      done </etc/passwd | tee /tmp/group-writable-dirs
+
+- name: backup user home directory which have world writeable permissions 
+  shell: |
+      while IFS=: read _ _ _ _ _ home _; do
+      [[ -d $home && ! -L "$home" ]] || continue # skip directories that do not actually exist
+      find "$home" -maxdepth 0 -perm -o+w
+      done </etc/passwd | tee /tmp/world-writable-dirs
+
+- name: remove write access for groups and world
+  shell: |
+        for homedir in $(cat /etc/passwd | awk 'BEGIN{FS=":"}{print $6}'); 
+        do
+            if [[ "$homedir" == "/var/spool/mail" || "$homedir" == "/root" || "$homedir" == "/" ]] ; then
+                  continue;
+            fi
+            if [[ -d "$homedir" && ! -L "$homedir" ]]; then
+            chmod go-w $homedir
+            fi
+        done

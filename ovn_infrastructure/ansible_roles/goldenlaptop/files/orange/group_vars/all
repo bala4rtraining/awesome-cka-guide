@@ -1,0 +1,158 @@
+#
+# This file defines parameters for the orange servers
+#
+# Each orange server also contains on-site MAC addresses assignment
+# for regular OVN nodes
+#
+
+orange_ks_dir: pxe-install-source-ks
+orange_ks_file: orange-install-ks.cfg
+orange_install_src_dir: pxe-install-source
+
+# For Vbox VM:
+#subnet_int_name: "enp0s8"	
+
+
+# For kvm VM:
+#subnet_int_name: "eth2"	
+
+# For DL360: first 10G port:
+subnet_int_name: "eno49"	
+
+
+  
+#
+# Servers
+#
+servers:
+
+  ovn-orange-1:
+
+     # TBD: remove the following 2 lines
+     secureboot_grub_file: grub.cfg.rack1
+     secureboot_grub_file_sig: grub.cfg.rack1.sig
+     
+     subnet: "{{ ip_subnet }}.32"
+     subnet_mask: "255.255.255.224"
+     subnet_mask_len: "27"
+     subnet_router: "{{ ip_subnet }}.33" 
+     subnet_int_ip: "{{ ip_subnet }}.34"
+     subnet_range: "{{ ip_subnet }}.35 {{ ip_subnet }}.44"
+     ovn_node_prefix: "ovn-node-rack1-"
+     
+     # TBD: DC name in domain name
+     dns_zone_forward: "{{ dns_domain_rack1_fwd }}"
+     dns_zone_forward_ns: "dnsserver1"
+     dns_zone_reverse: "rack1.ovn.reverse"
+     dns_allow_query_domains: ["{{ ip_subnet }}.32/27", "{{ ip_subnet }}.64/27", "{{ ip_subnet }}.96/27"]
+     dns_allow_transfer_domains: [ "{{ ip_subnet }}.66", "{{ ip_subnet }}.98"]
+
+     dns_zone_file_forward: "db.{{ dns_domain_rack1_fwd }}"
+     dns_zone_file_reverse: "db.{{ ip_subnet }}.32"
+
+
+     slave_zones:
+          forward: 
+              rack2.ovn:
+                  file: "bak.{{ dns_domain_rack2_fwd }}"
+                  master: "{{ ip_subnet }}.66"
+              rack3.ovn:
+                  file: "bak.{{ dns_domain_rack3_fwd }}"
+                  master: "{{ ip_subnet }}.98"
+
+          reverse: 
+              rack2.ovn.reverse:
+                  file: "bak.{{ ip_subnet }}.64"
+                  master: "{{ ip_subnet }}.66"
+              rack3.ovn.reverse:
+                  file: "bak.{{ ip_subnet }}.96"
+                  master: "{{ ip_subnet }}.98"
+
+
+  ovn-orange-2:
+
+     #TBD
+     secureboot_grub_file: grub.cfg.rack2
+     secureboot_grub_file_sig: grub.cfg.rack2.sig
+
+     subnet: "{{ ip_subnet }}.64"
+     subnet_mask: "255.255.255.224"
+     subnet_mask_len: "27"
+     subnet_router: "{{ ip_subnet }}.65" 
+     subnet_int_ip: "{{ ip_subnet }}.66"
+     subnet_range: "{{ ip_subnet }}.67 {{ ip_subnet }}.76"
+     ovn_node_prefix: "ovn-node-rack2-"
+
+     dns_zone_forward: "{{ dns_domain_rack2_fwd }}"
+     dns_zone_forward_ns: "dnsserver2"
+     dns_zone_reverse: "rack2.ovn.reverse"
+     dns_allow_query_domains: ["{{ ip_subnet }}.32/27", "{{ ip_subnet }}.64/27", "{{ ip_subnet }}.96/27"]
+     dns_allow_transfer_domains: [ "{{ ip_subnet }}.34", "{{ ip_subnet }}.98"]
+
+     dns_zone_file_forward: "db.{{ dns_domain_rack2_fwd }}"
+     dns_zone_file_reverse: "db.{{ ip_subnet }}.64"
+
+
+     slave_zones:
+          forward: 
+              rack1.ovn:
+                  file: "bak.{{ dns_domain_rack1_fwd }}"
+                  master: "{{ ip_subnet }}.34"
+              rack3.ovn:
+                  file: "bak.{{ dns_domain_rack3_fwd }}"
+                  master: "{{ ip_subnet }}.98"
+
+          reverse: 
+              rack1.ovn.reverse:
+                  file: "bak.{{ ip_subnet }}.32"
+                  master: "{{ ip_subnet }}.34"
+              rack3.ovn.reverse:
+                  file: "bak.{{ ip_subnet }}.96"
+                  master: "{{ ip_subnet }}.98"
+
+
+
+
+
+  ovn-orange-3:
+     #TBD
+     secureboot_grub_file: grub.cfg.rack3
+     secureboot_grub_file_sig: grub.cfg.rack3.sig
+
+     subnet: "{{ ip_subnet }}.96"
+     subnet_mask: "255.255.255.224"
+     subnet_mask_len: "27"
+     subnet_router: "{{ ip_subnet }}.97" 
+     subnet_int_ip: "{{ ip_subnet }}.98"
+     subnet_range: "{{ ip_subnet }}.99 {{ ip_subnet }}.108"
+     ovn_node_prefix: "ovn-node-rack3-"
+
+     dns_zone_forward: "{{ dns_domain_rack3_fwd }}"
+     dns_zone_forward_ns: "dnsserver3"
+     dns_zone_reverse: "rack3.ovn.reverse"
+     dns_allow_query_domains: ["{{ ip_subnet }}.32/27", "{{ ip_subnet }}.64/27", "{{ ip_subnet }}.96/27"]
+     dns_allow_transfer_domains: [ "{{ ip_subnet }}.34", "{{ ip_subnet }}.66"]
+
+     dns_zone_file_forward: "db.{{ dns_domain_rack3_fwd }}"
+     dns_zone_file_reverse: "db.{{ ip_subnet }}.96"
+
+
+     slave_zones:
+          forward: 
+              rack1.ovn:
+                  file: "bak.{{ dns_domain_rack1_fwd }}"
+                  master: "{{ ip_subnet }}.34"
+              rack2.ovn:
+                  file: "bak.{{ dns_domain_rack2_fwd }}"
+                  master: "{{ ip_subnet }}.66"
+
+          reverse: 
+              rack1.ovn.reverse:
+                  file: "bak.{{ ip_subnet }}.32"
+                  master: "{{ ip_subnet }}.34"
+              rack2.ovn.reverse:
+                  file: "bak.{{ ip_subnet }}.64"
+                  master: "{{ ip_subnet }}.66"
+
+
+

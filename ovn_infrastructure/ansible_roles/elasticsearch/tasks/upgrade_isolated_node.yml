@@ -1,0 +1,47 @@
+---
+- name: uninstall elasticsearch version "{{ elasticsearch_oldversion }}"
+  yum: name=elasticsearch-{{ elasticsearch_oldversion }} state=absent
+
+- name: install rpms
+  yum: name={{download_path_url}}/{{item}}.rpm state=present
+  with_items: "{{elasticsearch_rpms}}"
+
+- name: update the service file (e.g. add local patches on top of the RPM installed one)
+  template: src={{item.src}} dest={{item.dest}} mode={{item.mode}}
+  with_items: "{{service_templates}}"
+
+- name: ensure data directory exists and is writable
+  file: path={{ elasticsearch_datadir }} owner=elasticsearch group=elasticsearch state=directory recurse=yes
+
+- name: reload systemd daemon as necessary
+  command: systemctl daemon-reload
+  when: systemd_daemon_reload
+
+- name: apply elasticsearch config templates
+  template: src=elasticsearch_isolated_node.yml.j2 dest=/etc/elasticsearch/elasticsearch.yml
+
+- name: copy log4j properties file
+  template: src=log4j2.properties.j2 dest=/etc/elasticsearch/log4j2.properties
+
+- name: copy jvm.options properties file
+  template: src=jvm.options.j2 dest=/etc/elasticsearch/jvm.options
+
+- name: ensure config directory exists and is writable
+  file: path={{ elasticsearch_config_dir }} owner=elasticsearch group=elasticsearch state=directory recurse=yes
+
+- name: set vm.max_map_count higher than the 65530 linux default
+  command: sysctl -w vm.max_map_count=262144
+
+- name: change permission of /var/log/elasticsearch directory, upgrade causes permission to be restricted to 750, permission 755 is required for td-agent to access elasticsearch log directory
+  file:
+    path: "{{ elasticsearch_log_dir }}"
+    mode: 0755
+    group: "{{ elasticsearch_user }}"
+    owner: "{{ elasticsearch_group }}"
+    recurse: yes
+
+- name: Start elasticsearch service
+  service: name=elasticsearch state=started
+
+
+

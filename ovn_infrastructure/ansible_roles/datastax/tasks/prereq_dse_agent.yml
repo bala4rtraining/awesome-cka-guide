@@ -1,0 +1,9 @@
+---
+#-- download folder to download tars for the agent
+#- name: create download directory datastax Opscenter= "{{ovn_datastax['agent']['download_foldr']}}"
+#  file:
+#    path: "{{ovn_datastax['agent']['download_foldr']}}"
+#    state: directory
+#    owner: "{{ ovn_datastax['agent']['user'] }}"
+#    group: "{{ ovn_datastax['agent']['group'] }}"
+#    mode: "0755"

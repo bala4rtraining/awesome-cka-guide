@@ -1,0 +1,10 @@
+---
+grafana_reverse_proxy_enabled: true
+grafana_reverse_proxy_url: "https://sl73ovnmgp01.visa.com:8444/grafana-khe/"
+grafana_reverse_proxy_path: "grafana-khe"
+grafana_admin_user: "ovnadmin"
+
+graphite_url: "http://10.16.200.38:5603"
+graphite_beacon_env: 'PRODOCE'
+
+prometheus_datacenter_id: "KHE"

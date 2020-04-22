@@ -1,0 +1,35 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: version of release 
+  shell: ln -nsf $(. <(grep ^REL_VSN /opt/{{name}}/bin/{{service_name}}); echo $REL_VSN) /opt/{{name}}/releases/0.1.0-local.dev
+  args:
+    executable: /bin/bash
+
+- name: sys config for {{name}}
+  template: >
+    src={{service_name}}.config.j2
+    dest=/opt/{{name}}/releases/0.1.0-local.dev/sys.config
+    owner={{name}}
+    group={{name}}
+  notify:
+    - start epmd
+    - enable service
+    - restart service
+
+- name: vm args for {{name}}
+  template: >
+    src=vm.args.j2 
+    dest=/opt/{{name}}/releases/0.1.0-local.dev/vm.args
+    owner={{name}}
+    group={{name}}
+  notify:
+    - start epmd
+    - enable service
+    - restart service

@@ -1,0 +1,18 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elastalert
+# playbook for deploying elastalert.
+
+# 1. Set Elasticsearch host name
+- name: Set Elastic Search Hostname based on eserv_type=lbonly host attribute
+  hosts: elastalert
+  tasks:
+    - set_fact: elasticsearch_host="{{ item }}"
+      with_items: "{{ groups['elasticsearch'] }}"
+      when: hostvars[item].eserv_type == "lbonly"
+
+# 2. Provision elastalert and deploy the rules
+- name: Provision elastalert and deploy elastalert rules
+  hosts: elastalert
+  gather_facts: yes
+  roles:
+     - { role: elastalert, dispatch: ['provision_elastalert', 'deploy_elastalert_rules']}

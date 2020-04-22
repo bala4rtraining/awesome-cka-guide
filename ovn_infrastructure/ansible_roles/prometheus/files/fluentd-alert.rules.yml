@@ -1,0 +1,51 @@
+groups:
+- name: fluentd-alert.rules
+  rules:
+  - alert: FluentdDataWriteError
+    expr: increase(fluentd_output_status_num_errors{job="fluentd_metrics"}[1m]) > 5
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      Description: FluentD output status error count is {{ $value | humanize }} for the last 1 minute
+      Summary: FluentD output status data write errors
+  - alert: FluentdDataWriteError
+    expr: increase(fluentd_output_status_num_errors{job="fluentd_metrics"}[1m]) > 10
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      Description: FluentD output status error count is {{ $value | humanize }} for the last 2 minutes
+      Summary: FluentD output status data write errors
+  - alert: FluentDBufferFillingFast
+    expr: ((fluentd_output_status_buffer_total_bytes{job="fluentd_metrics"} / (1073741824 * 16)) * 100 ) > 60
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      Description: FluentD buffer queue length capacity is currently {{ $value | humanize }}% for the last 10 minutes
+      Summary: FluentD buffer queue length capacity exceeds 60% 
+  - alert: FluentDBufferFillingFast
+    expr: ((fluentd_output_status_buffer_total_bytes{job="fluentd_metrics"} / (1073741824 * 16)) * 100 ) > 80
+    for: 15m
+    labels:
+      severity: critical
+    annotations:
+      Description: FluentD buffer queue length capacity is currently {{ $value | humanize }}% for the last 15 minutes
+      Summary: FluentD buffer queue length capacity exceeds 80%
+  - alert: FluentDRetryCount
+    expr: increase(fluentd_output_status_retry_count{job="fluentd_metrics"}[1m]) > 5
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      Description: FluentD output status retry count is {{ $value | humanize }} in the last 1 minute
+      Summary: FluentD output status data write retry count
+  - alert: FluentDRetryCount
+    expr: increase(fluentd_output_status_retry_count{job="fluentd_metrics"}[1m]) > 10
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      Description: FluentD output status retry count is {{ $value | humanize }} in the last 2 minutes
+      Summary: FluentD output status data write retry count

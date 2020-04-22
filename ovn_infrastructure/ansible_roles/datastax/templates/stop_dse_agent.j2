@@ -1,0 +1,14 @@
+##!/bin/bash
+## call without arguments to stop dse agent instance.
+
+
+#ps -ef |grep dse |grep -v grep
+#if [ $? -eq 0 ]; then
+#  {{ ovn_datastax['agent']['installed_foldr'] }}/bin/dse cassandra-stop -p {{ ovn_datastax['req_foldrs']['pid_run_foldr'] }}/dse.pid
+#  sleep 30
+#fi
+#ps -ef |grep dse |grep -v grep
+#if [ $? -eq 0 ]; then
+#  pid=$(ps -ef|grep dse |grep -v grep | awk '{print $2}')
+#  kill -9 $pid
+#fi

@@ -1,0 +1,61 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_switch_servers,ovn_mediator_servers
+
+- include: set_common_variables.yml target_hosts=ovn_mediator_servers:ovn_switch_servers
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+
+  tags:
+    - always
+
+- name: start nodes of the switch
+  hosts: ovn_switch_servers
+  roles:
+  - { role: ovn,
+      ovngit_ref: "{{switch_ovngit_ref|default(omit)}}",
+      ovn_firewalld_ports: ["{{erl_dist_ports}}", "{{epmd_port}}", "{{netiso_port}}/tcp", "{{netcontext_port}}/tcp",
+        "{{switch_acceptor_port_for_mediator}}/tcp"],
+      tags: [ 'deploy_switch' ]  }
+  vars:
+    name: ovn_switch
+    node_name: ovn_switch
+    service_name: ovn_switch
+    source_dir: "{{ switch_ovngit_ref|default('files/') }}"
+    source_file: ovn_switch.tar.gz
+    ovn_opdb_pool: 16
+    ovn_opdb_max_overflow: 32
+
+- name: start nodes of the mediator
+  hosts: ovn_mediator_servers
+  roles:
+  - { role: ovn,
+      ovngit_ref: "{{mediator_ovngit_ref|default(omit)}}",
+      ovn_firewalld_ports: ["{{erl_dist_ports}}", "{{epmd_port}}", "{{netiso_port}}/tcp",
+       "{{netcontext_port}}/tcp", "{{mediator_acceptor_port_for_switch}}/tcp", "7079/tcp"],
+      tags: [ 'deploy_mediator' ]  }
+  vars:
+    name: ovn_mediator
+    service_name: ovn_mediator
+    source_dir: "{{ mediator_ovngit_ref|default('files/') }}"
+    source_file: ovn_mediator.tar.gz

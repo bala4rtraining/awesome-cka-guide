@@ -1,0 +1,8 @@
+---
+
+- name: bring down riak node
+  systemd:
+    daemon_reload: yes
+    name: riak
+    state: stopped
+    enabled: True 

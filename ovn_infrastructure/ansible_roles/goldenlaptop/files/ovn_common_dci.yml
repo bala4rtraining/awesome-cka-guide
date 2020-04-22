@@ -1,0 +1,14 @@
+#
+# Common variables for both switches and servers
+#
+#
+
+#
+# IP subnet for OVN cluster
+# (assume /24 mask)
+#
+ip_subnet: 10.237.1
+
+ip_subnet_oob_sw: 10.237.0.128
+ip_subnet_oob_sw_len: 26
+

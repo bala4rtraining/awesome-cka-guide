@@ -1,0 +1,15 @@
+---
+kibana_reverse_proxy_enabled: true
+kibana_basepath: "/kibana-{{ epic_name }}-1"
+grafana_reverse_proxy_enabled: true
+grafana_reverse_proxy_url: "https://ovntest.visa.com/grafana-{{ epic_name }}-1/"
+prometheus_datacenter_id: "{{ epic_name_caps }}-1"
+carbon_host: "{{ vm_dc1_name[5] }}.visa.com"
+grafana_reverse_proxy_path: "grafana-{{ epic_name }}-1"
+kibana_reverse_proxy_path: "kibana-{{ epic_name }}-1"
+
+alertmanager_context_path: "alertmanager-{{ epic_name }}-1"
+alertmanager_app_context_path: "alertmanager-{{ epic_name }}-1-app"
+prometheus_context_path: "prometheus-{{ epic_name }}-1"
+prometheus_app_context_path: "prometheus-{{ epic_name }}-1-app"
+vss_output_context_path: "vss-output-{{ epic_name }}-1"

@@ -1,0 +1,111 @@
+{% set intvars = interfaces[ansible_hostname] %}
+#
+# /etc/network/interfaces template for switches ({{ansible_hostname}})
+# Created by Ansible. Don't modify
+#
+
+{# Loopback and management interfaces #}
+#
+# Loopback and management interfaces
+#
+auto lo
+iface lo inet loopback
+  address {{ intvars.loopback }}/32
+
+auto eth0
+  iface eth0 inet dhcp
+
+{# Neighboring interfaces with loopback address #}
+#
+# Neighboring interfaces
+#
+{% for iface in intvars.neighbors %}
+
+auto {{ iface }}
+iface {{ iface }}
+    address {{ intvars.loopback }}/32
+
+{% endfor %}
+
+
+
+{# Bond interfaces #}
+#
+# Bond interfaces
+#
+{% if intvars.bonds is defined %}
+{% for bond in intvars.bonds %}
+auto {{intvars.bonds[bond].name }}
+iface {{intvars.bonds[bond].name }}
+   bond_slaves {{" ".join(intvars.bonds[bond].bond_slaves)}}
+
+{% endfor %}
+{% endif %}
+
+
+{# Neighboring interfaces connect to non-cumulus switches, e.g. Cisco #}
+#
+# Interfaces to non-cumulus switches
+#
+{% if intvars.neighbors_non_cumulus is defined %}
+{% for iface in intvars.neighbors_non_cumulus %}
+
+auto {{ iface }}
+iface {{ iface }}
+    address {{ intvars.neighbors_non_cumulus[iface] }}/30
+
+{% endfor %}
+{% endif %}
+
+
+{# Bridge #}
+#
+# Bridge
+#
+{% for network in intvars.networks | default(()) %}
+#TBD
+#{% for port in intvars.networks[network].ports %}
+#auto {{ port }}
+#iface {{ port }}
+
+#{% endfor %}
+
+auto {{ network }}
+iface {{ network }}
+    bridge-vlan-aware yes
+    bridge-ports {{ " ".join(intvars.networks[network].ports) }}
+{% if intvars.networks[network].vlans is defined %}
+    bridge-vids {{ " ".join(intvars.networks[network].vlan_ids) }}
+{% endif %}
+    bridge-pvid 1
+    bridge-stp on
+
+
+{# VLANs #}
+#
+# VLANs in the Bridge
+#
+{% if intvars.networks[network].vlans is defined %}
+  
+{% for vlan_id in intvars.networks[network].vlans  %}
+
+auto {{ network }}.{{vlan_id}}
+iface {{ network }}.{{vlan_id}}
+    address {{ intvars.networks[network].vlans[vlan_id].ip }}
+
+{% for port in intvars.networks[network].vlans[vlan_id].ports  %}
+auto {{ port }}
+iface {{ port }}
+  bridge-access {{ vlan_id }}
+
+{% endfor %}
+
+{% endfor %}
+
+{# end of if vlans #}
+{% endif %}
+
+{% endfor %}
+
+
+

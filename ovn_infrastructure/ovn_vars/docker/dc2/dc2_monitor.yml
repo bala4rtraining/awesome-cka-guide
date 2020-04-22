@@ -1,0 +1,24 @@
+---
+kibana_reverse_proxy_enabled: true
+kibana_nginx_enable_ssl: "true"
+kibana_basepath: "/kibana-localdev2"
+kibana_reverse_proxy_path: "kibana-localdev2"
+
+grafana_reverse_proxy_enabled: true
+grafana_auth_proxy_enabled: true
+grafana_nginx_enable_ssl: "true"
+grafana_reverse_proxy_url: "https://localhost/grafana-localdev2/"
+grafana_reverse_proxy_path: "grafana-localdev2"
+
+nginx_enable_ssl: "true"
+vss_output_context_path: "vss-output-localdev2"
+
+prometheus_datacenter_id: "DEV-DC2"
+prometheus_external_host: "ovnlocaldev-2.visa.com"
+alertmanager_context_path: "alertmanager-localdev2"
+alertmanager_app_context_path: "alertmanager-localdev2-app"
+prometheus_context_path: "prometheus-localdev2"
+prometheus_app_context_path: "prometheus-localdev2-app"
+
+
+elastalert_env: "LOCALDEV-DC2"

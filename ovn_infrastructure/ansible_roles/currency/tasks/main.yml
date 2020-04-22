@@ -1,0 +1,16 @@
+---
+- name: create currency directory
+  file: >
+    path=/opt/currency
+    state=directory
+    owner=root
+    group=root
+    mode=0755
+
+- name: unarchive currency tar
+  unarchive: >
+    src={{source}}
+    dest=/opt/currency
+    copy={{source_copy}}
+    owner=root
+    group=root

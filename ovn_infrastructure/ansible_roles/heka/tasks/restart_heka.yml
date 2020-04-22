@@ -1,0 +1,7 @@
+# Restart heka service on all the nodes
+- name: restart heka
+  service:
+    name: "{{ heka_service_name }}"
+    state: restarted
+    enabled: yes
+  become: true

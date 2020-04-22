@@ -1,0 +1,46 @@
+groups:
+- name: haproxy-alert.rules
+  rules:
+  - alert: HAProxyBackendServerNotConnected
+    expr: (haproxy_server_up{job="haproxy_metrics"} == 0) and (haproxy_up{job="haproxy_metrics"}
+      == 1)
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      Description: '{{ $labels.hostname }} could not connect to mediator backend {{
+        $labels.Server }}'
+      Summary: HAProxy mediator backend server could not be connected
+  - alert: HAProxyErrorRequestsExceeded
+    expr: haproxy_backend_connection_errors_total{job="haproxy_metrics"} > 10
+    for: 20s
+    labels:
+      severity: critical
+    annotations:
+      Description: Number of error requests exceeded threshold for {{ $labels.hostname}}.
+      Summary: HAProxy backend connection error requests exceeded
+  - alert: HAProxyRequestsQueuingExceeded
+    expr: haproxy_backend_current_queue{job="haproxy_metrics"} > 50
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      Description: Number of requests queued exceeded threshold for HAProxy host {{
+        $labels.hostname }}
+      Summary: Queuing Requests Exceeded for HAProxy
+  - alert: HAProxyNoIncomingRequests
+    expr: sum(haproxy_frontend_bytes_in_total{job="haproxy_metrics"}) == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      Description: No Incoming Requests are directed to HAProxy
+      Summary: No Incoming Requests to HAProxy
+  - alert: HAProxyNoOutgoingRequests
+    expr: sum(haproxy_backend_bytes_out_total{job="haproxy_metrics"}) == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      Description: No Outgoing Requests from  HAProxy
+      Summary: No Outgoing Request from HAProxy

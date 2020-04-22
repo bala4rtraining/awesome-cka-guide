@@ -1,0 +1,12 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts | default('all,!cumulus_switch') }}"
+
+# validate packages found through qualys
+
+- name: "validate packages"
+  hosts: "{{ target_hosts | default('all,!cumulus_switch') }}"
+  serial: 1
+  roles:
+    - { role: update_packages, dispatch: ['validate'] }
+  vars:
+    validate_packages: true
