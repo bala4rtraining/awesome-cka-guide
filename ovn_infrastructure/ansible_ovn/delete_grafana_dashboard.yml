@@ -1,8 +1,0 @@
----
-# This playbook allows us to delete grafana dashboard which are tagged as "deprecated"
-- include: "../ovn_vars.yml"
-
-- name: Delete grafana dashboard
-  hosts: grafana
-  roles:
-    - { role: grafana, dispatch: ['delete_dashboard'] }

@@ -1,6 +1,0 @@
----
-ntp_service_name: ntp
-ntp_config_driftfile: /var/lib/ntp/ntp.drift
-ntp_log_file: /var/log/ntp.log
-ntp_pkgs:
-  - ntp # placeholder for now

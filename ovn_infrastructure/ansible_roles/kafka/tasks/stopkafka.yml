@@ -1,4 +1,0 @@
-- name: stop kafka
-  systemd:
-    name: kafka
-    state: stopped

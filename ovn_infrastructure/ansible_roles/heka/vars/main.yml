@@ -1,5 +1,0 @@
----
-# vars file for heka
-#
-heka_exec_mode : '0755'
-heka_readable_mode : '0644'

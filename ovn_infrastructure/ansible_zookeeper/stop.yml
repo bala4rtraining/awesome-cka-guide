@@ -1,8 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=zookeeper
-
-- name: stop zookeeper
-  hosts: zookeeper
-  gather_facts: true
-  roles:
-    - {role: zk, dispatch: ['stopzookeeper']}

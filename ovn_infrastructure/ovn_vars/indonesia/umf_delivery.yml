@@ -1,8 +1,0 @@
----
-enable_umf_deliver_service: "true"
-extra_umf_delivery: true
-batch_lifetime: 600000
-max_connection_attempts: 60
-connection_reconnect_delay: 60000
-
-umf_apf_port: 50103

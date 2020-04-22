@@ -1,9 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=graphite_beacon
-
-# graphite-beacon role
-- name: Run the graphite_beacon role for the graphite host in the inventory
-  hosts: graphite_beacon
-  roles:
-     - graphite_beacon
-

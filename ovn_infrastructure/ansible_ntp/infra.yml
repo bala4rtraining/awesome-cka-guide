@@ -1,9 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=orange
-
-# Use this playbook to actually create or modify the shape and type of the machines the rest of the ansible project requires.
-- hosts: orange
-  gather_facts: yes
-  tasks:
-  - name: not really setting up servers here
-    debug: msg="This is purely for posterity and flair."

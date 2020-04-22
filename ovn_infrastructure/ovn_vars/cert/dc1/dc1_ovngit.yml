@@ -1,4 +1,0 @@
----
-# ovngit gitweb local cache (must be the IP address of JenkinsCD for this Datacenter)
-ovngit_host: http://10.184.254.25:8088/git/@pod1/
-ovngit_dir: /git/pod1

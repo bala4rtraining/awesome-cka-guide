@@ -1,8 +1,0 @@
----
-# handlers file for goldenlaptop
-
-
-- name: Restart networking service  
-  #service: name=network state=restarted enabled=yes
-  shell: "ifdown enp0s8 && ifup enp0s8"
-

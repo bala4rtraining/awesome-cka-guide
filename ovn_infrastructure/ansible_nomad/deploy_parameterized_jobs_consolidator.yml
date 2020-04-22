@@ -1,8 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=nomad_server,kafka
-
-- name: submit parameterized job to nomad server
-  hosts: nomad_server[0]
-  gather_facts: yes
-  roles:
-    - { role: nomad_parameterized_jobs, dispatch: ['submit_consolidator_job'] }

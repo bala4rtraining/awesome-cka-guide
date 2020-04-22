@@ -1,8 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=kafka
-
-- name: rebalance | reassign partitions amongst the brokers
-  hosts: kafka
-  gather_facts: true
-  roles:
-    - {role: kafka, dispatch: ['rebalance-brokers']}

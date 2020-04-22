@@ -1,6 +1,0 @@
----
-# tasks file for configuring TFTP server on all orange servers
-
-- name: configure orange TFTP server
-  replace: dest=/etc/xinetd.d/tftp regexp="disable.*=.*yes" replace="disable = no"
-  notify: Restart TFTP server

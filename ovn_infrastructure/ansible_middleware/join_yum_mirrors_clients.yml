@@ -1,8 +1,0 @@
----
-- include: mware_vars.yml ovn_vars_hosts="{{ target_hosts | default('all') }}"
-
-# join client servers to yum mirrors 
-- name: join the servers to yum mirrors
-  hosts: "{{ target_hosts | default('all:!yum_mirror_servers') }}"
-  roles:
-    - { role: yum_mirrors, dispatch: ['join_clients']}

@@ -1,5 +1,0 @@
-- name: Lock users after 90 days of inactivity
-  lineinfile:
-    path: /etc/default/useradd
-    regexp: '^INACTIVE='
-    line: 'INACTIVE=90'

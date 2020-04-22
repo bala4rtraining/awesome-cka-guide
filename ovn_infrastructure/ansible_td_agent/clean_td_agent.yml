@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=fluentd_aggregator,ovn_vss_servers,ftps_server
-
-- name: remove td_agent
-  hosts: ovn_vss_servers:ftps_server:kafka:zookeeper:hadoop_namenodes:hadoop_datanodes:ovn_xdc_sync:nomad_client:fluentd_aggregator
-  roles:
-    - {  role: td_agent, dispatch: ['cleanup'] }

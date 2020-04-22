@@ -1,5 +1,0 @@
----
-- name: docker task dispatcher
-  include: "{{ item }}.yml"
-  with_items: "{{ dispatch|default([]) }}"
-  when: dispatch != []

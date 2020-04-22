@@ -1,9 +1,0 @@
----
-- name: Stop elasticsearch service
-  service: name=elasticsearch state=stopped
-
-- name: re-apply elasticsearch config templates
-  template: src=elasticsearch.yml.j2 dest=/etc/elasticsearch/elasticsearch.yml
-
-- name: ensure data directory exists and is writable
-  file: path={{ elasticsearch_config_dir }} owner=elasticsearch group=elasticsearch state=directory recurse=yes

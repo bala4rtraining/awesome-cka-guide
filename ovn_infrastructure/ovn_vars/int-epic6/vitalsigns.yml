@@ -1,2 +1,0 @@
----
-sftp_servers: '[{"{{ vitalsigns_servers[0] }}", 22, "ovnvs", "/vitalsigns/ovndata", 100}, {"{{ vitalsigns_servers[1] }}", 22, "ovnvs", "/vitalsigns/ovndata", 100}]'

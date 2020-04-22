@@ -1,9 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=elastalert
-
-# playbook for deploying elastalert rules
-- name: playbook to deploy elastalert rules
-  hosts: elastalert
-  gather_facts: yes
-  roles:
-     - { role: elastalert, dispatch: ['deploy_elastalert_rules']}

@@ -1,4 +1,0 @@
-[defaults]
-hostfile=./host
-host_key_checking=False 
-ask_sudo_pass=yes

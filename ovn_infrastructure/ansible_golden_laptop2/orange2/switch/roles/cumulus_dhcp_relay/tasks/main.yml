@@ -1,7 +1,0 @@
-- name: Configure isc-dhcp-relay
-  template: src=isc-dhcp-relay.j2 dest=/etc/default/isc-dhcp-relay
-  when: node[ansible_hostname].dhcp_relay is defined
-  notify:
-    - restart dhcp relay
-  tags:
-    - dhcp_relay

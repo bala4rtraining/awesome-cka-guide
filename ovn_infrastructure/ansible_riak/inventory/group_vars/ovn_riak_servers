@@ -1,9 +1,0 @@
-http_listener_port: '8098'
-protobuf_listener_port: '8087'
-erl_port_min: '6000'
-erl_port_max: '7999'
-hand_off_port: '8099'
-epmd_listener_port: '4369'
-solr_port: '8093'
-solr_jmx_port: '8985'
-enable_firewall_rules: true

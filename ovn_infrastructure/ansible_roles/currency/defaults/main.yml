@@ -1,3 +1,0 @@
----
-source: "{% if source_dir == 'files/' %}{{source_dir+'/'+source_file}}{% else %}{{ovngit_host+source_dir+':/'+source_file}}{% endif %}"
-source_copy: "{{ source_dir == 'files/' }}"

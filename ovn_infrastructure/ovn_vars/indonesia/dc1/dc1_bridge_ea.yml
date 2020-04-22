@@ -1,3 +1,0 @@
-#clearing_jobs - credentials need to be updated
-bridge_ea: "{{ bridge_ea_servers[0] }}"
-bridge_ftp_user: "ftpproduser"

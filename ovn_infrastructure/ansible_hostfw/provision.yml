@@ -1,9 +1,0 @@
----
-- include: "../ovn_vars.yml"
-
-# Use this playbook to outfit your servers/machines with the roles they need to perform.
-- name: Install and config SELinux policies with iptables
-  hosts: ovn_cluster_nodes
-  gather_facts: yes
-  roles:
-    - iptables_secmark

@@ -1,6 +1,0 @@
-# xdc_sync
-xdc_sync_src_namenodes: "{{ groups.dc1_hadoop_namenodes }}"
-xdc_sync_dest_namenodes: "{{ groups.dc2_hadoop_namenodes }}"
-xdc_sync_riak: "{{groups.dc1_ovn_riak_servers}}"
-xdc_sync_kafka: "{{groups.dc1_kafka}}"
-xdc_sync_kakfa_topic: "{{remote_xdc_state_kafka_topic}}"

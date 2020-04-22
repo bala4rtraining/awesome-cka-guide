@@ -1,8 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts | default('all,!cumulus_switch') }}"
-
-- name: install td_agent
-  hosts: "{{ target_hosts | default('all,!cumulus_switch') }}"
-  serial: 1
-  roles:
-    - {  role: td_agent, dispatch: ['install-td-agent'] }

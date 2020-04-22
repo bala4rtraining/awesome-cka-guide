@@ -1,8 +1,0 @@
----
-# Tasks to test NTP service to use as client
-
-- name: Test ntp service
-  command: ntpq -p
-  register: ntpq_command
-
-- debug: msg="{{ ntpq_command.stdout }} "

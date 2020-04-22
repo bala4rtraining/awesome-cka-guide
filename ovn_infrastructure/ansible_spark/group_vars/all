@@ -1,6 +1,0 @@
-zoo_client_port: "9094"
-mesos_master_port: 5050
-mesos_lib_dir: "/usr/local/lib/"
-proxy_env:
-  http_proxy: http://internet.visa.com:80
-  https_proxy: https://internet.visa.com:443

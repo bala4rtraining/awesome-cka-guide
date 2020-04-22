@@ -1,3 +1,0 @@
-set check_signatures=enforce
-set superusers="root"
-password_pbkdf2 root grub.pbkdf2.{{grub_passwd}}

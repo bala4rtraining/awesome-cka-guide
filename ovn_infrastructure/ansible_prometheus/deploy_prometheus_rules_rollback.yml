@@ -1,5 +1,0 @@
----
-- name: Deploy rollback of prometheus alert rule files
-  hosts: prometheus_server
-  roles:
-    - { role: prometheus, dispatch: ['prometheus_rules_rollback'] }

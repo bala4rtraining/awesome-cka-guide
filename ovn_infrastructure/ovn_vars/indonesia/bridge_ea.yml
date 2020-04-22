@@ -1,3 +1,0 @@
----
-# Bridge EA
-vip_connector: '[{enabled, true}, {ea_idt, "{{ bridge_ea_servers[1] }}"}, {ea_idd, "{{ bridge_ea_servers[0] }}"}]'

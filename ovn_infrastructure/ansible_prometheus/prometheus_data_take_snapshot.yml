@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
-
-- name: Take Prometheus Data Snapshot
-  hosts: '{{ host_name }}'
-  roles:
-    - { role: prometheus, dispatch: ['prometheus_take_snapshot'] }

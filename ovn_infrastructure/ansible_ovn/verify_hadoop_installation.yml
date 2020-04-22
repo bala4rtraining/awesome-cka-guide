@@ -1,8 +1,0 @@
-# verify hadoop cluster installation
----
-- include: ../ovn_vars.yml ovn_vars_hosts=hadoop_datanodes
-
-- name: verify hadoop installation
-  hosts: hadoop_datanodes[0]
-  roles:
-    - { role: hadoop, dispatch: ['verify-installation'] }

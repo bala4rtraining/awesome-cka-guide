@@ -1,4 +1,0 @@
----
-- include: shutdown_datacenter.yml target_hosts=ovn_mediator_servers:ovn_switch_servers:haproxy
-- include: provision.yml
-- include: start_datacenter.yml target_hosts=ovn_mediator_servers:ovn_switch_servers:haproxy

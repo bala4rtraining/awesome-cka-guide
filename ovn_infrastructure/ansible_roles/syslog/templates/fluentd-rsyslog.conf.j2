@@ -1,8 +1,0 @@
-# OVN specific logs
-# forwarding for securelogs to fluentd forwarder.
-authpriv.*    @127.0.0.1:5140
-
-# OVN specific logs
-# # forwarding to fluentd syslog forwarder.
-$MaxMessageSize 32k
-local1.*    @127.0.0.1:5141;RSYSLOG_ForwardFormat

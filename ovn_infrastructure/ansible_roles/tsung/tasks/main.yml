@@ -1,8 +1,0 @@
----
-- include: rhel6.yml
-  when: rhel_centos_6
-
-- include: rhel7.yml
-  when: rhel_centos_7
-
-- include: tsung.yml

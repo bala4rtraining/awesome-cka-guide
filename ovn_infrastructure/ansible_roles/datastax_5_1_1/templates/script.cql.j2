@@ -1,5 +1,0 @@
-ALTER USER cassandra WITH PASSWORD '{{dstax511_cql_passwd}}' NOSUPERUSER;
-CREATE USER IF NOT EXISTS {{dstax511_ovn_datastax['cql'] ['app_user'] }} WITH PASSWORD {{dstax511_ovn_datastax['cql'] ['app_password']}}  NOSUPERUSER;
-Create KEYSPACE IF NOT EXISTS {{dstax511_ovn_datastax['cql']['keyspace_name']}} WITH replication = {'class': 'NetworkTopologyStrategy',  '{{dstax511_ovn_datastax['cql'] ['dc']}}: '3'}  AND durable_writes = true;
-GRANT ALL ON KEYSPACE {{dstax511_ovn_datastax['cql']['keyspace_name']}} TO {{dstax511_ovn_datastax['cql']['app_user']}};
-REVOKE AUTHORIZE ON KEYSPACE {{dstax511_ovn_datastax['cql']['keyspace_name']}} from {{dstax511_ovn_datastax['cql']['app_password']}};

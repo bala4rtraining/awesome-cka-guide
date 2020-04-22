@@ -1,3 +1,0 @@
----
-dependencies:
-- { role: ovn_yumrepo }

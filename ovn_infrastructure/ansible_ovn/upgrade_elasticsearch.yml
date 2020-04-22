@@ -1,9 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
-
-# Playbook for upgrading elasticsearch role .
-- name: run the playbook to upgrade elastic search .
-  hosts: elasticsearch
-  gather_facts: yes
-  roles:
-   - {role: elasticsearch, dispatch: [ 'upgradeelastic']}

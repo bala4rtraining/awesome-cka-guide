@@ -1,9 +1,0 @@
----
-- include: ../ovn_vars.yml
-  
-- name: start deploying third party products tanium and tripwire
-  hosts: all,!cumulus_switch,!ovn_manager
-  roles:
-    - { role: security_thirdparty, dispatch: ['tripwire'] }
-    - { role: security_thirdparty, dispatch: ['tanium'] }
-

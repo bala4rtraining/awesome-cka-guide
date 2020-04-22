@@ -1,9 +1,0 @@
----
-# vars file for syslog  (only used for RedHat7)
-
-# these were downloaded at the EPEL7 level (plugin only)
-syslog_rpms:
- - rsyslog-elasticsearch-7.4.7-12.el7.x86_64.rpm
-
-imjournal_modload: true
-imklog_modload: false

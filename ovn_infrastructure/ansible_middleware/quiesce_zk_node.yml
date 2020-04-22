@@ -1,7 +1,0 @@
----
-- include: mware_vars.yml
-
-- name: Stop service on that node alone
-  hosts: "{{ node }}"
-  roles:
-    - { role: zk, dispatch: ['stop_zk'] }

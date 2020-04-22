@@ -1,6 +1,0 @@
-#{{ ansible_managed }}
-# list of slaves for hadoop cluster
-{% for host in groups['hadoop_datanodes'] if host != inventory_hostname %}
-{{ host }}
-{% endfor %}
-  

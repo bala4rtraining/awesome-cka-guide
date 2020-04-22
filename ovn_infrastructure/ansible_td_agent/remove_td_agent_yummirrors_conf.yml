@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=yum_mirror_servers,!cumulus_switch,!ovn_manager
-
-- name: delete td-agent configurations for yum local mirrors
-  hosts: yum_mirror_servers
-  roles:
-    - { role: td_agent, dispatch: ['remove_td_agent_yummirrors_conf'] }

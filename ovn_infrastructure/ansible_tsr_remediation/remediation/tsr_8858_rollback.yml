@@ -1,9 +1,0 @@
----
-
-- name: read the file that has directories without the sticky bit set 
-  shell: cat /tmp/tsr_8858 | awk '{ print $11}'
-  register: directorylist
-
-- name: loop through list from directories and unset sticky bit
-  command: chmod -t {{item}}
-  with_items: "{{ directorylist.stdout_lines }}"

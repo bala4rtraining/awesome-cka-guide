@@ -1,9 +1,0 @@
----
-
-# variables for systemd timer service
-timer_year: "*"
-timer_month: "*"
-timer_date: "*"
-timer_hour: "00"
-timer_minute: "00"
-timer_second: "00"

@@ -1,8 +1,0 @@
----
-# handlers file for consul
-
-- name: restart consul
-  service: name=consul state=restarted enabled=yes
-
-- name: check consul status
-  command: consul info

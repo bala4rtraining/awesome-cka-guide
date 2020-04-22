@@ -1,8 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=nomad_ui,nomad_server
-
-# enable mutual ssl between nomad and nomad_ui
-- name: enable nomad-tls on nomad_ui
-  hosts: nomad_ui
-  roles:
-    - { role: nomad_ui, dispatch: ['enable-tls'] }

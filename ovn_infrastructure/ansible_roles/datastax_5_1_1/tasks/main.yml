@@ -1,5 +1,0 @@
----
-- name: <main> Deploy Datastax Cassandra 511 
-  include: "{{ item }}.yml" # assumes no nested includes from loops
-  with_items: "{{ dispatch|default([]) }}"
-  when: "dispatch != []"

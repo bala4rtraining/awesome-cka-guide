@@ -1,8 +1,0 @@
----
-# Defaults for Zookeper deployment
-zookeeper_install_dir: /opt/zookeeper
-zookeeper_service: zookeeper
-
-default_iface: "{{ ansible_default_ipv4.interface }}"
-
-group_name: "{{ zookeeper_service }}"

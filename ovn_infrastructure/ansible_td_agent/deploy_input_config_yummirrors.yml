@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=yum_mirror_servers
-
-- name: deploy td-agent forwarder configuration for Yum Mirrors monitoring
-  hosts: yum_mirror_servers
-  roles:
-    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "yummirrors", when: "'yummirrors' in fluentd_input_config_list" }

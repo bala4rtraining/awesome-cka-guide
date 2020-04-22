@@ -1,6 +1,0 @@
----
-
-- name: remove ssmtp package
-  yum:
-    name: ssmtp
-    state: absent

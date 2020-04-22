@@ -1,8 +1,0 @@
----
-
-- name: Install ntp packages 
-  yum: name="{{ listofrpms }}" state=present update_cache=yes
-  with_items: "{{ ntp_rpms }}"
-  loop_control:
-    loop_var: listofrpms
-

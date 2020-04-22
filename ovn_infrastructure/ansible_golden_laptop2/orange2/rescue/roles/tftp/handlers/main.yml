@@ -1,6 +1,0 @@
----
-# handlers file for tftp 
-
-- name: Restart TFTP server
-  service: name=xinetd state=restarted enabled=yes
-

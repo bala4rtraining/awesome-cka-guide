@@ -1,8 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=grafana
-
-# grafana roles
-- name: Run the grafana role for the grafana host in the inventory
-  hosts: grafana
-  roles:
-     - { role: grafana, dispatch: ['deploy_grafana'] }

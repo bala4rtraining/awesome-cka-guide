@@ -1,8 +1,0 @@
----
-# Enable Unlimited crypto policies for {{ jre_version }}
-- name: enable unlimited crypto policies
-  lineinfile:
-    path: /usr/java/{{ jre_version }}/lib/security/java.security
-    line: "crypto.policy=unlimited"
-    insertafter: "^#crypto.policy="
-    state: present

@@ -1,4 +1,0 @@
----
-
-nfs_mount_dir: "/backup"
-nfs_server_dir: "/data/col1/OVN-NFS"

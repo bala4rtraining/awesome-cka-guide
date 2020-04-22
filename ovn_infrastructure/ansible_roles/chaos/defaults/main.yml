@@ -1,8 +1,0 @@
----
-# Defaults for ovn chaos deployment
-
-artifact_url: "{{ovngit_host}}{{ovngit_ref}}:/{{source}}"
-coordinator_ip: "127.0.0.1"
-default_iface: "default_ipv4"
-run_elevated: true
-chaos_rest_port: 11235

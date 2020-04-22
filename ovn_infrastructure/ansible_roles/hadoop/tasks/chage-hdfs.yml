@@ -1,4 +1,0 @@
----
-- name: set hdfs user password expiry to never
-  shell: chage -M -1 hdfs
-  ignore_error: true

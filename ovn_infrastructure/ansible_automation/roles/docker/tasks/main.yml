@@ -1,6 +1,0 @@
----
-- include: "{{ play }}.yml"
-  with_items: "{{ dispatch | default([]) }}"
-  when: dispatch != []
-  loop_control:
-    loop_var: play

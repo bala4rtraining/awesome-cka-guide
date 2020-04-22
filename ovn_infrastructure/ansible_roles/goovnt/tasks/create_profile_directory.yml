@@ -1,7 +1,0 @@
-- name: Creates profile directory
-  file:
-    path: /opt/profile
-    state: directory
-    owner: "{{ goovnt_user}}"
-    group: "{{ goovnt_group }}"
-    mode: 0775

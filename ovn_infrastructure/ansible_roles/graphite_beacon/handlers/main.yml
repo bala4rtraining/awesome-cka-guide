@@ -1,4 +1,0 @@
----
-# handlers file for graphite-beacon
-- name: restart graphite-beacon
-  service: name=graphite-beacon state=restarted

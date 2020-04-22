@@ -1,8 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=localhost
-
-- name: Print firewall rules
-  hosts: localhost
-  roles:
-  - { role: firewall_rules, dispatch: [ 'generate_uniq_src_port_by_dest_ip' ] }
-  - { role: firewall_rules, dispatch: [ 'print_csv_rule' ] }

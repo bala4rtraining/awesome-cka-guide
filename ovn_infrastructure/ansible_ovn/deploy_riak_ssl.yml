@@ -1,9 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=ovn_riak_servers
-
-# Use this playbook for ddl chages of riak cluster.
-- name: deploy ddl chages to riak cluster
-  hosts: ovn_riak_servers
-  gather_facts: yes
-  roles:
-     - { role: riak_ddl-ssl, dispatch: ['riak_ssl'] }

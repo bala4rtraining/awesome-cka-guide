@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch
-
-- name: Deploying Ovn Yumrepo
-  hosts: all:!cumulus_switch
-  roles:
-     - { role: ../ansible_automation/roles/ovn_yumrepo  }

@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
-
-- name: install haproxy_exporter
-  hosts: haproxy
-  roles:
-    - { role: prometheus, dispatch: ['haproxy_exporter'] }

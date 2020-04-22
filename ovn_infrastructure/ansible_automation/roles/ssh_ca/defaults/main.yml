@@ -1,9 +1,0 @@
----
-admin_principal: "{{ ovn_admin_principal | default('admin') }}"
-support_principal: "{{ ovn_support_principal | default('support') }}"
-appsupport_principal: "{{ ovn_appsupport_principal | default('appsupport') }}"
-cd_principal: "{{ ovn_sshca_principal | default('cd') }}"
-
-sshca_public_key: |
-  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqaLE825QywHrCp9nbdxISE4BimC7ZViusKbB15mtKHKvoSAVBB2buSbfOF6RCCBrzRh6Ml2JF/fF/2f5av6xTKLd+iB9NUrz+2Km7U3bIxnX8XAdGu5rLRR/Mv+mADEx+FgOjbf97w3lJSWrZX5Ce/6tmxO5wEoiktG+RGAKIiWRsxZF3ckTH+YLvPMzvW4OQUfIjN5uEI8/naaLd3XZgADDmRW4x+KEUtdth7vrXwkjGKPuKgebBohqPY9a8KTG8eugrAcozIXReVmBwIxUU4/HEGwBw2EzhbF+0DxSIg4PJfVLz7z33N7WiaR9fIda9Tp6drCgJ7OqSxhm37R65 younglee@wm-C02RQ2QUG8WM
-  

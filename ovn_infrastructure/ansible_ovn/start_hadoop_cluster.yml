@@ -1,8 +1,0 @@
-# Start hadoop cluster 
----
-- include: ../ovn_vars.yml ovn_vars_hosts=hdfs_HA_All_nodes
-
-- name:  start all hadoop services
-  hosts: hdfs_HA_All_nodes
-  roles:
-    - { role: hadoop, dispatch: ['start-all'] }

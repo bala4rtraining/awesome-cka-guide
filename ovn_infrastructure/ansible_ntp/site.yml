@@ -1,6 +1,0 @@
----
-# file: site.yml
-- include: infra.yml
-- include: provision.yml
-- include: deploy.yml
-- include: test.yml

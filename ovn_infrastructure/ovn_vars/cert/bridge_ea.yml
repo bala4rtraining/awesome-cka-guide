@@ -1,3 +1,0 @@
----
-vip_connector: '[{enabled, true}, {ea_khc, "{{bridge_ea_servers[0]}}"}]'
-mock_vip_ports: '[{10000, 11998}, {19500, 19500}]'

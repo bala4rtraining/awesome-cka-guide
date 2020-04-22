@@ -1,5 +1,0 @@
----
-# tasks file for consul (CentOS 7 specific)
-                                            
-- name: Ensure Consul service is started and enabled on boot
-  service: name={{ consul_service_name }} state=started enabled=yes

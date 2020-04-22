@@ -1,3 +1,0 @@
----
-# vars file for vault (CentOS specific)
-vault_systemd_dir: /etc/systemd/system

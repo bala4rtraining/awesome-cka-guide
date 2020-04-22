@@ -1,8 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=ftps_server
-
-- name: Delete endOfConfig.txt flag from FTPS server
-  hosts: ftps_server
-  roles:
-     - { role: vss, dispatch: ['delete_endofconfig'] }
-

@@ -1,7 +1,0 @@
----
-# tasks file for vault (CentOS 7 specific)
-
-- name: Remove Vault systemd configuration
-  file: >
-    path={{ vault_systemd_dir }}/{{ vault_service_name }}.service
-    state=absent

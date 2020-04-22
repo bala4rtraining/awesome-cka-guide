@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=yum_mirror_servers,!cumulus_switch,!ovn_manager
-
-- name: install node_exporter on Yum Mirror Servers
-  hosts: yum_mirror_servers:!cumulus_switch:!ovn_manager
-  roles:
-    - { role: prometheus, dispatch: ['node_exporter'] }

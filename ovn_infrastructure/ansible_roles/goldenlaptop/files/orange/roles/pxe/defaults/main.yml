@@ -1,9 +1,0 @@
----
-# defaults file for pxeserver
-
-orange_tftpboot_path: /var/lib/tftpboot
-#orange_secureboot_ks_file: centos-7-min-ks.cfg
-orange_secureboot_ks_file: min-ks.cfg
-orange_centos_repo_file: centos7_1511.tar.gz
-orange_visa_repo_file: visa_repo.tar.gz
-orange_visa_centos_liveos_file: centos_liveos.tar.gz

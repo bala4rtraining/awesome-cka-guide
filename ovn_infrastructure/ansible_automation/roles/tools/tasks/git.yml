@@ -1,6 +1,0 @@
----
-- name: install git
-  yum:
-    name: git
-    state: present
-    disablerepo: '{{ spacewalk_yum_repo }}'

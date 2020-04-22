@@ -1,9 +1,0 @@
----
-# Stop tasks file for vault
-
-# CentOS 7 Specific tasks file for vault
-
-- name: Include CentOS specific vars
-  include_vars: "CentOS.yml"
-
-- include: CentOS/CentOS_stop.yml

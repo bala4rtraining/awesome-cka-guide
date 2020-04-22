@@ -1,5 +1,0 @@
----
-vss_output_context_path: "vss-output-telin"
-vss_mvs_hostname: "MVSD.INTL.VISA.NET"
-
-vss_mirror_server: "sl981ovnapp0102" # Telin VSS mirror server is DCI VSS server

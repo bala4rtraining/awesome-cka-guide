@@ -1,5 +1,0 @@
----
-# tasks file for vault (CentOS 7 specific)
-
-- name: Ensure Vault service is stopeed and disabled on boot
-  service: name={{ vault_service_name }} state=stopped enabled=no

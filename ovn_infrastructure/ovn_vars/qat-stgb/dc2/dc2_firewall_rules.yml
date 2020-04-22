@@ -1,6 +1,0 @@
----
-#####
-# Suricata IDS servers (DC1) test
-#####
-suricata_ids_server:
-  - '10.211.177.88'

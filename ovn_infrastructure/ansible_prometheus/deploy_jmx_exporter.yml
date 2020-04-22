@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
-
-- name: install jmx_exporter
-  hosts: hadoop_namenodes:hadoop_datanodes:kafka:zookeeper
-  roles:
-    - { role: prometheus, dispatch: ['jmx_exporter'] }

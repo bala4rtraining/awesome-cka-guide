@@ -1,8 +1,0 @@
-# Stop hadoop cluster 
----
-- include: ../ovn_vars.yml ovn_vars_hosts=hdfs_HA_All_nodes
-
-- name:  stop all hadoop services
-  hosts: hdfs_HA_All_nodes
-  roles:
-    - { role: hadoop, dispatch: ['stop-all'] }

@@ -1,7 +1,0 @@
----
-# artifactory_url: https://artifactory.trusted.visa.com
-ovn_mp_name: "ovn_mp"
-profile_id: "/opt/ovn_profile/ovn_profile-171027.215737-test1.db"
-service_listener_port: 1234
-service_user: "was"
-service_group: "was"

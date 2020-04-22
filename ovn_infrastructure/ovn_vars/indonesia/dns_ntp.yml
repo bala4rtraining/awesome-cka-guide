@@ -1,5 +1,0 @@
----
-# Visa NTP and DNS servers for Indonesia
-visa_dns_servers: "['10.183.17.153', '10.178.17.153']"
-visa_ntp_servers: '{{visa_dns_servers}}'
-visa_dns_domain: 'ap.visa.net'

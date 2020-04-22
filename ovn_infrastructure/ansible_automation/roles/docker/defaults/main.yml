@@ -1,8 +1,0 @@
----
-artifactory_url: https://artifactory.trusted.visa.com
-docker_ce_version: "17.06.2.ce"
-docker_ce_rpm: '{{ artifactory_url }}/ovn-extra-el7/docker-ce-{{docker_ce_version}}-1.el7.centos.x86_64.rpm '
-
-docker_home: /opt/app/docker
-
-tmpdir: .ansible/tmp

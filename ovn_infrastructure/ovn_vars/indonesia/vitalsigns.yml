@@ -1,3 +1,0 @@
----
-# please note that the space infront of the [ is there to avoid the variable value being interpreted as PYTHON code.
-sftp_servers: ' [{"{{ vitalsigns_servers[0] }}", 22, "ovnvs", "/vitalsigns/ovndata", 100}, {"{{ vitalsigns_servers[1] }}", 22, "ovnvs", "/vitalsigns/ovndata", 100}]'

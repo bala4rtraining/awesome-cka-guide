@@ -1,4 +1,0 @@
----
-vip_connector: '[{enabled, true}, {ea_khe, localhost}, {ea_khc, localhost}, {ea_idd, localhost}, {ea_idt, localhost}, {ea_mock1, localhost}, {ea_mock2, localhost}]'
-
-mock_vip_ports: '[{10000, 11998}, {19500, 19500}]'

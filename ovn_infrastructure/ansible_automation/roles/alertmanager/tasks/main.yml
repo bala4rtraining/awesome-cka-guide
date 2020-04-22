@@ -1,3 +1,0 @@
----
-- name: Provision alertmanager package.
-  include: provision_alertmanager.yml

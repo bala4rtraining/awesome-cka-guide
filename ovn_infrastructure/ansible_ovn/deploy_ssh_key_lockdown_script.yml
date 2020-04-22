@@ -1,8 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts | default('all,!cumulus_switch') }}"
-
-- name: copy and execute ssh keys lockdown script
-  hosts: "{{ target_hosts | default('all,!cumulus_switch') }}"
-  gather_facts: yes
-  roles:
-     - { role: sshd_lockdown, dispatch: ['ssh_script_deploy'] }

@@ -1,9 +1,0 @@
----
-- name: Add mesosphere repo
-  yum: name={{ mesosphere_repo }} state=present
-
-- name: Downloading and enable the EPEL repository
-  yum: name={{ epel_repo }} state=present
-
-- name: Hack (change https to http in repo urls)
-  template: src=epel.j2 dest=/etc/yum.repos.d/epel.repo

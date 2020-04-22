@@ -1,7 +1,0 @@
----
-- name: Change root password on all servers
-  user:
-    name: root
-    password: "{{ new_password | password_hash('sha256', salt) }}"
-    update_password: always
-    state: present

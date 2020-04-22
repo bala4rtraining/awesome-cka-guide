@@ -1,6 +1,0 @@
----
-
-- name: apply TSR remediation patches - running {{ tsr_id }}.yml playbook
-  hosts: all
-  tasks:
-    - include_tasks: "remediation/{{ tsr_id }}.yml"

@@ -1,4 +1,0 @@
----
-# handlers file for dhcp
-- name: Restart HTTP server
-  service: name=httpd state=restarted enabled=yes

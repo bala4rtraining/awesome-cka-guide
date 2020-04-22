@@ -1,7 +1,0 @@
-# NOT USED
-# Use this playbook to deploy build artifacts to the set of servers.
-- hosts: all
-  gather_facts: yes
-  tasks:
-  - name: not actually deploying things here.
-    debug: msg="You'd want to execute the set of deploy tasks or include them from someplace."

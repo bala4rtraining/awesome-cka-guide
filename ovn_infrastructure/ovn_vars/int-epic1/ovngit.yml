@@ -1,3 +1,0 @@
----
-ovngit_host: http://localhost:8888/git/@pod1/
-ansible_ssh_extra_args: '-o RemoteForward="8888 sl55ovnapq01.visa.com:80"'

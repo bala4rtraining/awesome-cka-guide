@@ -1,9 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=ovn_riak_servers
-
-# Use this playbook to outfit your servers/machines with the roles they need to perform.
-- name: install riak in all nodes
-  hosts: ovn_riak_servers
-  gather_facts: yes
-  roles:
-     - { role: riak, dispatch: ['install'] }

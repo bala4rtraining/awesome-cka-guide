@@ -1,7 +1,0 @@
----
-
-- name: remove profile directory {{profile_dir+'/'+profile_version_dir}}
-  file: >
-    path={{profile_dir+'/'+profile_version_dir}}
-    state=absent
-

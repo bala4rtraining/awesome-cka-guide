@@ -1,8 +1,0 @@
----
-# handlers file for graphite
-- name: restart httpd
-  service: name=httpd state=restarted
-
-- name: restart carbon-cache
-  service: name=carbon-cache state=restarted
-

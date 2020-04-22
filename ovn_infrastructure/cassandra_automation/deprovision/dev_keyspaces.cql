@@ -1,2 +1,0 @@
-DROP KEYPSACE <keyspace_name>;
-DROP KEYSPACES;

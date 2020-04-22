@@ -1,5 +1,0 @@
----
-# vars file for elasticsearch  (only used for CENTOS-7)
-systemd_daemon_reload: true
-service_templates:
- - { src: elasticsearch.service.j2, dest: /usr/lib/systemd/system/elasticsearch.service, mode: '0644' }

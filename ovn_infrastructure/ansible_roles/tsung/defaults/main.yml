@@ -1,6 +1,0 @@
----
-# defaults file for tsung
-default_iface: "{{ ansible_default_ipv4.alias }}"
-workspace: "/opt/tsung/"
-tsung_source: "tsung.tar.gz"
-netiso_port: 7070

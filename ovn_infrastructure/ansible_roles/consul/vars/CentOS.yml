@@ -1,3 +1,0 @@
----
-# vars file for consul (CentOS specific)
-consul_systemd_dir: /etc/systemd/system

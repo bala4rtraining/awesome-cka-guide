@@ -1,9 +1,0 @@
----
-#####
-# PLEASE DO NOT MODIFY THIS FILE.
-#
-# This file contains the release manifest specific for epic-13
-#####
-profile_tarball:         "dev_profile_20180402_171.tar"
-currency_ovngit_ref:     "test/currency/2017/04-27/1"
-umf_broker_ovngit_ref:   "build/ovn_umf_broker/2017/05-18/25"

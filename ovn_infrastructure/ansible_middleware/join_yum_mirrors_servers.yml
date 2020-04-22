@@ -1,8 +1,0 @@
----
-- include: mware_vars.yml ovn_vars_hosts="{{ target_hosts | default('yum_mirror_servers') }}"
-
-# start the service and join the cluster
-- name: join the cluster
-  hosts: "{{ target_hosts | default('yum_mirror_servers') }}"
-  roles:
-    - { role: yum_mirrors, dispatch: ['join_servers']}

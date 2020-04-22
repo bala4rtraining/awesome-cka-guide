@@ -1,2 +1,0 @@
-- name: reload envoy
-  systemd: name=envoy state=reloaded

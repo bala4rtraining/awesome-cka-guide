@@ -1,9 +1,0 @@
----
-
-
-artifactory_rpm_path: "ovn-extra-el7"
-riak_rpm: "{{ riak_package }}-{{ riak_version }}.el7.centos.x86_64"
-riak_package: "riak"
-riak_url: "{{ artifactory_url }}/{{ artifactory_rpm_path }}/{{ riak_rpm }}.rpm"
-riak_config_file: "riak.conf"
-riak_remove_data: "false"

@@ -1,7 +1,0 @@
----
-# Main tasks file that dispatches requests
-
-- name: Consul role task dispatcher
-  include_tasks: "{{ item }}.yml" # assumes no nested includes from loops
-  with_items: "{{ dispatch|default([]) }}"
-  when: "dispatch != []"

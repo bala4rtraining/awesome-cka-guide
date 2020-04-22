@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
-
-- name: install node_exporter
-  hosts: all:!cumulus_switch:!ovn_manager
-  roles:
-    - { role: prometheus, dispatch: ['node_exporter'] }

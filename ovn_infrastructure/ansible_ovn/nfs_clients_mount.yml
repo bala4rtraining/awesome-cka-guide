@@ -1,5 +1,0 @@
----
-- name: run nfs-mount for all nfs-clients
-  hosts: nfs_clients
-  roles:
-     - {role: appliance_storage, dispatch: ['nfs_client_mount']}

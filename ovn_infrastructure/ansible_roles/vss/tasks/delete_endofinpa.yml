@@ -1,5 +1,0 @@
----
-- name: Delete endOfInpa.txt file from FTPS server
-  file:
-    path: "{{ vss_sftp_directory }}/endOfInpa.txt"
-    state: absent

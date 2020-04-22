@@ -1,4 +1,0 @@
----
-- name: Command to initialize sg_admin
-  command: "{{ searchguard_install_dir }}/plugins/{{ searchguard_package_name }}/tools/sgadmin.sh -h {{ inventory_hostname }} -cd {{ searchguard_install_dir }}/plugins/{{ searchguard_package_name }}/sgconfig/ -cacert {{ elasticsearch_client_ca_cert_path }} -cert {{ elasticsearch_client_cert_path }} -key {{ elasticsearch_client_key_path }} {{ searchguard_admin_command_args }}"
-  when: hostvars[inventory_hostname].eserv_type == "lbonly"

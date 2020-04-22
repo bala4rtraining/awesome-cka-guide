@@ -1,4 +1,0 @@
----
-artifactory_url: "http://10.55.65.116"
-jre_version: jre1.8.0_162
-hdfs_set_etc_hosts: false

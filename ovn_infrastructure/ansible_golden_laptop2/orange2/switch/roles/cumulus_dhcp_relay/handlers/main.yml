@@ -1,5 +1,0 @@
-- name: restart dhcp relay
-  service:
-    name: dhcrelay
-    enabled: yes
-    state: restarted

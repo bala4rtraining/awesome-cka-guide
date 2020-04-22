@@ -1,7 +1,0 @@
-{fault_generator_module, firewalled_network_partition_generator}.
-{oscillation_period, 12000}.
-{init_config, "192.168.56.0/24"}.
-{active_config, #{port => {multiport,"8087,8098,8099,6000:8000"}, period => 6000, mode => reject}}.
-{idle_config, []}.
-{ignore_nodes, ['chaos_agent@{{ hostvars[groups['kafka'][0]]['ansible_'+default_iface]['address']}}',
-    'chaos_agent@{{ hostvars[groups['kafka'][1]]['ansible_'+default_iface]['address']}}']}.

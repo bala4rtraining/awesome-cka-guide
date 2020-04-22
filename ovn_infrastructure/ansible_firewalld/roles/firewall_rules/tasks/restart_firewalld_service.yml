@@ -1,9 +1,0 @@
----
-
-- name: Ensure firewalld is enabled and running
-  systemd:
-    name: firewalld
-    state: restarted
-    daemon_reload: yes
-    enabled: yes
-    

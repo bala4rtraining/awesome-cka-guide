@@ -1,9 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=nomad_server
-
-- name: clean up delivery nomad jobs on the server 
-  hosts: nomad_server
-  gather_facts: yes
-  roles:
-    - { role: nomad, dispatch: ['stop_delivery_jobs'] }
-

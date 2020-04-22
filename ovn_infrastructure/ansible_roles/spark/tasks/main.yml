@@ -1,5 +1,0 @@
----
-- include: spark.yml
-
-- include: dispatcher.yml
-  when: dispatcher

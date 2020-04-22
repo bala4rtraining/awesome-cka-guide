@@ -1,8 +1,0 @@
----
-# vars file for elasticsearch  (only used for RHEL6)
-service_templates:
- - { src: elasticsearch.service.RHEL6.j2, dest: /etc/rc.d/init.d/elasticsearch, mode: '0755' }
-
-## because we are running RHEL6 SECCOMP doesn't work, so we bypass error here
-bootstrap_check: 'false'
-

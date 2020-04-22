@@ -1,4 +1,0 @@
----
-ovn_cas_admin: 'ovn_dev_cas_admin'
-ovn_cas_viewer: 'ovn_dev_cas_viewer'
-ovn_cas_editor: 'ovn_dev_cas_editor'

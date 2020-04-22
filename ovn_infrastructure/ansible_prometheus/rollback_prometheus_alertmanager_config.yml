@@ -1,8 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=prometheus_alertmanager
-
-- name: rollback alertmanager config and templates
-  hosts: prometheus_alertmanager
-  gather_facts: yes
-  roles:
-    - { role: prometheus, dispatch: ['rollback_prometheus_alertmanager_config'] }

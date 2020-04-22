@@ -1,9 +1,0 @@
-{% set servars = servers[ansible_hostname] %}
-
-BOOTPROTO=none
-IPADDR={{ servars.subnet_int_ip }}
-PREFIX={{ servars.subnet_mask_len }}
-DEVICE={{ subnet_int_name }}
-ONBOOT=yes
-DEFROUTE=yes
-GATEWAY={{servars.subnet_router}}

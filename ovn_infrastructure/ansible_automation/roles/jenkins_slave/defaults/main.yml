@@ -1,9 +1,0 @@
----
-# jenkins agent home directory
-jenkins_home: /opt/app/jenkins
-
-# jenkins owner
-jenkins_user: was
-
-# for ssh trust: see automation inventory `agent` group vars
-jenkins_ssh_keys: "{{ jenkins_agent_authorized_keys | default('[]') }}"

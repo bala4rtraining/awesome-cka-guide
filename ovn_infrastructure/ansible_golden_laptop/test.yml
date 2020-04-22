@@ -1,6 +1,0 @@
-# NOT USED
-# Use this playbook to bootstrap tests to run from plays in the tests directory.
-- hosts: all
-  gather_facts: yes
-  tasks:
-    - include: tests/main.yml

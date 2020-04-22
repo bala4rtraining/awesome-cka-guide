@@ -1,9 +1,0 @@
----
-tran_log_kafka_topic: "umf_feed_ovn_06_00"
-station_state_kafka_topic: "ovn_station_state_kh{{local_instance}}"
-cdb_state_kafka_topic: "ovn_cdb_state_kh{{local_instance}}"
-cas_state_kafka_topic: "ovn_cas_state_kh{{local_instance}}"
-xdc_state_kafka_topic: "ovn_xdc_state_kh{{local_instance}}"
-# remote_tran_log_kafka_topic: "ovn_tran_log_kh{{remote_instance}}"
-kafka_topic_names: '["{{tran_log_kafka_topic}}", "{{xdc_state_kafka_topic}}" , "{{station_state_kafka_topic}}", "{{cdb_state_kafka_topic}}",  "{{cas_state_kafka_topic}}"]' # '["{{tran_log_kafka_topic}}", "{{remote_tran_log_kafka_topic}}"]'
-kafka_data_retention_hours: 8760

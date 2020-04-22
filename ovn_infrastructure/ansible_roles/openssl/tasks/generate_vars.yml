@@ -1,5 +1,0 @@
----
-- name: generate vars and write to {{variable_generation.var_file}}
-  template:
-    src: gen_vars.j2
-    dest: "{{ variable_generation.var_file }}"

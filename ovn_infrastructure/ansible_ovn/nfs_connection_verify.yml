@@ -1,5 +1,0 @@
----
-- name: test nfs-connection between nfs-clients and nfs-servers
-  hosts: nfs_clients
-  roles:
-     - {role: appliance_storage, dispatch: ['nfs_test_connection']}

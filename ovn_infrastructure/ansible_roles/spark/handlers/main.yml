@@ -1,6 +1,0 @@
----
-- name: Reload daemons
-  shell: systemctl daemon-reload
-
-- name: Restart Spark Mesos Dispathcer service
-  service: name=spark-dispatcher state=restarted enabled=yes

@@ -1,9 +1,0 @@
-# handlers file for heka
-- name: restart heka
-  service:
-    name: "{{ heka_service_name }}"
-    state: restarted
-    enabled: yes
-
-- name: reload systemd
-  command: systemctl daemon-reload

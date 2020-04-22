@@ -1,5 +1,0 @@
-#
-# Default vars for rescue interface role
-#
-
-int_config_dir: "/etc/sysconfig/network-scripts"

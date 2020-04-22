@@ -1,7 +1,0 @@
----
-vss_public: |
- ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDd9XiueNVD7L3F1zVQM9Owv0PYdm6JXuA47EVOnGdOxKv5JbrwQEtjv5n1+Sva3pB3k1oA5Nu4G47U6Vla5WIQop1d+AD6DHSXobIJjtxdKYtQ4c84MqL954lri58xDMVfW5t/fLggC9d4vjQTiaj9f0umPlSFmscl8iFEB0utkYngQ+jjZOGuSm8mCSnuIXmTEOYIQ7LEBPah4i9ze0jyqjUQj9uZALo/G77C6XDNtvE4Tc+b8Fen2jzz8P4SIfvDulLFE5jMGMJhtaUClulNXg70fobRVAe2hai19ei7dMXiNs65He9/jRkVqzwV/Gd9U5u9wQzXdqRFguEMipFD indonesia
-
-vss_mirror_public: "{{ vss_public }}"
-vss_sftp_directory: "/var/vsftpd/prodvss"
-vss_ftps_username: "prodvss"

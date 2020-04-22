@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager 
-
-- name: install statsd_exporter
-  hosts: nomad_server:nomad_client:ovn_switch_servers:ovn_mediator_servers:ovn_riak_servers:ovn_multidc_sync:ovn_vitalsigns_delivery:ovn_umf_delivery:ovn_vss_servers
-  roles:
-    - { role: prometheus, dispatch: ['statsd_mapping_reload'] }

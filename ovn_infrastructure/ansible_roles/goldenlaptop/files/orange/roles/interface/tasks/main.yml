@@ -1,6 +1,0 @@
----
-# tasks file for interface
-
-- name: Configure an static interface for DHCP management
-  template: src=interface_orange.j2 dest=/etc/sysconfig/network-scripts/ifcfg-{{ subnet_int_name }}
-  notify: Restart networking service

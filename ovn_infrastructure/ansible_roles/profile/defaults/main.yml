@@ -1,4 +1,0 @@
----
-source: "{% if source_dir == 'files/' %}{{source_dir+'/'+source_file}}{% else %} {{ artifactory_host+'/ovn/profile/'+profile_tarball }} {% endif %}"
-source_copy: "{{ source_dir == 'files/' }}"
-profile_dir: "/opt/profile"

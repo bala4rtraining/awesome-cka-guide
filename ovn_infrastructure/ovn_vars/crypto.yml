@@ -1,4 +1,0 @@
----
-crypto_dek_path: "/usr/local/share/key"
-crypto_iv: "EDFC1313C7BB8A628FB782594AF01AF9"
-crypto_salt: "45DCDC36657CE573"

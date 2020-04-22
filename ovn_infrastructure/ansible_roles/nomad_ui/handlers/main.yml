@@ -1,9 +1,0 @@
----
-- name: reload nomad_ui service configuration
-  command: systemctl daemon-reload
-
-- name: restart nomad_ui
-  service:
-    name: nomad_ui
-    state: restarted
-    enabled: yes

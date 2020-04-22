@@ -1,7 +1,0 @@
----
-- include: ../ovn_vars.yml ovn_vars_hosts=prometheus_alertmanager
-
-- name: Get silences ID from AlertManager and delete all Active and Pending Silences
-  hosts: prometheus_alertmanager
-  roles:
-     - {role: prometheus, dispatch: ['delete_silence_id']}

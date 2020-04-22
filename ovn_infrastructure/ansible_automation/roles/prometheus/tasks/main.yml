@@ -1,3 +1,0 @@
----
-- name: Provision prometheus package.
-  include: provision_prometheus.yml

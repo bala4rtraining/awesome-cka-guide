@@ -1,5 +1,0 @@
----
-- name: <main> deploy Cassandra
-  include: "{{ item }}.yml" # assumes no nested includes from loops
-  with_items: "{{ dispatch|default([]) }}"
-  when: "dispatch != []"

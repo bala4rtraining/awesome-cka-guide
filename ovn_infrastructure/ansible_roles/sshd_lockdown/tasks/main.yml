@@ -1,5 +1,0 @@
----
-- name: ssh keys lockdown dispatcher
-  include: "{{ item }}.yml" # assumes no nested includes from loops
-  with_items: "{{ dispatch|default([]) }}"
-  when: "dispatch != []"
