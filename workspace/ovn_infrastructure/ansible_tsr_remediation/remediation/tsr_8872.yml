@@ -1,0 +1,57 @@
+ - name: check if /var/log/boot.log exists
+   stat:
+     path: /var/log/boot.log 
+   register: p
+
+ - name: check if /var/log/boot.log.bak exists
+   stat:
+     path: /var/log/boot.log.bak
+   register: b
+
+ - name: delete backup file /var/log/boot.log.bak
+   command: rm -f /var/log/boot.log.bak
+   when: b.stat.exists
+
+ - name: take a /var/log/boot.log backup for rollback
+   command: cp -p /var/log/boot.log /var/log/boot.log.bak
+   when: p.stat.exists
+
+ - name: /var/log/boot.log permissions set to 600 
+   command: chmod u-x,og-rwx /var/log/boot.log 
+   when: p.stat.exists
+
+ - name: create file /var/log/boot.log with permissions 600 
+   shell: |
+      touch /var/log/boot.log
+      chown root:root /var/log/boot.log
+      chmod u-x,og-rwx /var/log/boot.log 
+   when: p.stat.exists == false
+
+ - name: check if /var/log/secure exists
+   stat:
+     path: /var/log/secure
+   register: p
+
+ - name: check if backup file /var/log/secure.bak exists
+   stat:
+     path: /var/log/secure.bak
+   register: s
+
+ - name: delete backup file /var/log/secure.bak
+   command: rm -f /var/log/secure.bak
+   when: s.stat.exists
+
+ - name: take a /var/log/secure backup for rollback
+   command: cp -p /var/log/secure /var/log/secure.bak
+   when: p.stat.exists
+
+ - name: /var/log/secure permissions set to 600 
+   command: chmod u-x,og-rwx /var/log/secure 
+   when: p.stat.exists
+
+ - name: create file /var/log/secure with permissions 600 
+   shell: |
+      touch /var/log/secure
+      chown root:root /var/log/secure
+      chmod u-x,og-rwx /var/log/secure 
+   when: p.stat.exists == false

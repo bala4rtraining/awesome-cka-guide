@@ -1,0 +1,18 @@
+[Unit]
+Description=Consul client
+After=network.target
+
+[Service]
+User={{ consul_user }}
+Environment="GOMAXPROCS=`nproc`"
+Environment=TERM=xterm
+Restart=on-failure
+ExecStart=/bin/sh -c '{{ consul_bin }} agent -config-dir {{ consul_client_conf_file }} 2>&1 >> {{ consul_client_log_file }}'
+ExecReload=/bin/kill -HUP $MAINPID
+KillSignal=SIGTERM
+RestartSec=90
+StartLimitInterval=500
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

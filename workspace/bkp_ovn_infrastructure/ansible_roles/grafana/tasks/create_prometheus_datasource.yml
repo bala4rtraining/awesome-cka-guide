@@ -1,0 +1,60 @@
+---
+# It creates prometheus datasources using grafana datasource api's
+
+- name: create grafana group 
+  group: 
+    name: "grafana"
+    state: present
+
+- name: create grafana user
+  user:
+    name: "grafana"
+    group: "grafana"
+    createhome: no
+    comment: "grafana user"
+    state: present
+
+- name: create a directory for storing json files of creating datasources
+  file: 
+    path: "{{ grafana_datasource_json_path }}"
+    owner: "grafana" 
+    group: "grafana" 
+    state: directory
+    recurse: true
+
+- name: Delete the datasource json files if they already exist
+  file:
+    state: absent
+    path: "{{grafana_datasource_json_path}}/datasource_{{ip_addr}}.json"
+  with_items: "{{groups['prometheus_server']}}"
+  loop_control:
+    loop_var: ip_addr
+
+- name: Copy python script
+  template: src=create_prometheus_datasource_json.py.j2 dest=/tmp/create_prometheus_datasource_json.py mode="0644"
+
+- name: Run python script to create json file with given configuration
+  command: python /tmp/create_prometheus_datasource_json.py
+
+- name: Remove python script
+  file:
+    state: absent
+    path: /tmp/create_prometheus_datasource_json.py
+
+- name: create datasource using curl with auth proxy
+  command: curl -sS -H 'X-WEBAUTH-USER:{{ grafana_admin_user }}' --noproxy 127.0.0.1 -XPOST -i 'http://127.0.0.1:{{grafana_port}}/api/datasources' --data-binary @{{grafana_datasource_json_path}}/datasource_{{ip_addr}}.json  -H "Content-Type:application/json" 
+  register: create_datasource
+  changed_when: "'200 OK' in create_datasource.stdout"
+  with_items: "{{groups['prometheus_server']}}"
+  loop_control:
+    loop_var: ip_addr
+  when: grafana_auth_proxy_enabled
+
+- name: create datasource using curl without auth proxy
+  command: curl -sS --noproxy 127.0.0.1 -i -XPOST 'http://{{ grafana_admin_user }}:{{ grafana_admin_pass }}@127.0.0.1:{{grafana_port}}/api/datasources' --data-binary @{{grafana_datasource_json_path}}/datasource_{{ip_addr}}.json  -H "Content-Type:application/json" 
+  register: create_datasource_without_auth_proxy
+  changed_when: "'200 OK' in create_datasource_without_auth_proxy.stdout"
+  with_items: "{{groups['prometheus_server']}}"
+  loop_control:
+    loop_var: ip_addr
+  when: not grafana_auth_proxy_enabled

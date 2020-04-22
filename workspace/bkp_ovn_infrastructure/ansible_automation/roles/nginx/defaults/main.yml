@@ -1,0 +1,46 @@
+---
+# The name of the nginx apt/yum package to install.
+nginx_package_name: nginx
+
+# nginx process owner
+nginx_user: "nginx"
+
+# default jenkins port for nginx reverse proxy
+jenkins_port: "{{ jenkins_reverse_proxy_port | default(9089) }}"
+
+#
+# jenkins context path
+# e.g. http://localhost:<jenkins_port>/<jenkins_context_path>/...
+#
+jenkins_context_path: jenkins
+
+
+# default prometheus port for nginx reverse proxy
+prometheus_port: "{{ prometheus_reverse_proxy_port | default(9088) }}"
+
+#
+# prometheus context path
+# e.g. http://localhost:<prometheus_port>/<prometheus_context_path>/...
+#
+prometheus_context_path: prometheus
+prometheus_app_context_path: "prometheus-app"
+
+#
+# grafana context path
+# e.g. http://localhost:<grafana_port>/<grafana_context_path>/...
+#
+grafana_context_path: grafana
+
+# default prometheus port for nginx reverse proxy
+grafana_port: "3000"
+
+# nginx home directory
+nginx_home: /opt/app/nginx
+
+nginx_conf: nginx.conf
+nginx_ssl_port: "{{ ci_ssl_port | default(8443) }}"
+nginx_cert: nginx.crt
+nginx_key: nginx.key
+nginx_dhparam: dhparam.pem
+
+ovndoc_port: "{{ ovndoc_reverse_proxy_port | default(6060) }}"

@@ -1,0 +1,48 @@
+---
+# This is the SSH CA principal account for ansible.  When running playbooks from jenkins
+# or command line, ansible will use this principal to obtain a signed ssh pubkey credential
+# lease.  Basically, ansible will login to the target as this user.
+ovn_sshca_principal: 'cd'
+
+#
+# The principals for ssh cluster access which also happens to the the remote user account on
+# the target system
+ovn_admin_principal: admin
+ovn_support_principal: support
+ovn_appsupport_principal: appsupport
+
+#Default logs directory for OVN applications
+ovn_root_logdir: "/var/log"
+
+artifactory_url: "https://artifactory.trusted.visa.com"
+
+# spacewalk yum repo
+spacewalk_yum_repo: 'centos7-patch-channel-oct2015'
+
+#jre version
+jre_name: jre1.8
+jre_version: jre1.8.0_221-amd64
+
+# yum mirrors variables
+yum_primary_server: "{{ hostvars[groups['yum_mirror_servers'][0]].ansible_nodename }}"
+yum_secondary_server: "{{ hostvars[groups['yum_mirror_servers'][1]].ansible_nodename }}"
+
+# disable spacewalk repo
+disabled_yum_repos: centos7-patch-channel-oct2015
+
+# nginx variables
+nginx_user: nginx
+nginx_group: nginx
+
+#ovn cryptolibrary version used my mulitple playbooks
+cryptolib_version: "2.1.1"
+
+#redhat network ssl cert rpm
+redhat_network_ssl_cert_rpm: rhn-org-trusted-ssl-cert-1.0-4.noarch.rpm
+
+# set ansible distribution flag
+rhel_centos_6: '{{(ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_major_version == "6"}}'
+rhel_centos_7: '{{(ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_major_version == "7"}}'
+
+# artifactory host
+artifactory_host: "{{ artifactory_url | default('https://artifactory.trusted.visa.com') }}"

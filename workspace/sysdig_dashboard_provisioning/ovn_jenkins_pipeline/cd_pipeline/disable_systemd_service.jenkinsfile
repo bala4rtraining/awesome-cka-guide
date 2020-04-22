@@ -1,0 +1,40 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+    string(name: 'service_name', defaultValue: '', description: 'Enter the systemd service which has to be disabled. e.g. mediator')
+    string(name: 'host_name', defaultValue: '', description: 'Enter the hostname on which the above service has to be disabled. Eg: sl73ovnapd163')
+  }
+  stages {
+     stage('Set cluster variables') {
+         // boilerplate for stage must be the first stage
+         // in all the cd pipeline jobs.
+         // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+         steps {
+           setClusterAndDatacenter(env);
+         }
+     }
+     stage('checkout SCM'){
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+     stage('Disable systemd service') {
+       steps {
+         ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --extra-vars service_name=${service_name} --extra-vars host_name=${host_name}", playbook: 'ansible_ovn/disable_systemd_service.yml'
+         }
+       }
+     }
+  }
+}

@@ -1,0 +1,175 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+        booleanParam(name: 'RELEASE_OVN_RIAK_PERSISTENCE',    defaultValue: false, description: 'Is OVN_RIAK_PERSISTENCE part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_CLEARING_JOBS',            defaultValue: false, description: 'Is OVN_CLEARING_JOBS part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_CLEARING_XDC_SYNC',        defaultValue: false, description: 'Is OVN_CLEARING_XDC_SYNC part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_CAS_TOOLS',                defaultValue: false, description: 'Is OVN_CAS_TOOLS part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_CAS_UI',                   defaultValue: false, description: 'Is OVN_CAS_UI part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_CRYPTO',                   defaultValue: false, description: 'Is OVN_CRYPTO part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_NGINX_AUTH',        	   defaultValue: false, description: 'Is OVN_NGINX_AUTH part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN2',                         defaultValue: false, description: 'Is OVN2 part of the upcoming release?')
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        RELEASE_TAG = "v${params.RELEASE_VERSION}-rc1"
+        RELEASE_TAG_GO = "${params.RELEASE_VERSION}-rc1"
+
+    }
+
+    stages {
+
+        stage('Releasing OVN_CLEARING_JOBS') {
+            when { expression { return params.RELEASE_OVN_CLEARING_JOBS } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_clearing_jobs_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_clearing_jobs.git']]]
+                sh "cd ovn_clearing_jobs_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh "cd ovn_clearing_jobs_repo/ && git tag -a -m \"OVN_CLEARING_JOBS RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_clearing_jobs_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing OVN_CLR_XDC_SYNC') {
+            when { expression { return params.RELEASE_OVN_CLEARING_XDC_SYNC } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_clearing_xdc_sync_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_clearing_xdc_sync.git']]]
+                sh "cd ovn_clearing_xdc_sync_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh "cd ovn_clearing_xdc_sync_repo/ && git tag -a -m \"OVN_CLEARING_XDC_SYNC RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_clearing_xdc_sync_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing OVN_CAS_TOOLS') {
+            when { expression { return params.RELEASE_OVN_CAS_TOOLS } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_cas_tools_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_cas_tools.git']]]
+                sh "cd ovn_cas_tools_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn_cas_tools_repo/ && jq --arg value ${RELEASE_TAG_GO} \'.version=$value\' package.json > package.tmp && mv package.tmp package.json'
+                sh "cd ovn_cas_tools_repo/ && git add package.json && git commit -m \"modify package.json for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn_cas_tools_repo/ && git tag -a -m \"OVN_CAS_TOOLS RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_cas_tools_repo/ && git push origin ${RELEASE_TAG}  && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing OVN_CAS_UI') {
+            when { expression { return params.RELEASE_OVN_CAS_UI } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_cas_ui_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_cas_ui.git']]]
+                sh "cd ovn_cas_ui_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn_cas_ui_repo/ && jq --arg value ${RELEASE_TAG_GO} \'.version=$value\' package.json > package.tmp && mv package.tmp package.json'
+                sh "cd ovn_cas_ui_repo/ && git add package.json && git commit -m \"modify package.json for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn_cas_ui_repo/ && git tag -a -m \"OVN_CAS_UI RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_cas_ui_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing Ovn_crypto') {
+                    when { expression { return params.RELEASE_OVN_CRYPTO } }
+                    steps {
+                        checkout poll: false, scm: [$class: 'GitSCM',
+                                                    branches: [[name: 'master']],
+                                                    doGenerateSubmoduleConfigurations: false,
+                                                    extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_crypto_repo']],
+                                                    submoduleCfg: [],
+                                                    userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_crypto.git']]]
+                        sh "cd ovn_crypto_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                        copyArtifacts filter: '.frozen.packages*', projectName: 'release-freeze-dependencies', selector: lastSuccessful(), target: 'ovn_crypto_repo/'
+                        sh "cd ovn_crypto_repo/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+                        sh "cd ovn_crypto_repo/ && git tag -a -m \"OVN_CRYPTO RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                        sh "cd ovn_crypto_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+                    }
+
+        }
+
+        stage('Releasing OVN_NGINX_AUTH') {
+            when { expression { return params.RELEASE_OVN_NGINX_AUTH } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_nginx_auth_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_nginx_auth.git']]]
+                sh "cd ovn_nginx_auth_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn_nginx_auth_repo/ && jq --arg value ${RELEASE_TAG_GO} \'.version=$value\' package.json > package.tmp && mv package.tmp package.json'
+                sh "cd ovn_nginx_auth_repo/ && git add package.json && git commit -m \"modify package.json for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn_nginx_auth_repo/ && git tag -a -m \"OVN_NGINX_AUTH RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_nginx_auth_repo/ && git push origin ${RELEASE_TAG}  && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing Ovn Riak_persistence') {
+            when { expression { return params.RELEASE_OVN_RIAK_PERSISTENCE } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_riak_persistence_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_riak_persistence.git']]]
+                sh "cd ovn_riak_persistence_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                copyArtifacts filter: '.frozen.packages*', projectName: 'release-freeze-dependencies', selector: lastSuccessful(), target: 'ovn_riak_persistence_repo/'
+                sh "cd ovn_riak_persistence_repo/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn_riak_persistence_repo/ && git tag -a -m \"OVN ovn Riak Persistence RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_riak_persistence_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing OVN2') {
+            when { expression { return params.RELEASE_OVN2 } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn2_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git']]]
+                sh "cd ovn2_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn2_repo/ && jq --arg value ${RELEASE_TAG_GO} \'.version=$value\' package.json > package.tmp && mv package.tmp package.json'
+                sh "cd ovn2_repo/ && git add package.json && git commit -m \"modify package.json for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn2_repo/ && git tag -a -m \"OVN2 RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn2_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+    }
+}
+
+
+

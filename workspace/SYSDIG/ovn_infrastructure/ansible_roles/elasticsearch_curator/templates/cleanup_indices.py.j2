@@ -1,0 +1,128 @@
+#jinja2:lstrip_blocks: True
+# Date: 25th July, 2017
+# This file is deployed as python script (cleanup_indices.py) in node containing elasticsearch.
+# A periodic cron job executes this script once a day
+# This script deletes the elasticsearch indices which are older than N days and have not been used in last K days
+
+import operator
+import httplib
+import os
+import subprocess
+import datetime
+from datetime import date
+from subprocess import Popen, PIPE
+from shlex import split
+import syslog
+import argparse
+import ssl
+
+# Check if the index is used withing last "days" days
+def isLastAccessTimeOlderThanNDays(fileName, days):
+
+        if True == os.path.exists( "/opt/app/elasticsearch/nodes/0/indices/"):
+            p1 = Popen(split("stat /opt/app/elasticsearch/nodes/0/indices/" + fileName), stdout=PIPE)
+        elif True == os.path.exists("/opt/app/elasticsearch/elasticsearch/nodes/0/indices/"):
+            p1 = Popen(split("stat /opt/app/elasticsearch/elasticsearch/nodes/0/indices/" + fileName), stdout=PIPE)
+        p2 = Popen(split("grep Access"), stdin=p1.stdout,stdout=PIPE)
+        p3 = Popen(split("sed -n 2p"), stdin=p2.stdout, stdout=PIPE)
+        p4 = Popen(split("cut -f 2 -d ' '"), stdin=p3.stdout, stdout=PIPE)
+
+        out, err = p4.communicate()
+        temp = out.split("-")
+        filedate = date(int(temp[0]), int(temp[1]), int(temp[2]))
+        today = datetime.date.today()
+
+        if ((today - filedate).days > days):
+                return True
+        else:
+                return False
+
+def main(exclude=False):
+        #Get list of elastic search indices
+        try:
+
+               {% if elasticsearch_client_use_fqdn == "true" and ansible_fqdn is defined %}
+               host_url = "{{ ansible_fqdn }}:{{ elasticsearch_port }}"
+               {% else %}
+               host_url = "{{ inventory_hostname }}:{{ elasticsearch_port }}"
+               {% endif %}
+
+               {% if elasticsearch_client_ssl_enabled == "true" %}
+               sslcontext = ssl.create_default_context(cafile="{{ curator_elasticsearch_ca_cert_path }}")
+               conn = httplib.HTTPSConnection(host_url, key_file="{{ curator_elasticsearch_key_path }}", cert_file="{{ curator_elasticsearch_cert_path }}",context=sslcontext)
+               {% else %}
+               conn = httplib.HTTPConnection(host_url)
+               {% endif %}
+               if False!= exclude :
+                        conn.request("GET", "/_cat/indices?pretty")
+                        r1 = conn.getresponse()
+                        out = r1.read().split("\n")
+                        exclude_list = []
+                        index_to_size = {}
+                        for line in out:
+                                temp = line.split()
+
+                                if (len(temp) > 1 ):
+
+                                        if(isLastAccessTimeOlderThanNDays(temp[3], {{ curator_default_retention_period }}) == False):
+                                                exclude_list.append(temp[2])
+
+                                        # To find out indices which take most heap size
+                                        if("gb" in temp[-2]):
+                                                temp[-2] = float(temp[-2].split("gb")[0]) * 1024 * 1024
+                                        elif("mb" in temp[-2]):
+                                                temp[-2] = float(temp[-2].split("mb")[0]) * 1024
+                                        elif("kb" in temp[-2]):
+                                                temp[-2] = float(temp[-2].split("kb")[0])
+                                        else:
+                                                temp[-2] = 0
+
+                                        index_to_size[temp[2]] = temp[-2]
+
+                        # Contains mapping of index vs the disk space occupied by index
+                        sorted_x = sorted(index_to_size.items(), key=operator.itemgetter(1), reverse=True)
+
+                        index_stats = {}
+                        stat_list = []
+                        count = 0
+                        for ele in sorted_x:
+                                if count == 5:
+                                        break
+                                stat_list.append(ele[0] + " : " + str(ele[1]))
+                                count = count + 1
+
+                        syslog.syslog("Top 5 indices based on disk usage : {" + ",".join(stat_list) + "}")
+                        exclude_str = "|".join(exclude_list)
+
+                        if(len(exclude_str) > 0):
+                                os.environ["ELASTICSEARCH_EXCLUDE_LIST"] = exclude_str
+
+               else:
+                        os.environ["ELASTICSEARCH_EXCLUDE_LIST"] = "NO_ITEM_TO_EXCLUDE"
+               try:
+                        # Run curator command to delete the indices
+                        p1 = Popen(split("curator --config /etc/elasticsearch_curator/curator_config.yml /etc/elasticsearch_curator/curator_cleanup_config.yml"), stdout=PIPE)
+                        out, err = p1.communicate()
+                        syslog.syslog(out)
+               except:
+                        syslog.syslog("Failed to delete elastic search indices")
+
+        except Exception as e:
+                syslog.syslog("Could not connect to elasticsearch")
+                syslog.syslog(str(e))
+
+
+if __name__ == '__main__':
+
+    # Read command line options
+    parser = argparse.ArgumentParser(
+        description=(
+            'Elasticsearch curator cleanup script'))
+
+    parser.add_argument(
+        '--exclude',
+        action='store_true',
+        help='invoke the script using python cleanup_indices.py --exclude to enable exclude list')
+
+    args = parser.parse_args()
+    main(args.exclude)

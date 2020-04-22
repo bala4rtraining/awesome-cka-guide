@@ -1,0 +1,42 @@
+@Library('ovn-shared-library') _
+properties([parameters([string(defaultValue: '', description: 'host to deploy', name: 'target')]), pipelineTriggers([])])
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+
+  stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+    stage('checkout SCM'){
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    //
+    stage('deploy-jreupgrade') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", playbook: 'ansible_ovn/java-oracleJre-update.yml', extras: '--extra-vars \'{target_hosts: "$target"}\''
+
+        }
+      }
+    }
+
+  }
+
+}

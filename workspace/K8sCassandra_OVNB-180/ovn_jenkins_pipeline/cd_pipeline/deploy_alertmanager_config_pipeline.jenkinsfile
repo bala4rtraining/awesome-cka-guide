@@ -1,0 +1,41 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+        string(name:'alertmanager_repeat_interval', defaultValue: '3h', description: 'Enter the time interval to resend the alert notification')
+        string(name:'alertmanager_email_to', defaultValue: 'GDLnonprodprometheusovnalerts@visa.com', description: 'Enter the email id(s) to whom the alert mails will be sent')
+        string(name:'Netcool_email', defaultValue: 'EmailNetcoolQA@visa.com', description: 'Enter the email id(s) to which the Netcool alert mails will be sent')
+  }
+  stages {
+     stage('Set cluster variables') {
+         // boilerplate for stage must be the first stage
+         // in all the cd pipeline jobs.
+         // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+         steps {
+           setClusterAndDatacenter(env);
+         }
+     }
+     stage("GitSCM checkout for ovn_infrastructure"){
+       steps {
+         checkout poll: false, scm: [$class: 'GitSCM', branches: [[name: '${RELEASE_BRANCH}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git']]]
+       }
+     }
+     stage('Deploy alertmanager config & templates pipeline') {
+       steps {
+         ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", playbook: 'ansible_prometheus/prometheus_alertmanager_config.yml', extras: "-e alertmanager_repeat_interval=${params.alertmanager_repeat_interval} -e alertmanager_email_to=${params.alertmanager_email_to} -e Netcool_email=${params.Netcool_email} -e @config/${env.ENV}.vars.secret.yml --vault-password-file ~/.vault-${env.ENV}"
+         }
+       }
+     }
+  }
+}

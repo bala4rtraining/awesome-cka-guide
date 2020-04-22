@@ -1,0 +1,112 @@
+---
+- name: Provision build machine
+  hosts: all
+  environment: proxy_env
+  tasks:
+  - name: Register YUM mirror 1/N
+    ini_file: >
+      dest=/etc/yum.repos.d/CentOS-Base.repo
+      section={{item}}
+      option=mirrorlist
+      state=absent
+    with_items: [base, updates]
+    tags: mirror
+
+  - name: Register YUM mirror 2/N
+    ini_file: >
+      dest=/etc/yum.repos.d/CentOS-Base.repo
+      section=base
+      option=baseurl
+      value={{centos_mirror}}/os/$basearch/
+    tags: mirror
+
+  - name: Register YUM mirror 3/N
+    ini_file: >
+      dest=/etc/yum.repos.d/CentOS-Base.repo
+      section=updates
+      option=baseurl
+      value={{centos_mirror}}/updates/$basearch/
+    tags: mirror
+
+  - name: Register YUM mirror 4/N
+    ini_file: >
+      dest=/etc/yum.repos.d/CentOS-Sources.repo
+      section=base-source
+      option=baseurl
+      value={{centos_mirror}}/os/Source/
+    tags: mirror
+
+  - name: Register YUM mirror 5/N
+    ini_file: >
+      dest=/etc/yum.repos.d/CentOS-Sources.repo
+      section=updates-source
+      option=baseurl
+      value={{centos_mirror}}/updates/Source/
+    tags: mirror
+
+  - name: Register YUM mirror 6/N
+    ini_file: >
+      dest=/etc/yum.repos.d/CentOS-Base.repo
+      section=extras
+      option=enabled
+      value=0
+    tags: mirror
+
+  - name: install build tools
+    yum: name={{item}}
+    with_items: [yum-utils, createrepo, rpm-build, squashfs-tools, efivar-devel, efivar-libs, nfs-utils, keyutils, anaconda-dracut, anaconda, cmake, gmp-devel]
+
+  - name: clean rpmbuild dir
+    file: path=rpmbuild state=absent
+
+  - name: check for sources
+    become: false
+    shell: test -f grub2-{{grub_ver}}.src.rpm -a -f kernel-{{kernel_ver}}.src.rpm -a -f shim-{{shim_ver}}.src.rpm -a -f shim-signed-{{shim_signed_ver}}.src.rpm
+    register: test_f
+    changed_when: false
+    failed_when: false
+    ignore_errors: true
+
+  - name: download sources
+    become: false
+    shell: yumdownloader --source {{item}}
+    with_items: ["kernel-{{kernel_ver}}", "grub2-{{grub_ver}}", "shim-{{shim_ver}}", "shim-signed-{{shim_signed_ver}}"]
+    when: test_f|failed
+    changed_when: false
+
+  - name: install sources
+    become: false
+    shell: rpm -i {{item}}
+    with_items: ["kernel-{{kernel_ver}}.src.rpm", "grub2-{{grub_ver}}.src.rpm", "shim-{{shim_ver}}.src.rpm", "shim-signed-{{shim_signed_ver}}.src.rpm"]
+    changed_when: false
+
+  - name: download dependencies
+    shell: yum-builddep -y rpmbuild/SPECS/{{item}}.spec
+    with_items: [kernel, grub2, shim, shim-signed]
+    changed_when: false
+
+  - name: make dracut module dir
+    file: path=/usr/lib/dracut/modules.d/46ca-cert-override state=directory
+    tags: scripts
+
+  - name: copy dracut module
+    copy: src=files/46ca-cert-override.module-setup.sh dest=/usr/lib/dracut/modules.d/46ca-cert-override/module-setup.sh
+    tags: scripts
+
+  - name: upload patches and build scripts 1/N
+    become: false
+    copy: src=files/{{item}} dest=.
+    with_items: [grub2.patch, kernel.patch, shim-signed.patch, visa-grub.cfg, lib.sh, CentOS-7-x86_64-Minimal-1511.iso, efitools-1.5.3-1.1.x86_64.rpm]
+    tags: scripts
+
+  - name: upload patches and build script 2/N
+    become: false
+    template: src=templates/{{item}} dest=./{{item}}
+    with_items: [build.sh, pack.sh, shim.patch, grub.cfg.embedded, grub.cfg.embedded.standalone, grub.cfg, min-ks.cfg]
+    tags: scripts
+
+  - name: upload patches and build scripts 3/N
+    become: false
+    copy: src=files/{{item}} dest=rpmbuild/SPECS
+    with_items: [visa-grub.spec, visa-initrd.spec]
+    tags: scripts

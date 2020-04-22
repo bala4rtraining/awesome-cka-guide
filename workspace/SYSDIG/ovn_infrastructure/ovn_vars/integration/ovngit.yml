@@ -1,0 +1,4 @@
+---
+# FOR NON-PROD we do not run an OVNGIT local jenkins cache, we can go directly to the OCC version of OVNGIT
+ovngit_host: http://sl55ovnapq01.visa.com:80/git/@pod1/
+

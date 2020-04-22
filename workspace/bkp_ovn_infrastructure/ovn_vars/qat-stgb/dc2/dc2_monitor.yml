@@ -1,0 +1,23 @@
+---
+kibana_reverse_proxy_enabled: true
+kibana_nginx_enable_ssl: "true"
+kibana_basepath: "/kibana-qatstgb2"
+kibana_reverse_proxy_path: "kibana-qatstgb2"
+
+grafana_reverse_proxy_enabled: true
+grafana_auth_proxy_enabled: true
+grafana_nginx_enable_ssl: "true"
+grafana_reverse_proxy_url: "https://ovntest.visa.com/grafana-qatstgb2/"
+grafana_reverse_proxy_path: "grafana-qatstgb2"
+
+nginx_enable_ssl: "true"
+
+graphite_url: "http://sl73ovnapq196.visa.com:5603"
+prometheus_datacenter_id: "QATSTGB-DC2"
+carbon_host: "sl73ovnapq196.visa.com"
+
+alertmanager_context_path: "alertmanager-qatstgb2"
+alertmanager_app_context_path: "alertmanager-qatstgb2-app"
+prometheus_context_path: "prometheus-qatstgb2"
+prometheus_app_context_path: "prometheus-qatstgb2-app"
+vss_output_context_path: "vss-output-qatstgb2"

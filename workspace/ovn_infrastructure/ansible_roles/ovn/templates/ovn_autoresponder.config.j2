@@ -1,0 +1,16 @@
+[
+    {ovn_responder, [
+        {endpoints, #{
+            pcrs =>  {{responder_pcrs}},
+            aps =>   {{responder_aps}},
+            hosts => {{mediator_endpoint}}
+        }},
+        {strategy, {ovn_configurable_strategy, [#{
+                    %%{Destination Station Id, Source Station Id} => {Strategy Module, Args}
+                    {'_', '_'} => {ovnt_strategy_pass, true}
+                },
+                accept %% default behaviour
+            ]
+        }}
+    ]}
+].

@@ -1,0 +1,45 @@
+[Unit]
+Description=Kafka Mirror Maker
+After=kafka.service
+
+[Service]
+Type=simple
+User={{kafka_username}}
+Group={{kafka_group}}
+Restart=always
+RestartSec=3
+TimeoutStopSec=180
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=kafka_mirror_maker
+
+ExecStart=/bin/java -Xmx512M -server \
+    -XX:+UseG1GC \
+    -XX:MaxGCPauseMillis=20 \
+    -XX:InitiatingHeapOccupancyPercent=35 \
+    -XX:+DisableExplicitGC \
+    -Djava.awt.headless=true \
+    -Xloggc:{{kafka_log_dir}}/kafkaMirrorMaker-gc.log \
+    -verbose:gc \
+    -XX:+PrintGCDetails \
+    -XX:+PrintGCDateStamps \
+    -XX:+PrintGCTimeStamps \
+    -Dkafka.logs.dir={{kafka_log_dir}} \
+    -Dlog4j.configuration=file:{{kafka_install_dir}}/config/log4j.properties \
+{% if kafka_enable_zk_client_authentication == "true" %}
+    -Djava.security.auth.login.config={{ kafka_install_dir }}/config/jaas.conf \
+{% endif %}
+    -cp :{{kafka_install_dir}}/libs/* kafka.tools.MirrorMaker \
+{% if enable_kafka_mirror_maker_ssl == true %}
+    --new.consumer \
+{% endif %}
+    --consumer.config {{kafka_install_dir}}/config/consumer.properties \
+    --producer.config {{kafka_install_dir}}/config/producer.properties \
+{% if enable_kafka_mirror_maker_ssl == true %}
+    --whitelist={{ kafka_mirror_topics_new_consumer }}
+{% else %}
+    --whitelist="{{kafka_mirror_topics}}"
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

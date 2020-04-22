@@ -1,0 +1,41 @@
+job "{{ vss_config_init_nomad }}" {
+  datacenters = ["{{ vic_identity|trim }}"]
+
+  region = "global"
+
+  type = "batch"
+
+  periodic {
+    cron             = "0 15 * * * *"
+    prohibit_overlap = true
+  }
+	
+constraint {
+    attribute = "${node.class}"
+    value     = "vss"
+  }
+  priority = 100
+
+  group "{{ vss_config_init_nomad }}" {
+  
+    restart {
+      attempts = 419
+      delay    = "60s"
+	  interval = "7h"
+      mode = "fail"
+    }
+  
+    task "{{ vss_config_init_nomad }}Task" {
+      user = "{{ vss_username }}"
+      driver = "raw_exec"
+      logs {
+        max_files     = 10
+        max_file_size = 10
+      }
+      config {
+          command = "/bin/bash"
+          args = ["{{ vss_binaries_path }}/configInit.sh"]
+      }
+    }
+  }
+}

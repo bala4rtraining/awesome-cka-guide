@@ -1,0 +1,35 @@
+IPCsock YES
+krbconf /etc/krb.conf:/etc/krb5/krb5.conf
+keytab /etc/krb5/krb5.keytab
+krb5rcache /var/tmp
+mprincipal pmmasterd
+lprincipal pmlocald
+policyfile /etc/opt/quest/qpm4u/pm.conf
+policydir /opt/quest/qpm4u/policies
+logsascii NO
+pmmasterdlog /var/log/pmmasterd.log
+kerberos NO
+encryption AES
+reconnectClient NO
+reconnectAgent NO
+clientVerify NONE
+setReservePortRange 600 1023
+setNonReservePortRange 29104 31024
+FailOverTimeOut 10
+Certificates NO
+selecthostrandom YES
+thishost _
+shortnames YES
+syslog YES
+eventLogQueue /var/opt/quest/qpm4u/evcache
+pmservicedLog /var/log/pmserviced.log
+pmlogsrvdLog /var/log/pmlogsrvd.log
+pmmasterdOpts -ar
+pmlocaldEnabled YES
+pmclientdEnabled YES
+masterport 4162
+localport 4161
+tunnelport 12347
+masters sl73upmapp01 sl75upmapp01 sl73upmapp02 sl73upmapp02 sl73upmapp03 sl75upmapp02 sl75upmapp03 sl93upmapp005 sl93upmapp006
+pmlocaldlog /var/log/pmlocald.log
+pmrunlog /var/log/pmrun.log

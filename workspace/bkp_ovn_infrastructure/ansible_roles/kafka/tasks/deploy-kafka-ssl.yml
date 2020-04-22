@@ -1,0 +1,30 @@
+---
+- name: ensure kafka is present
+  stat: path={{ kafka_install_dir }}
+  register: links
+
+- debug: msg="link exists"
+  when: links.stat.islnk is defined and links.stat.islnk
+
+- name: Stopping current kafka
+  service: name=kafka state=stopped
+
+- name: check that kafka is not running
+  wait_for: port={{ client_port }} host={{ hostvars[inventory_hostname]['ansible_'+default_iface]['ipv4']['address'] }} state=stopped delay=20
+
+- name: deploy keystores
+  include: deploy-kafka-keystore.yml
+  when: enable_kafka_ssl
+
+- name: make changes in broker properties to enable/disable SSL
+  template: >
+    src=server.properties.j2
+    dest={{ kafka_install_dir }}/config/server.properties
+    owner={{ kafka_username }}
+    group={{ kafka_group }}
+
+- name: restart kafka
+  service:
+    name: kafka
+    state: restarted
+    enabled: yes

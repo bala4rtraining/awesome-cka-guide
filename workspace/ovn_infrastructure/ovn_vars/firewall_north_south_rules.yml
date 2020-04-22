@@ -1,0 +1,312 @@
+---
+#######
+# Firewall rule is considered `norh-south` only when the communication is between
+# an external entity and nodes in the datactner.  Examples include communications to the
+# ovn_manager, communication between nodes in `dc1` and `dc2`.
+#
+# North-South Firewall rules that require cross connect
+# between datacenters `dc1` and `dc2`.
+#
+# The `north_south_firewall_rules` must be run on
+# composite `test1` inventory
+# e.g.
+#   .../inventories/test
+#######
+north_south_firewall_rules:
+
+# haproxy open to all external clients for the moment.
+# we will need to restrict access to specific clients.
+- src: "{{ client_ea_servers }}"
+  dest: "{{ groups.haproxy }}"
+  ports:
+  - port: "{{ haproxy_ssl_port }}"
+
+# Mediator
+# From dc1 to dc2
+- src: "{{ groups.dc1_ovn_mediator_servers }}"
+  dest: "{{ groups.dc2_ovn_mediator_servers }}"
+  ports:
+  - port: "{{ forward_handler_port }}"
+- src: "{{ groups.dc2_ovn_mediator_servers }}"
+  dest: "{{ groups.dc1_ovn_mediator_servers }}"
+  ports:
+  - port: "{{ forward_handler_port }}"
+
+# Kafka Mirror Maker
+- src: "{{ groups.dc1_kafka_mirror_maker }}"
+  dest: "{{ groups.dc2_kafka }}"
+  ports:
+  - port: "{{ kafka_port }}"
+  - port: "{{ kafka_ssl_port }}"
+- src: "{{ groups.dc2_kafka_mirror_maker }}"
+  dest: "{{ groups.dc1_kafka }}"
+  ports:
+  - port: "{{ kafka_port }}"
+  - port: "{{ kafka_ssl_port }}"
+
+# zookeeper
+- src: "{{ groups.dc1_kafka_mirror_maker }}"
+  dest: "{{ groups.dc2_zookeeper }}"
+  ports:
+  - port: "{{ zk_port }}"
+- src: "{{ groups.dc2_kafka_mirror_maker}}"
+  dest: "{{ groups.dc1_zookeeper }}"
+  ports:
+  - port: "{{ zk_port }}"
+
+######
+# OVN Manager
+######
+# limit ssh access to ovn manager
+- src: "{{ ovn_manager + rescue_server + qualys_nat_server }}"
+  dest: "{{ groups.datacenter }}"
+  ports:
+  - port: "{{ ssh_port }}"
+
+# grafana
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.grafana }}"
+  ports:
+  - port: "{{ grafana_port }}"
+
+# kibana
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.kibana }}"
+  ports:
+  - port: "{{ kibana_port }}"
+
+# graphite
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.graphite }}"
+  ports:
+  - port: "{{ graphite_port }}"
+
+# elasticsearch
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.elasticsearch }}"
+  ports:
+  - port: "{{ elasticsearch_rest_port }}"
+
+# MVS CDB feeds
+- src: "{{ mvs_cdb_feed_servers + mvs_inpa_feed_servers }}"
+  dest: "{{ groups.ftps_server }}"
+  ports:
+  - port: "{{ ftps_auth_port }}"
+  - port: "{{ ftps_data_port_range }}"
+
+# OVN manager access to remote cluster
+- src: "{{ groups.datacenter }}"
+  dest: "{{ ovn_manager }}"
+  ports:
+  - port: "8080"
+
+# dns-ntp servers
+- src: "{{ groups.datacenter }}"
+  dest: "{{ visa_dns_servers }}"
+  ports:
+  - port: "53"
+    protocol: "tcp"
+  - port: "53"
+    protocol: "udp"
+  - port: "123"
+    protocol: "udp"
+
+# umf UB servers
+- src: "{{ groups.ovn_umf_delivery }}"
+  dest: "{{ umf_ub_servers }}"
+  ports:
+  - port: "{{ umf_ub_port }}"
+
+# umf APF servers
+- src: "{{ groups.ovn_umf_delivery }}"
+  dest: "{{ umf_apf_servers }}"
+  ports:
+  - port: "{{ umf_apf_port }}"
+
+# Vital Signs
+- src: "{{ groups.ovn_vitalsigns_delivery }}"
+  dest: "{{ vitalsigns_servers }}"
+  ports:
+  - port: "{{ ssh_port }}"
+
+# SMTP
+- src: "{{ groups.grafana + groups.prometheus_alertmanager + groups.elastalert}}"
+  dest: "{{ corpportal_smtp_server }}"
+  ports:
+  - port: "25"
+
+# prometheus_server
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.prometheus_server }}"
+  ports:
+  - port: "{{ nginx_default_port }}"
+
+# prometheus_alertmanager
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.prometheus_alertmanager }}"
+  ports:
+  - port: "{{ nginx_default_port }}"
+
+# Collection and delivery
+- src: "{{ groups.nomad_client }}"
+  dest: "{{ client_ea_servers }}"
+  ports:
+  - port: "{{ client_ea_cas_port }}"
+
+#Cas_UI to Cas_Tool
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.cas_tool }}"
+  ports:
+  - port: "{{ cas_tool_http_port }}"
+
+#Nginx-US to in-country nginx-grafana
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.grafana }}"
+  ports:
+  - port: "{{ nginx_default_port }}"
+
+#Nginx-US to in-country nginx-kibana
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.kibana }}"
+  ports:
+  - port: "{{ nginx_default_port }}"
+
+#Nginx-US to in-country nginx-nomad_ui
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.nomad_ui }}"
+  ports:
+  - port: "{{ nginx_default_port }}"
+
+#Nginx-US to in-country fluentd_aggregator for vss output files
+- src: "{{ ovn_manager }}"
+  dest: "{{ groups.fluentd_aggregator }}"
+  ports:
+  - port: "{{ nginx_default_port }}"
+
+# MVS VSS feeds
+- src: "{{ mvs_vss_feed_servers }}"
+  dest: "{{ groups.ftps_server }}"
+  ports:
+  - port: "{{ ftps_auth_port }}"
+  - port: "{{ ftps_data_port_range }}"
+
+# VSS
+# From dc1 to dc2
+- src: "{{ groups.dc1_ovn_vss_servers }}"
+  dest: "{{ groups.dc2_ovn_vss_servers }}"
+  ports:
+  - port: "{{ ssh_port }}"
+- src: "{{ groups.dc2_ovn_vss_servers }}"
+  dest: "{{ groups.dc1_ovn_vss_servers }}"
+  ports:
+  - port: "{{ ssh_port }}"
+
+#OVN Manager to CAS-UI
+- src: "{{ ovn_manager }}"
+  dest: "{{ ovn_manager }}"
+  ports:
+    - port: "{{ cas_ui_port }}"
+
+# HDFS
+# From DC2 to DC1
+- src: "{{ groups.dc2_hadoop_datanodes}}"
+  dest: "{{ groups.dc1_hadoop_namenodes }}"
+  ports:
+  - port: "{{ hadoop_namenode_rpc_port }}"
+- src: "{{ groups.dc2_hadoop_datanodes}}"
+  dest: "{{ groups.dc1_hadoop_datanodes }}"
+  ports:
+  - port: "{{ hadoop_datanode_port }}"
+  - port: "{{ hadoop_datanode_secure_port }}"
+  - port: "{{ hadoop_datanode_ipc_port }}"
+  - port: "{{ hadoop_datanode_http_port }}"
+  - port: "{{ hadoop_datanode_http_secure_port }}"
+  - port: "{{ hadoop_datanode_https_port }}"
+
+# From DC1 to DC2
+- src: "{{ groups.dc1_hadoop_datanodes}}"
+  dest: "{{ groups.dc2_hadoop_namenodes }}"
+  ports:
+  - port: "{{ hadoop_namenode_rpc_port }}"
+- src: "{{ groups.dc1_hadoop_datanodes}}"
+  dest: "{{ groups.dc2_hadoop_datanodes }}"
+  ports:
+  - port: "{{ hadoop_datanode_port }}"
+  - port: "{{ hadoop_datanode_secure_port }}"
+  - port: "{{ hadoop_datanode_ipc_port }}"
+  - port: "{{ hadoop_datanode_http_port }}"
+  - port: "{{ hadoop_datanode_http_secure_port }}"
+  - port: "{{ hadoop_datanode_https_port }}"
+
+# XDC_Sync
+# From dc1 to dc2
+- src: "{{ groups.dc1_ovn_xdc_sync }}"
+  dest: "{{ groups.dc2_hadoop_namenodes }}"
+  ports:
+  - port: "{{ hadoop_namenode_rpc_port }}"
+  - port: "{{ hadoop_namenode_http_port }}"
+  - port: "{{ hadoop_namenode_https_port }}"
+- src: "{{ groups.dc1_ovn_xdc_sync }}"
+  dest: "{{ groups.dc2_hadoop_datanodes }}"
+  ports:
+  - port: "{{ hadoop_datanode_port }}"
+  - port: "{{ hadoop_datanode_secure_port }}"
+  - port: "{{ hadoop_datanode_ipc_port }}"
+  - port: "{{ hadoop_datanode_http_port }}"
+  - port: "{{ hadoop_datanode_http_secure_port }}"
+  - port: "{{ hadoop_datanode_https_port }}"
+
+# XDC_Sync
+# From dc2 to dc1
+- src: "{{ groups.dc2_ovn_xdc_sync }}"
+  dest: "{{ groups.dc1_hadoop_namenodes }}"
+  ports:
+  - port: "{{ hadoop_namenode_rpc_port }}"
+  - port: "{{ hadoop_namenode_http_port }}"
+  - port: "{{ hadoop_namenode_https_port }}"
+- src: "{{ groups.dc2_ovn_xdc_sync }}"
+  dest: "{{ groups.dc1_hadoop_datanodes }}"
+  ports:
+  - port: "{{ hadoop_datanode_port }}"
+  - port: "{{ hadoop_datanode_secure_port }}"
+  - port: "{{ hadoop_datanode_ipc_port }}"
+  - port: "{{ hadoop_datanode_http_port }}"
+  - port: "{{ hadoop_datanode_http_secure_port }}"
+  - port: "{{ hadoop_datanode_https_port }}"
+
+# ERPM + UKM for remote cluster access management
+- src: "{{ erpm_servers + ukm_servers }}"
+  dest: "{{ groups.datacenter }}"
+  ports:
+  - port: "{{ ssh_port }}"
+
+# Tripwire for intrusion detection
+- src: "{{ tripwire_servers }}"
+  dest: "{{ groups.datacenter }}"
+  ports:
+  - port: "{{ tripwire_rpc_port }}"
+  - port: "{{ tripwire_http_port }}"
+
+# Xceedium windows + Linux for remote cluster access management
+- src: "{{ xceedium_windows_servers + xceedium_linux_servers }}"
+  dest: "{{ groups.datacenter }}"
+  ports:
+  - port: "{{ ssh_port }}"
+
+# Kerberos Server cross-dc authentication
+# From dc1 to dc2
+- src: "{{ groups.dc1_kerberos_server + groups.dc1_kafka + groups.dc1_hdfs_HA_All_nodes + groups.dc1_zookeeper }}"
+  dest: "{{ groups.dc2_kerberos_server }}"
+  ports:
+  - { port: "{{ kerberos_kdc_port }}", protocol: "udp" }
+  - { port: "{{ kerberos_kdc_port }}", protocol: "tcp" }
+  - { port: "{{ kerberos_kadmind_port }}", protocol: "udp" }
+  - { port: "{{ kerberos_kadmind_port }}", protocol: "tcp" }
+# From dc2 to dc1
+- src: "{{ groups.dc2_kerberos_server + groups.dc2_kafka + groups.dc2_hdfs_HA_All_nodes + groups.dc2_zookeeper }}"
+  dest: "{{ groups.dc1_kerberos_server }}"
+  ports:
+  - { port: "{{ kerberos_kdc_port }}", protocol: "udp" }
+  - { port: "{{ kerberos_kdc_port }}", protocol: "tcp" }
+  - { port: "{{ kerberos_kadmind_port }}", protocol: "udp" }
+  - { port: "{{ kerberos_kadmind_port }}", protocol: "tcp" }

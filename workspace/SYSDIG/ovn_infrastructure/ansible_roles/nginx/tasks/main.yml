@@ -1,0 +1,82 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+#Create nginx_user if not exist already
+- name: create nginx group
+  group: name={{ nginx_group }}  state=present
+  when: not update_nginx_conf  
+
+- name: create nginx user
+  user:
+    name: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    createhome: no
+    comment: "Nginx User"
+    state: present
+  when: not update_nginx_conf    
+
+# Installing nginx rpm
+- name: install nginx rpm
+  yum:
+    name: "{{ nginx_rpm }}"
+    state: present
+    validate_certs: no
+  when: (rhel_centos_7) and (not update_nginx_conf)
+
+# Deploying nginx.conf
+- name: deploy nginx.conf
+  template:
+    src: "nginx.conf.j2"
+    dest: "/etc/nginx/nginx.conf"
+  notify:
+    - restart nginx
+  when: not update_nginx_conf    
+
+# Deploying logrotate.d/nginx
+- name: Add nginx logrotation file.
+  template:
+    src: 'nginx.logrotate.j2'
+    dest: /etc/logrotate.d/nginx
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+  when: not update_nginx_conf
+
+- name: take a backup of elasticsearch_upstream for rollback
+  command: cp -p /etc/nginx/conf.d/elasticsearch_upstream.conf /etc/nginx/conf.d/elasticsearch_upstream.conf.bak
+  when: update_nginx_conf
+  ignore_errors: yes
+  
+- name: take a backup of elasticsearch.conf for rollback
+  command: cp -p /etc/nginx/conf.d/elasticsearch/elasticsearch.conf /etc/nginx/conf.d/elasticsearch/elasticsearch.conf.bak
+  when: update_nginx_conf
+  ignore_errors: yes  
+
+# Run configuration tasks
+- name: include configuration tasks
+  include: configuration.yml
+
+#Start the nginx service
+- name: Restart the nginx service
+  service:
+    name: "nginx"
+    state: restarted
+    enabled: yes
+
+#change permission of nginx cache folder
+#This folder and user might change with new nginx version. Check compatibility before upgrading the nginx version.
+#Tested with nginx-1.12.1-1.el7.centos.ngx.x86_64
+- name: change ownership of nginx cache folder
+  file:
+    path: "/var/cache/nginx/"
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_group }}"
+    state: directory
+    recurse: yes

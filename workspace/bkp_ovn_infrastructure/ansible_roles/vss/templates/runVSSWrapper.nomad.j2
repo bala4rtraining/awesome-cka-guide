@@ -1,0 +1,39 @@
+job "{{ vss_run_vsswrapper }}" {
+  region = "global"
+  datacenters = ["{{ vic_identity|trim }}"]
+
+  type = "batch"
+
+  periodic {
+    cron             = "0 10 * * * *"
+    prohibit_overlap = true
+  }
+  constraint {
+    attribute = "${node.class}"
+    value     = "vss"
+  }
+  priority = 100
+
+  group "{{ vss_run_vsswrapper }}" {
+  
+    restart {
+      attempts = 180
+      delay    = "55s"
+      mode = "fail"
+    }
+  
+    task "{{ vss_run_vsswrapper }}task" {
+      user = "{{ vss_username }}"
+      driver = "raw_exec"
+      logs {
+            max_files     = 10
+            max_file_size = 10
+      }
+      config {
+          command = "{{ vsswrapper_root_path }}/bin/runVSSWrapper.sh"
+          args = []
+      }
+    }
+  }
+}
+

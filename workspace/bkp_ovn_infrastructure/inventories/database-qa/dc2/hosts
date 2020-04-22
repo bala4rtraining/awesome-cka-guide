@@ -1,0 +1,20 @@
+#########
+### This hosts file has all multi-tenant database servers used in QA dc2 environments
+#########
+
+
+[sl73ovdbq076]
+10.211.153.157
+
+[sl73ovdbq077]
+10.211.153.158
+
+[sl73ovdbq078]
+10.211.153.159
+
+# aerospike QA-B servers
+[aerospike:children]
+sl73ovdbq076
+sl73ovdbq077
+sl73ovdbq078
+

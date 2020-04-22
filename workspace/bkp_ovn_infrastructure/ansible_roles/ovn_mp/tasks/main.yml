@@ -1,0 +1,31 @@
+---
+- name: remove ovn_mp from a remote repository
+  yum:
+    name: "ovn_mp"
+    state: absent
+
+- name: Clean yum repo (temporary task)
+  shell: yum --enablerepo=ovn-app-el7 clean metadata
+
+- name: install ovn_mp rpm from a remote repository
+  yum:
+    name: "ovn_mp"
+    state: present
+
+- name: Generate ovn_mp config
+  template: >
+      src=ovn_mp.yml.j2
+      dest=/opt/app/ovn_mp/config/ovn_mp.yaml
+      owner={{service_user}}
+      group={{service_group}}
+      mode=755
+  register: envoy_service_result
+
+- name: reload systemd configuration
+  command: systemctl daemon-reload
+
+- name: restart ovn_mp service
+  service: name=ovn_mp state=restarted
+
+- name: validate that the service is up (server port validation)
+  wait_for: port={{service_listener_port}} delay=2

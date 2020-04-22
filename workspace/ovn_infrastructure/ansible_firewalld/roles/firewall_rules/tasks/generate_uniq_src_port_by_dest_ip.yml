@@ -1,0 +1,60 @@
+######
+# This script generates unique (src, port) by destination ip.
+# 
+# 1. The first pass is performed by `generate_src_port_by_dest_ip.yml`
+# 2. The second pass reconstiutes `_east_west_rules_var` and `_north_south_rules_var` variables produced
+#    in the first pass and removes duplicate (src, port) for a destination ip and produces
+#    the result in the `_firewall_rules_vars_file`.
+######
+
+- name: Reconstitute `_east_west_rules_var`
+  include_vars:
+    file: "{{ _east_west_vars_file }}"
+
+- name: Reconstitute `_north_south_rules_var`
+  include_vars:
+    file: "{{ _north_south_vars_file }}"
+
+- set_fact:
+    _east_rules:  >
+      {% if _east_west_rules_var is iterable -%}
+        {{ _east_west_rules_var }}
+      {%- else -%}
+        []
+      {%- endif %}
+    _north_rules:  >
+      {% if _north_south_rules_var is iterable -%}
+        {{ _north_south_rules_var }}
+      {%- else -%}
+        []
+      {%- endif %}
+      
+- set_fact:
+    _rules: "{{ _east_rules + _north_rules }}"
+
+- name: group by `destination ip` and remove duplicate (src, port) under a single destination ip
+  copy:
+    content: |
+      _firewall_rules_var:
+      {% for ip, dest in _rules | groupby('ip') %}
+      {% set wrapped_rules = [] %}
+      {% for d in dest %}
+      {% if d.rules is iterable %}
+      {% for rule in d.rules %}
+      {% set _ = wrapped_rules.append(rule) %}
+      {% endfor %}
+      {% endif %}
+      {% endfor %}
+      - ip: "{{ ip }}"
+        rules:
+      {% for r in wrapped_rules | unique %}
+          - src: "{{ r.src }}"
+            state: "{{ r.state}}"
+            port: {{r.port}}
+            protocol: "{{ r.protocol }}"
+            action: "{{ r.action }}"
+      {% endfor %}
+      {% endfor %}
+    dest: "{{ _firewall_rules_vars_file }}"
+    force: yes
+  delegate_to: 127.0.0.1

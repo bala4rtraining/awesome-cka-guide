@@ -1,0 +1,32 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: init file for epmd
+  template: >
+    src=services/epmd.init.j2
+    dest=/etc/init.d/epmd
+    mode=u+x
+  when: epmd_is_up is not defined
+
+- name: sysconfig for epmd
+  template: >
+    src=services/epmd.sysconfig.j2
+    dest=/etc/sysconfig/epmd
+  when: epmd_is_up is not defined
+
+- name: init file for service
+  template: >
+    src=services/service.rh6.init.j2
+    dest=/etc/init.d/{{name}}
+    mode=u+x
+
+- name: sysconfig for service
+  template: >
+    src=services/service.rh.sysconfig.j2
+    dest=/etc/sysconfig/{{name}}

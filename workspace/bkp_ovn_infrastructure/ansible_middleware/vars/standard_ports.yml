@@ -1,0 +1,24 @@
+---
+consul_dns_port: 8600
+consul_serf_lan_port: 8301
+consul_http_port: 8500
+consul_https_port: 8700
+#Consul server-only ports
+consul_serf_wan_port: 8302
+consul_server_port: 8300
+
+#zookeeper ports
+zk_port: 2181
+syslogd_port: 10514
+zk_jmx_port: 1113
+statsd_port: 8125
+
+election_port_a: 2888
+election_port_b: 3888
+
+erl_port_min: 10000
+erl_port_max: 10199
+http_listener_port: 8098
+protobuf_listener_port: "{{ riak_port | default('8087')}}"
+hand_off_port: "{{ riak_handoff_port | default('8099')}}"
+epmd_listener_port: 4369

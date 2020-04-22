@@ -1,0 +1,64 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+
+  stages {
+
+    stage('Saving changes in master') {
+      steps{
+        sh "./jenkins-sh/get_recent_commits.sh master"
+      }
+    }
+
+    stage('Saving changes in int-epic1') {
+      steps{
+        sh "./jenkins-sh/get_recent_commits.sh epic-1"
+      }
+    }
+
+    stage('Saving changes in int-epic4') {
+      steps{
+        sh "./jenkins-sh/get_recent_commits.sh epic-4"
+      }
+    }
+
+    stage('Saving changes in int-epic5') {
+      steps{
+        sh "./jenkins-sh/get_recent_commits.sh epic-5"
+      }
+    }
+
+    stage('Saving changes in int-epic6') {
+      steps{
+        sh "./jenkins-sh/get_recent_commits.sh epic-6"
+      }
+    }
+
+    stage('Saving changes in int-epic7') {
+      steps{
+        sh "./jenkins-sh/get_recent_commits.sh epic-7"
+      }
+    }
+
+    stage('Saving changes in int-epic8') {
+      steps{
+        sh "./jenkins-sh/get_recent_commits.sh epic-8"
+      }
+    }
+
+    stage('archiving artifacts') {
+     steps{
+          archiveArtifacts 'recent_playbooks_commit_*.txt'
+
+      }
+    }
+  }
+
+}

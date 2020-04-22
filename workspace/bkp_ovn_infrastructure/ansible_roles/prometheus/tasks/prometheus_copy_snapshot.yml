@@ -1,0 +1,12 @@
+---
+- name: Seperate hostnames
+  set_fact: 
+    target_prometheus_host="{{split_hosts.split(',')}}"
+    
+- name: Get the latest snapshot directory from Source
+  shell: chdir={{ prometheus_data_dir }}/snapshots ls -td -- */ | head -n 1 | cut -d'/' -f1
+  register: latest_directory
+
+- name: Copy the snapshot file to the Target Prometheus server
+  shell: scp -r -i '{{ prometheus_ssh_idrsa_path }}'  -o StrictHostKeyChecking=no {{ prometheus_data_dir }}/snapshots/{{ latest_directory.stdout }}/* root@'{{ item }}':{{ prometheus_data_dir }}/
+  with_items: "{{ target_prometheus_host }}"

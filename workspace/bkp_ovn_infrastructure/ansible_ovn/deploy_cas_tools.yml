@@ -1,0 +1,34 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=cas_tool,nomad_server
+
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+
+- name: Deploy CAS_Tool Server
+  hosts: cas_tool
+  gather_facts: yes
+  roles:
+    - cas_tool
+  vars:
+    cas_tool_server: true

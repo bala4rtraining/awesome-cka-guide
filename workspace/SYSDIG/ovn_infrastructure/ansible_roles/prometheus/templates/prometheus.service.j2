@@ -1,0 +1,34 @@
+#####
+# PLEASE DO NOT EDIT!!!!  Maintained by Ansible!!!!!
+#####
+{% set prometheus_mode = hostvars[inventory_hostname].prometheus_mode|default('active') %}
+[Unit]
+Description=Prometheus is a systems and service monitoring system
+Documentation=https://prometheus.io/docs/introduction/overview/
+
+[Service]
+Type=simple
+User={{ prometheus_user }}
+Group={{ prometheus_group }}
+Restart=always
+RestartSec=10
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+WorkingDirectory={{ prometheus_base_dir }}
+ExecStart={{ prometheus_base_dir }}/prometheus \
+  --log.level {{ prometheus_log_level }} \
+  --config.file {{ prometheus_config_dir }}/prometheus.yml \
+  --storage.tsdb.path {{ prometheus_data_dir }} \
+{% if 'lt' in prometheus_mode %}
+  --storage.tsdb.retention {{ prometheus_lt_data_retention }} \
+{% else %}
+  --storage.tsdb.retention {{ prometheus_data_retention }} \
+{% endif %}
+  --web.external-url https://{{ prometheus_external_host }}/{{ prometheus_context_path }} \
+  --web.listen-address {{ prometheus_listen_address }} \
+  --web.enable-admin-api
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

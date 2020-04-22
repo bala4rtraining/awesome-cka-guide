@@ -1,0 +1,6 @@
+---
+- name: install curator
+  yum:
+    name: "{{elasticsearch_curator_rpm}}" 
+    state: present
+    validate_certs: no

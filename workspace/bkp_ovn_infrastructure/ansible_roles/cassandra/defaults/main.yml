@@ -1,0 +1,27 @@
+---
+# defaults file for cassandra
+cassandra_config_directory: "/etc/cassandra/bin"
+cassandra_cqlsh_directory: "/etc/cassandra/bin/cqlsh"
+cassandra_nodetool_directory: "/etc/cassandra/bin/nodetool"
+cassandra_root_directory: "/etc/cassandra"
+cassandra_port: 9042
+cassandra_nodetool_port: 7199
+
+
+#queries
+keyspace_query: "describe keyspaces"
+keyspace: "fluentd"
+keyspace_table: "run_table"
+cassandra_select_query: "describe {{ keyspace }}.{{ keyspace_table }}"
+
+
+# User and Group under which the software needs to be installed
+cassandra_username:            ""
+cassandra_password:            "" 
+
+
+# files
+cassandra_env_sh:           "{{ cassandra_root_directory }}/conf/cassandra-env.sh"
+cassandra_yaml:             "{{ cassandra_root_directory }}/conf/cassandra.yaml"
+
+cassandra_ssl: "true"

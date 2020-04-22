@@ -1,0 +1,15 @@
+#######
+#!!! Please DO NOT EDIT.  This configuration is maintained by Ansible !!!
+#######
+
+{{ jenkins_home }}/log/jenkins.log {{ jenkins_home }}/log/access_log {
+    compress
+    dateext
+    maxage 365
+    rotate 99
+    size=+4096k
+    notifempty
+    missingok
+    create 644
+    copytruncate
+}

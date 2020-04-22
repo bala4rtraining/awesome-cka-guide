@@ -1,0 +1,678 @@
+---
+apiVersion: v1
+data:
+  schema.txt: Ly8gS2V5c3BhY2VzCkNSRUFURSBLRVlTUEFDRSBJRiBOT1QgRVhJU1RTIG92bl9kZXYxCglXSVRIIFJFUExJQ0FUSU9OID0gewoJCSdjbGFzcycgOiAnU2ltcGxlU3RyYXRlZ3knLAoJCSdyZXBsaWNhdGlvbl9mYWN0b3InIDogMQp9OwpDUkVBVEUgS0VZU1BBQ0UgSUYgTk9UIEVYSVNUUyBvdm5fYWR2aWNlCiAgICBXSVRIIFJFUExJQ0FUSU9OID0gewogICAgICAgICdjbGFzcycgOiAnU2ltcGxlU3RyYXRlZ3knLAogICAgICAgICdyZXBsaWNhdGlvbl9mYWN0b3InIDogMQp9OwoKREVTQ1JJQkUgS0VZU1BBQ0VTOwoKLy8gUm9sZXMKLy8gQ29tbWVudGVkIHNpbmNlIHJ1biB0aGVzZSBjb21tYW5kcyB1c2VyIHNob3VsZCBiZSBsb2dnZWQgaW4gJiBpdCB3b24ndCBydW4gbGlrZSB0aGlzCi8vIENSRUFURSBST0xFIElGIE5PVCBFWElTVFMgb3ZuX2FwcHVzZXJfZGV2MSBXSVRIIFBBU1NXT1JEID0gJ292bl9lbHJvbmRAYXBwdXNlcl9kZXYxJyBBTkQgTE9HSU4gPSB0cnVlOwovLyBHUkFOVCBTRUxFQ1QgT04gS0VZU1BBQ0Ugb3ZuX2RldjEgVE8gb3ZuX2FwcHVzZXJfZGV2MTsKLy8gR1JBTlQgTU9ESUZZIE9OIEtFWVNQQUNFIG92bl9kZXYxIFRPIG92bl9hcHB1c2VyX2RldjE7Ci8vIEdSQU5UIEVYRUNVVEUgT04gQUxMIEZVTkNUSU9OUyBJTiBLRVlTUEFDRSBvdm5fZGV2MSBUTyBvdm5fYXBwdXNlcl9kZXYxOwovLyBHUkFOVCBTRUxFQ1QgT04gS0VZU1BBQ0Ugb3ZuX2FkdmljZSBUTyBvdm5fYXBwdXNlcl9kZXYxOwovLyBHUkFOVCBNT0RJRlkgT04gS0VZU1BBQ0Ugb3ZuX2FkdmljZSBUTyBvdm5fYXBwdXNlcl9kZXYxOwovLyBHUkFOVCBFWEVDVVRFIE9OIEFMTCBGVU5DVElPTlMgSU4gS0VZU1BBQ0Ugb3ZuX2FkdmljZSBUTyBvdm5fYXBwdXNlcl9kZXYxOwovLyBMSVNUIEFMTCBQRVJNSVNTSU9OUyBPRiBvdm5fYXBwdXNlcl9kZXYxOwoKLy8gVGFibGVzClVTRSBvdm5fZGV2MTsKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgYWR2aWNlX2V4Y2VwdGlvbiAoCiAgICBldmVudF90eXBlIHRleHQsCiAgICBleGNlcHRpb25faWQgdGV4dCwKICAgIGV4Y2VwdGlvbl9kYXRldGltZSB0aW1lc3RhbXAsCiAgICBleGNlcHRpb25fbWVzc2FnZSB0ZXh0LAogICAgcGF5bG9hZCB0ZXh0LAogICAgUFJJTUFSWSBLRVkgKGV2ZW50X3R5cGUsIGV4Y2VwdGlvbl9pZCkKKTsKCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIGFkdmljZV9ieV9wY3IgKAoJcGNyIHRleHQsCglyb3V0aW5nX3J1bGUgdGV4dCwKCW5ldF9pZCBpbnQsCglwcmlvcml0eSBpbnQsCglxdWV1ZWRfZGF0ZXRpbWUgdGltZXN0YW1wLAoJYWR2aWNlX25hbWUgdGV4dCwKCXRyYW5zYWN0aW9uX2xpZmVjeWNsZV9rZXkgdGV4dCwKCW1lc3NhZ2VfbGlmZWN5Y2xlX2tleSB0ZXh0LAoJYWR2aWNlX2tleSB0ZXh0LAoJc291cmNlX3dvcmtzcGFjZV9pZCB0ZXh0LAoJYWR2aWNlX3NvdXJjZSB0ZXh0LAoJYWR2aWNlX3N0YXR1cyB0ZXh0LAoJYWR2aWNlX3R5cGUgdGV4dCwKCWV4ZWN1dGlvbl9ncm91cCB0ZXh0LAoJcmV0cnlfY291bnQgaW50LAoJc291cmNlX2RhdGV0aW1lIHRpbWVzdGFtcCwKCXN0YXR1c191cGRhdGVkX2RhdGV0aW1lIHRpbWVzdGFtcCwKCVBSSU1BUlkgS0VZICgocGNyKSwgcm91dGluZ19ydWxlLCBuZXRfaWQsIHByaW9yaXR5LCBxdWV1ZWRfZGF0ZXRpbWUsIGFkdmljZV9uYW1lLCBhZHZpY2Vfa2V5KQopOwoKQ1JFQVRFIElOREVYIElGIE5PVCBFWElTVFMgc3RhdHVzIG9uIGFkdmljZV9ieV9wY3IoYWR2aWNlX3N0YXR1cyk7CkNSRUFURSBJTkRFWCBJRiBOT1QgRVhJU1RTIGV4ZWNncm91cCBvbiBhZHZpY2VfYnlfcGNyKGV4ZWN1dGlvbl9ncm91cCk7CgpDUkVBVEUgVEFCTEUgSUYgTk9UIEVYSVNUUyBzdXNwZW5kZWRfYWR2aWNlX2J5X3BjciAoCglwY3IgdGV4dCwKCXJvdXRpbmdfcnVsZSB0ZXh0LAoJbmV0X2lkIGludCwKCXByaW9yaXR5IGludCwKCXF1ZXVlZF9kYXRldGltZSB0aW1lc3RhbXAsCglhZHZpY2VfbmFtZSB0ZXh0LAoJdHJhbnNhY3Rpb25fbGlmZWN5Y2xlX2tleSB0ZXh0LAoJbWVzc2FnZV9saWZlY3ljbGVfa2V5IHRleHQsCglhZHZpY2Vfa2V5IHRleHQsCglzb3VyY2Vfd29ya3NwYWNlX2lkIHRleHQsCglhZHZpY2Vfc291cmNlIHRleHQsCglhZHZpY2Vfc3RhdHVzIHRleHQsCglhZHZpY2VfdHlwZSB0ZXh0LAoJZXhlY3V0aW9uX2dyb3VwIHRleHQsCglyZXRyeV9jb3VudCBpbnQsCglzb3VyY2VfZGF0ZXRpbWUgdGltZXN0YW1wLAoJc3RhdHVzX3JlYXNvbl9jb2RlIHRleHQsCglzdXNwZW5kZWRfZGF0ZXRpbWUgdGltZXN0YW1wLAoJUFJJTUFSWSBLRVkgKChwY3IpLCBhZHZpY2VfbmFtZSwgYWR2aWNlX2tleSkKKSA7CgpDUkVBVEUgVEFCTEUgSUYgTk9UIEVYSVNUUyBtZXNzYWdlX2xpZmVjeWNsZSAoCiAgICBsY19ncm91cF9rZXkgdGV4dCwKICAgIGJ1c2luZXNzX2tleSB0ZXh0LAogICAgd29ya3NwYWNlX2tleSB0ZXh0LAogICAgd29ya3NwYWNlIGJsb2IsCiAgICBQUklNQVJZIEtFWSAobGNfZ3JvdXBfa2V5LCBidXNpbmVzc19rZXksIHdvcmtzcGFjZV9rZXkpCikgV0lUSCBkZWZhdWx0X3RpbWVfdG9fbGl2ZSA9ICczMDAnOwoKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgdHJhbnNhY3Rpb25fbGlmZWN5Y2xlICgKICAgIGxjX2dyb3VwX2tleSB0ZXh0LAogICAgYnVzaW5lc3Nfa2V5IHRleHQsCiAgICB3b3Jrc3BhY2Vfa2V5IHRleHQsCiAgICB3b3Jrc3BhY2UgYmxvYiwKICAgIFBSSU1BUlkgS0VZIChsY19ncm91cF9rZXksIGJ1c2luZXNzX2tleSwgd29ya3NwYWNlX2tleSkKKSBXSVRIIGRlZmF1bHRfdGltZV90b19saXZlID0gJzE1NTUyMDAwJzsKCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIGtleV9jb25zaXN0ZW5jeSAoCiAgICBycm4gdGV4dCwKICAgIGFjcV9pZCBpbnQsCiAgICBoYXNoZWRfcGFuIGJsb2IsCiAgICBQUklNQVJZIEtFWSAocnJuLCBhY3FfaWQpCikgV0lUSCBkZWZhdWx0X3RpbWVfdG9fbGl2ZSA9ICcxNTU1MjAwMCc7CgpDUkVBVEUgVEFCTEUgSUYgTk9UIEVYSVNUUyB0aW1lciAoCiAgICB0aW1lcl9wYXJ0aXRpb25faWQgaW50LAogICAgZXhwaXJ5X2RhdGUgdGV4dCwKICAgIHRpbWVyX2lkIHRleHQsCiAgICBjcmVhdGlvbl9kYXRlX3RpbWUgdGltZXN0YW1wLAogICAgc291cmNlIHRleHQsCiAgICBkZXN0aW5hdGlvbl9uYW1lIHRleHQsCiAgICBkZXN0aW5hdGlvbl9wYXJ0aXRpb25faWQgaW50LAogICAgZGVzdGluYXRpb25fcGFydGl0aW9uX2tleSB0ZXh0LAogICAgZXhwaXJ5X3RpbWUgdGltZXN0YW1wLAogICAgbWV0YWRhdGEgdGV4dCwKICAgIHN0YXR1cyBpbnQsCiAgICBQUklNQVJZIEtFWSAodGltZXJfcGFydGl0aW9uX2lkLCBleHBpcnlfZGF0ZSwgdGltZXJfaWQsIGNyZWF0aW9uX2RhdGVfdGltZSwgc291cmNlKQopIFdJVEggZGVmYXVsdF90aW1lX3RvX2xpdmUgPSAnNjA0ODAwJzsKCkNSRUFURSBJTkRFWCBJRiBOT1QgRVhJU1RTIHRpbWVyX3N0YXR1cyBPTiAgdGltZXIgKHN0YXR1cyk7CgpDUkVBVEUgVEFCTEUgSUYgTk9UIEVYSVNUUyBzdGF0aW9uICgKICAgIHBjciBpbnQsCiAgICBzdGF0aW9uX2lkIGludCwKICAgIHR5cGUgaW50LAogICAgc2VxX25vIGludCwKICAgIHN0YXR1cyBib29sZWFuLAogICAgdGltZSB0aW1lc3RhbXAsCiAgICB1c2VybmFtZSB0ZXh0LAogICAgUFJJTUFSWSBLRVkgKHBjciwgc3RhdGlvbl9pZCwgdHlwZSkKKTsKCkNSRUFURSBJTkRFWCBJRiBOT1QgRVhJU1RTIE9OIHN0YXRpb24oc3RhdHVzKTsKCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIGV4Y2VwdGlvbl9kYXRhICgKCWhhc2hlZF9wYW4gdGV4dCwKCWV4Y2VwdGlvbl9maWxlX25hbWUgdGV4dCwKCWFjdGlvbl9jb2RlIHRleHQsCglhY3Rpb25fdXBkYXRlX21ldGhvZCB0ZXh0LAoJc2VjdXJpdHlfY29kZSB0ZXh0LAoJY3JiX3JlZ2lvbl9saXN0IGJsb2IsCgljYXJkaG9sZGVyX3NwZW5kaW5nX2NvdW50X2xpbWl0IGludCwKCWNhcmRob2xkZXJfc3BlbmRpbmdfYW1vdW50X2xpbWl0IGludCwKICAgIGFjdGlvbl9kYXRlIGRhdGUsCglwdXJnZV9kYXRlIGRhdGUsCgl1cGRhdGVfZGF0ZSBkYXRlLAoJdXBkYXRlX3RpbWUgdGltZXN0YW1wLAoJUFJJTUFSWSBLRVkgKGhhc2hlZF9wYW4pCik7CgpDUkVBVEUgVEFCTEUgSUYgTk9UIEVYSVNUUyBleGNlcHRpb25faGlzdG9yeSAoCgloYXNoZWRfcGFuIHRleHQsCglleGNlcHRpb25fZmlsZV9uYW1lIHRleHQsCglhY3Rpb25fY29kZSB0ZXh0LAoJYWN0aW9uX3VwZGF0ZV9tZXRob2QgdGV4dCwKCXNlY3VyaXR5X2NvZGUgdGV4dCwKCWNyYl9yZWdpb25fbGlzdCBibG9iLAoJY2FyZGhvbGRlcl9zcGVuZGluZ19jb3VudF9saW1pdCBpbnQsCgljYXJkaG9sZGVyX3NwZW5kaW5nX2Ftb3VudF9saW1pdCBpbnQsCiAgICBhY3Rpb25fZGF0ZSBkYXRlLAoJcHVyZ2VfZGF0ZSBkYXRlLAoJdXBkYXRlX2RhdGUgZGF0ZSwKCXVwZGF0ZV90aW1lIHRpbWVzdGFtcCwKCXNubyB0aW1ldXVpZCwKCVBSSU1BUlkgS0VZIChoYXNoZWRfcGFuLCB1cGRhdGVfZGF0ZSwgc25vKQopOwoKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgYWN0aXZpdHkgKAoJaGFzaGVkX3ByaW1hcnlfYWNjb3VudF9udW1iZXIgdGV4dCwKICAgIGNyZWF0ZV9kYXRlIGRhdGUsCiAgICBwb3NfdHhuX2NudCBjb3VudGVyLAogICAgcG9zX3R4bl9hbXQgY291bnRlciwKICAgIGF0bV90eG5fY250IGNvdW50ZXIsCiAgICBhdG1fdHhuX2FtdCBjb3VudGVyLAogICAgUFJJTUFSWSBLRVkgKGhhc2hlZF9wcmltYXJ5X2FjY291bnRfbnVtYmVyLCBjcmVhdGVfZGF0ZSkKKTsKCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIHVua25vd25fYnl0ZXMgKAoJY29ycmVsYXRpb25faWQgdGV4dCwKCWRhdGEgYmxvYiwKCVBSSU1BUlkgS0VZIChjb3JyZWxhdGlvbl9pZCkKKTsKCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIHRyYW5faWRfc3RhdGUgKAoJcG9kX25hbWUgdGV4dCwKCXRyYW5faWRfc25hcHNob3QgYmlnaW50LAoJUFJJTUFSWSBLRVkgKHBvZF9uYW1lKQopIFdJVEggZGVmYXVsdF90aW1lX3RvX2xpdmUgPSAnMTcyODAwJzsKCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIGNsZWFyaW5nX2NpYl9kZXN0bl9ieV9zdGxtdF93aW5kb3cgKAoJc3RsbXRfd2luZG93X2lkIGludCwKICAgIGNwZCBkYXRlLAogICAgY2liIGludCwKCVBSSU1BUlkgS0VZKChjcGQsc3RsbXRfd2luZG93X2lkKSxjaWIpCik7CgpDUkVBVEUgVEFCTEUgSWYgTm90IEV4aXN0cyByZXF1ZXN0ICgKICAgIHByb2ZpbGVfdHlwZSBpbnQsCiAgICBleHRyYWN0X2RhdGUgdGV4dCwKICAgIG1ham9yIGludCwKICAgIG1pbm9yIGludCwKICAgIHJlcXVlc3RfdHlwZSBpbnQsCiAgICBpbnNlcnRfdGltZSB0aW1lc3RhbXAsCiAgICByZXF1ZXN0X3N0YXR1cyBpbnQsCiAgICBQUklNQVJZIEtFWSAocHJvZmlsZV90eXBlLCBleHRyYWN0X2RhdGUsIG1ham9yLCBtaW5vciwgcmVxdWVzdF90eXBlLCBpbnNlcnRfdGltZSkKICAgICkgV0lUSCBDTFVTVEVSSU5HIE9SREVSIEJZIChleHRyYWN0X2RhdGUgQVNDLCBtYWpvciBBU0MsIG1pbm9yIEFTQywgcmVxdWVzdF90eXBlIEFTQywgaW5zZXJ0X3RpbWUgREVTQyk7CgpDUkVBVEUgVEFCTEUgSWYgTm90IEV4aXN0cyB2ZXJzaW9uICgKICAgIHByb2ZpbGVfdHlwZSBpbnQsCiAgICBleHRyYWN0X2RhdGUgdGV4dCwKICAgIG1ham9yIGludCwKICAgIG1pbm9yIGludCwKICAgIGFjdGl2YXRpb25fdGltZSB0aW1lc3RhbXAsCiAgICBleHRyYWN0X3RpbWUgdGltZXN0YW1wLAogICAgbWFzdGVyX3BhdGggdGV4dCwKICAgIHZlcnNpb25fc3RhdHVzIGludCwKICAgIHdvcmtpbmdfcGF0aCB0ZXh0LAogICAgUFJJTUFSWSBLRVkgKHByb2ZpbGVfdHlwZSwgZXh0cmFjdF9kYXRlLCBtYWpvciwgbWlub3IpCik7CkNSRUFURSBJTkRFWCB2ZXJzaW9uX3N0YXR1cyBPTiB2ZXJzaW9uICh2ZXJzaW9uX3N0YXR1cyk7CgpDUkVBVEUgVEFCTEUgSWYgTm90IEV4aXN0cyBrZWVwX3RyYWNrICgKICAgIGJ1Y2tldF9uYW1lIHRleHQsCiAgICBidWNrZXRfaWQgdGV4dCwKICAgIGtleSB0ZXh0LAogICAgdGltZV90b19saXZlIHRpbWVzdGFtcCwKICAgIHZhbHVlIGJvb2xlYW4sCiAgICBQUklNQVJZIEtFWSAoYnVja2V0X25hbWUsIGJ1Y2tldF9pZCwga2V5KQopOwoKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgY2xlYXJpbmdfc3Vic2NyaWJlcl9kZXN0bl9ieV9zdGxtdF93aW5kb3cgKAoJc3RsbXRfd2luZG93X2lkIGludCwKICAgIGNwZCBkYXRlLAogICAgc3Vic2NyaWJlcl9pZCBpbnQsCiAgICBQUklNQVJZIEtFWSgoY3BkLCBzdGxtdF93aW5kb3dfaWQpLCBzdWJzY3JpYmVyX2lkKQopOwoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKlJlcG9ydERhdGFTdWJzZXQqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIHNtc19ycHRfb3JkZXJfYnlfYWNxYmluKAogICAgc3Vic2NyaWJlcl9pZCB0ZXh0LAogICAgYWZmaWxpYXRlX2JpbiB0ZXh0LAogICAgdnNzX3Byb2Nlc3NvciB0ZXh0LAogICAgd2luZG93X2lkIHRleHQsCiAgICBjcGQgdGV4dCwKICAgIGFjcXVpcmluZ19iaW4gdGV4dCwKICAgIGNhcmRfbnVtYmVyIHRleHQsCiAgICBpc3N1aW5nX2JpbiB0ZXh0LAogICAgcmV0cmlldmFsX3JlZmVyZW5jZV9udW1iZXIgdGV4dCwKICAgIHRyYW5zbWlzc2lvbl9kYXRlX2FuZF90aW1lIHRleHQsCiAgICB0cmFuc2FjdGlvbl9rZXkgdGV4dCwKICAgIGZ1bmRfdHJhbnNmZXJfc3JlIHRleHQsCiAgICBsb3dlc3RfbGV2ZWxfc3JlIHRleHQsCiAgICB2ZXJzaW9uIHRleHQsCiAgICBkYXRhX3N1YnNldCBibG9iLAogICAgUFJJTUFSWSBLRVkgKChzdWJzY3JpYmVyX2lkLCBhZmZpbGlhdGVfYmluLCB2c3NfcHJvY2Vzc29yLCAgd2luZG93X2lkLCBjcGQpLCBmdW5kX3RyYW5zZmVyX3NyZSwgbG93ZXN0X2xldmVsX3NyZSwgYWNxdWlyaW5nX2JpbiwgdHJhbnNhY3Rpb25fa2V5KQopOwoKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgc21zX3JwdF9vcmRlcl9ieV9pc3NiaW4oCiAgICBzdWJzY3JpYmVyX2lkIHRleHQsCiAgICBhZmZpbGlhdGVfYmluIHRleHQsCiAgICB2c3NfcHJvY2Vzc29yIHRleHQsCiAgICB3aW5kb3dfaWQgdGV4dCwKICAgIGNwZCB0ZXh0LAogICAgYWNxdWlyaW5nX2JpbiB0ZXh0LAogICAgY2FyZF9udW1iZXIgdGV4dCwKICAgIGlzc3VpbmdfYmluIHRleHQsCiAgICByZXRyaWV2YWxfcmVmZXJlbmNlX251bWJlciB0ZXh0LAogICAgdHJhbnNtaXNzaW9uX2RhdGVfYW5kX3RpbWUgdGV4dCwKICAgIHRyYW5zYWN0aW9uX2tleSB0ZXh0LAogICAgZnVuZF90cmFuc2Zlcl9zcmUgdGV4dCwKICAgIGxvd2VzdF9sZXZlbF9zcmUgdGV4dCwKICAgIHZlcnNpb24gdGV4dCwKICAgIGRhdGFfc3Vic2V0IGJsb2IsCiAgICBQUklNQVJZIEtFWSAoKHN1YnNjcmliZXJfaWQsIGFmZmlsaWF0ZV9iaW4sIHZzc19wcm9jZXNzb3IsICB3aW5kb3dfaWQsIGNwZCksIGZ1bmRfdHJhbnNmZXJfc3JlLCBsb3dlc3RfbGV2ZWxfc3JlLCBpc3N1aW5nX2JpbiwgdHJhbnNhY3Rpb25fa2V5KQopOwoKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgc21zX3JwdF9vcmRlcl9ieV9ycm4oCiAgICBzdWJzY3JpYmVyX2lkIHRleHQsCiAgICBhZmZpbGlhdGVfYmluIHRleHQsCiAgICB2c3NfcHJvY2Vzc29yIHRleHQsCiAgICB3aW5kb3dfaWQgdGV4dCwKICAgIGNwZCB0ZXh0LAogICAgYWNxdWlyaW5nX2JpbiB0ZXh0LAogICAgY2FyZF9udW1iZXIgdGV4dCwKICAgIGlzc3VpbmdfYmluIHRleHQsCiAgICByZXRyaWV2YWxfcmVmZXJlbmNlX251bWJlciB0ZXh0LAogICAgdHJhbnNtaXNzaW9uX2RhdGVfYW5kX3RpbWUgdGV4dCwKICAgIHRyYW5zYWN0aW9uX2tleSB0ZXh0LAogICAgZnVuZF90cmFuc2Zlcl9zcmUgdGV4dCwKICAgIGxvd2VzdF9sZXZlbF9zcmUgdGV4dCwKICAgIHZlcnNpb24gdGV4dCwKICAgIGRhdGFfc3Vic2V0IGJsb2IsCiAgICBQUklNQVJZIEtFWSAoKHN1YnNjcmliZXJfaWQsIGFmZmlsaWF0ZV9iaW4sIHZzc19wcm9jZXNzb3IsICB3aW5kb3dfaWQsIGNwZCksIGZ1bmRfdHJhbnNmZXJfc3JlLCBsb3dlc3RfbGV2ZWxfc3JlLCByZXRyaWV2YWxfcmVmZXJlbmNlX251bWJlciwgdHJhbnNhY3Rpb25fa2V5KQopOwoKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgc21zX3JwdF9vcmRlcl9ieV9jYXJkKAogICAgc3Vic2NyaWJlcl9pZCB0ZXh0LAogICAgYWZmaWxpYXRlX2JpbiB0ZXh0LAogICAgdnNzX3Byb2Nlc3NvciB0ZXh0LAogICAgd2luZG93X2lkIHRleHQsCiAgICBjcGQgdGV4dCwKICAgIGFjcXVpcmluZ19iaW4gdGV4dCwKICAgIGNhcmRfbnVtYmVyIHRleHQsCiAgICBpc3N1aW5nX2JpbiB0ZXh0LAogICAgcmV0cmlldmFsX3JlZmVyZW5jZV9udW1iZXIgdGV4dCwKICAgIHRyYW5zbWlzc2lvbl9kYXRlX2FuZF90aW1lIHRleHQsCiAgICB0cmFuc2FjdGlvbl9rZXkgdGV4dCwKICAgIGZ1bmRfdHJhbnNmZXJfc3JlIHRleHQsCiAgICBsb3dlc3RfbGV2ZWxfc3JlIHRleHQsCiAgICB2ZXJzaW9uIHRleHQsCiAgICBkYXRhX3N1YnNldCBibG9iLAogICAgUFJJTUFSWSBLRVkgKChzdWJzY3JpYmVyX2lkLCBhZmZpbGlhdGVfYmluLCB2c3NfcHJvY2Vzc29yLCAgd2luZG93X2lkLCBjcGQpLCBmdW5kX3RyYW5zZmVyX3NyZSwgbG93ZXN0X2xldmVsX3NyZSwgY2FyZF9udW1iZXIsIHRyYW5zYWN0aW9uX2tleSkKKTsKCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIHNtc19ycHRfb3JkZXJfYnlfdHJhbnRtKAogICAgc3Vic2NyaWJlcl9pZCB0ZXh0LAogICAgYWZmaWxpYXRlX2JpbiB0ZXh0LAogICAgdnNzX3Byb2Nlc3NvciB0ZXh0LAogICAgd2luZG93X2lkIHRleHQsCiAgICBjcGQgdGV4dCwKICAgIGFjcXVpcmluZ19iaW4gdGV4dCwKICAgIGNhcmRfbnVtYmVyIHRleHQsCiAgICBpc3N1aW5nX2JpbiB0ZXh0LAogICAgcmV0cmlldmFsX3JlZmVyZW5jZV9udW1iZXIgdGV4dCwKICAgIHRyYW5zbWlzc2lvbl9kYXRlX2FuZF90aW1lIHRleHQsCiAgICB0cmFuc2FjdGlvbl9rZXkgdGV4dCwKICAgIGZ1bmRfdHJhbnNmZXJfc3JlIHRleHQsCiAgICBsb3dlc3RfbGV2ZWxfc3JlIHRleHQsCiAgICB2ZXJzaW9uIHRleHQsCiAgICBkYXRhX3N1YnNldCBibG9iLAogICAgUFJJTUFSWSBLRVkgKChzdWJzY3JpYmVyX2lkLCBhZmZpbGlhdGVfYmluLCB2c3NfcHJvY2Vzc29yLCAgd2luZG93X2lkLCBjcGQpLCBmdW5kX3RyYW5zZmVyX3NyZSwgbG93ZXN0X2xldmVsX3NyZSwgdHJhbnNtaXNzaW9uX2RhdGVfYW5kX3RpbWUsIHRyYW5zYWN0aW9uX2tleSkKKTsKREVTQ1JJQkUgVEFCTEVTOwoKLy8gQWR2aWNlIFByb2Nlc3NpbmcgVGFibGVzClVTRSBvdm5fYWR2aWNlOwpDUkVBVEUgVEFCTEUgSUYgTk9UIEVYSVNUUyBhZHZpY2VfYnlfcGNyKAogICAgcGNyIHRleHQsCiAgICBiaW4gaW50LAogICAgbmV0X2lkIGludCwKICAgIHByaW9yaXR5IGludCwKICAgIHF1ZXVlZF9kYXRldGltZSB0aW1lc3RhbXAsCiAgICBhZHZpY2VfbmFtZSB0ZXh0LAogICAgc291cmNlX3dvcmtzcGFjZV9pZCB0ZXh0LAogICAgc291cmNlX2RhdGV0aW1lIHRpbWVzdGFtcCwKICAgIGV4ZWN1dGlvbl9ncm91cCB0ZXh0LAogICAgYWR2aWNlX3NvdXJjZSB0ZXh0LAogICAgYWR2aWNlX3R5cGUgdGV4dCwKICAgIGFkdmljZV9zdGF0dXMgdGV4dCwKICAgIHJldHJ5X2NvdW50IGludCwKICAgIHN0YXR1c191cGRhdGVkX2RhdGV0aW1lIHRpbWVzdGFtcCwKICAgIFBSSU1BUlkgS0VZICgocGNyKSxiaW4sbmV0X2lkLHByaW9yaXR5LHF1ZXVlZF9kYXRldGltZSxhZHZpY2VfbmFtZSxzb3VyY2Vfd29ya3NwYWNlX2lkKQopOwoKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgc3VzcGVuZGVkX2FkdmljZV9ieV9wY3IoCiAgICBwY3IgdGV4dCwKICAgIGJpbiBpbnQsCiAgICBuZXRfaWQgaW50LAogICAgcHJpb3JpdHkgaW50LAogICAgcXVldWVkX2RhdGV0aW1lIHRpbWVzdGFtcCwKICAgIGFkdmljZV9uYW1lIHRleHQsCiAgICBzb3VyY2Vfd29ya3NwYWNlX2lkIHRleHQsCiAgICBzb3VyY2VfZGF0ZXRpbWUgdGltZXN0YW1wLAogICAgZXhlY3V0aW9uX2dyb3VwIHRleHQsCiAgICBhZHZpY2Vfc291cmNlIHRleHQsCiAgICBhZHZpY2VfdHlwZSB0ZXh0LAogICAgYWR2aWNlX3N0YXR1cyB0ZXh0LAogICAgc3RhdHVzX3JlYXNvbl9jb2RlIHRleHQsCiAgICByZXRyeV9jb3VudCBpbnQsCiAgICBzdXNwZW5kZWRfZGF0ZXRpbWUgdGltZXN0YW1wLAogICAgUFJJTUFSWSBLRVkgKChwY3IpLGFkdmljZV9uYW1lLHNvdXJjZV93b3Jrc3BhY2VfaWQpCik7CiAgICAKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgYWR2aWNlX2V4Y2VwdGlvbigKICAgIGV2ZW50X3R5cGUgdGV4dCwKICAgIGV4Y2VwdGlvbl9pZCB0ZXh0LAogICAgZXhjZXB0aW9uX2RhdGV0aW1lIHRpbWVzdGFtcCwKICAgIGV4Y2VwdGlvbl9tZXNzYWdlIHRleHQsCiAgICBwYXlsb2FkIHRleHQsCiAgICBQUklNQVJZIEtFWSAoKGV2ZW50X3R5cGUpLGV4Y2VwdGlvbl9pZCkKKTsKCkNSRUFURSBJTkRFWCBleGVjZ3JvdXAgT04gYWR2aWNlX2J5X3BjcihleGVjdXRpb25fZ3JvdXApOwoKQ1JFQVRFIElOREVYIHN0YXR1cyBPTiBhZHZpY2VfYnlfcGNyKGFkdmljZV9zdGF0dXMpOwpERVNDUklCRSBUQUJMRVM7CgpDUkVBVEUgVEFCTEUgSWYgTm90IEV4aXN0cyBvdm5fZGV2MS5yZXF1ZXN0ICgKcHJvZmlsZV90eXBlIGludCwKZXh0cmFjdF9kYXRlIHRleHQsCm1ham9yIGludCwKbWlub3IgaW50LApyZXF1ZXN0X3R5cGUgaW50LAppbnNlcnRfdGltZSB0aW1lc3RhbXAsCnJlcXVlc3Rfc3RhdHVzIGludCwKUFJJTUFSWSBLRVkgKHByb2ZpbGVfdHlwZSwgZXh0cmFjdF9kYXRlLCBtYWpvciwgbWlub3IsIHJlcXVlc3RfdHlwZSwgaW5zZXJ0X3RpbWUpCikgV0lUSCBDTFVTVEVSSU5HIE9SREVSIEJZIChleHRyYWN0X2RhdGUgQVNDLCBtYWpvciBBU0MsIG1pbm9yIEFTQywgcmVxdWVzdF90eXBlIEFTQywgaW5zZXJ0X3RpbWUgREVTQyk7CgpDUkVBVEUgVEFCTEUgSWYgTm90IEV4aXN0cyBvdm5fZGV2MS52ZXJzaW9uICgKcHJvZmlsZV90eXBlIGludCwKZXh0cmFjdF9kYXRlIHRleHQsCm1ham9yIGludCwKbWlub3IgaW50LAphY3RpdmF0aW9uX3RpbWUgdGltZXN0YW1wLApleHRyYWN0X3RpbWUgdGltZXN0YW1wLAptYXN0ZXJfcGF0aCB0ZXh0LAp2ZXJzaW9uX3N0YXR1cyBpbnQsCndvcmtpbmdfcGF0aCB0ZXh0LApQUklNQVJZIEtFWSAocHJvZmlsZV90eXBlLCBleHRyYWN0X2RhdGUsIG1ham9yLCBtaW5vcikKKTsKQ1JFQVRFIElOREVYIHZlcnNpb25fc3RhdHVzIE9OIG92bl9kZXYxLnZlcnNpb24gKHZlcnNpb25fc3RhdHVzKTsKCkNSRUFURSBUQUJMRSBJZiBOb3QgRXhpc3RzIG92bl9kZXYxLmtlZXBfdHJhY2sgKApidWNrZXQgdGV4dCwKa2V5IHRleHQsCnRpbWVfdG9fbGl2ZSB0aW1lc3RhbXAsCnZhbHVlIGJvb2xlYW4sClBSSU1BUlkgS0VZIChidWNrZXQsIGtleSkKKTsKCgoKQ1JFQVRFIEtFWVNQQUNFIElGIE5PVCBFWElTVFMgb3ZuX3JwcAoJV0lUSCBSRVBMSUNBVElPTiA9IHsKCQknY2xhc3MnIDogJ1NpbXBsZVN0cmF0ZWd5JywKCQkncmVwbGljYXRpb25fZmFjdG9yJyA6IDEKfTsKCgoKLy8gVGFibGVzClVTRSBvdm5fcnBwOwoKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgdHJhbnNhY3Rpb25fbGlmZWN5Y2xlICgKCWxjX2dyb3VwX2tleSB0ZXh0LAoJd29ya3NwYWNlX2tleSBpbnQsCglidXNpbmVzc19rZXkgdGV4dCwKCXdvcmtzcGFjZSBibG9iLAoJUFJJTUFSWSBLRVkgKCBsY19ncm91cF9LZXksIGJ1c2luZXNzX2tleSwgd29ya3NwYWNlX2tleSkKKSBXSVRIIGRlZmF1bHRfdGltZV90b19saXZlID0gMTU1NTIwMDA7CgoKCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIHNtc19ycHRfb3JkZXJfYnlfYWNxYmluKAogICAgc3Vic2NyaWJlcl9pZCB0ZXh0LAogICAgYWZmaWxpYXRlX2JpbiB0ZXh0LAogICAgdnNzX3Byb2Nlc3NvciB0ZXh0LAogICAgd2luZG93X2lkIHRleHQsCiAgICBjcGQgdGV4dCwKICAgIGFjcXVpcmluZ19iaW4gdGV4dCwKICAgIGNhcmRfbnVtYmVyIHRleHQsCiAgICBpc3N1aW5nX2JpbiB0ZXh0LAogICAgcmV0cmlldmFsX3JlZmVyZW5jZV9udW1iZXIgdGV4dCwKICAgIHRyYW5zbWlzc2lvbl9kYXRlX2FuZF90aW1lIHRleHQsCiAgICB0cmFuc2FjdGlvbl9rZXkgdGV4dCwKICAgIGZ1bmRfdHJhbnNmZXJfc3JlIHRleHQsCiAgICBsb3dlc3RfbGV2ZWxfc3JlIHRleHQsCiAgICB2ZXJzaW9uIHRleHQsCiAgICBkYXRhX3N1YnNldCBibG9iLAogICAgUFJJTUFSWSBLRVkgKChzdWJzY3JpYmVyX2lkLCBhZmZpbGlhdGVfYmluLCB2c3NfcHJvY2Vzc29yLCAgd2luZG93X2lkLCBjcGQpLCBmdW5kX3RyYW5zZmVyX3NyZSwgbG93ZXN0X2xldmVsX3NyZSwgYWNxdWlyaW5nX2JpbiwgdHJhbnNhY3Rpb25fa2V5KQopOwpDUkVBVEUgVEFCTEUgSUYgTk9UIEVYSVNUUyBzbXNfcnB0X29yZGVyX2J5X2lzc2JpbigKICAgIHN1YnNjcmliZXJfaWQgdGV4dCwKICAgIGFmZmlsaWF0ZV9iaW4gdGV4dCwKICAgIHZzc19wcm9jZXNzb3IgdGV4dCwKICAgIHdpbmRvd19pZCB0ZXh0LAogICAgY3BkIHRleHQsCiAgICBhY3F1aXJpbmdfYmluIHRleHQsCiAgICBjYXJkX251bWJlciB0ZXh0LAogICAgaXNzdWluZ19iaW4gdGV4dCwKICAgIHJldHJpZXZhbF9yZWZlcmVuY2VfbnVtYmVyIHRleHQsCiAgICB0cmFuc21pc3Npb25fZGF0ZV9hbmRfdGltZSB0ZXh0LAogICAgdHJhbnNhY3Rpb25fa2V5IHRleHQsCiAgICBmdW5kX3RyYW5zZmVyX3NyZSB0ZXh0LAogICAgbG93ZXN0X2xldmVsX3NyZSB0ZXh0LAogICAgdmVyc2lvbiB0ZXh0LAogICAgZGF0YV9zdWJzZXQgYmxvYiwKICAgIFBSSU1BUlkgS0VZICgoc3Vic2NyaWJlcl9pZCwgYWZmaWxpYXRlX2JpbiwgdnNzX3Byb2Nlc3NvciwgIHdpbmRvd19pZCwgY3BkKSwgZnVuZF90cmFuc2Zlcl9zcmUsIGxvd2VzdF9sZXZlbF9zcmUsIGlzc3VpbmdfYmluLCB0cmFuc2FjdGlvbl9rZXkpCik7CkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIHNtc19ycHRfb3JkZXJfYnlfcnJuKAogICAgc3Vic2NyaWJlcl9pZCB0ZXh0LAogICAgYWZmaWxpYXRlX2JpbiB0ZXh0LAogICAgdnNzX3Byb2Nlc3NvciB0ZXh0LAogICAgd2luZG93X2lkIHRleHQsCiAgICBjcGQgdGV4dCwKICAgIGFjcXVpcmluZ19iaW4gdGV4dCwKICAgIGNhcmRfbnVtYmVyIHRleHQsCiAgICBpc3N1aW5nX2JpbiB0ZXh0LAogICAgcmV0cmlldmFsX3JlZmVyZW5jZV9udW1iZXIgdGV4dCwKICAgIHRyYW5zbWlzc2lvbl9kYXRlX2FuZF90aW1lIHRleHQsCiAgICB0cmFuc2FjdGlvbl9rZXkgdGV4dCwKICAgIGZ1bmRfdHJhbnNmZXJfc3JlIHRleHQsCiAgICBsb3dlc3RfbGV2ZWxfc3JlIHRleHQsCiAgICB2ZXJzaW9uIHRleHQsCiAgICBkYXRhX3N1YnNldCBibG9iLAogICAgUFJJTUFSWSBLRVkgKChzdWJzY3JpYmVyX2lkLCBhZmZpbGlhdGVfYmluLCB2c3NfcHJvY2Vzc29yLCAgd2luZG93X2lkLCBjcGQpLCBmdW5kX3RyYW5zZmVyX3NyZSwgbG93ZXN0X2xldmVsX3NyZSwgcmV0cmlldmFsX3JlZmVyZW5jZV9udW1iZXIsIHRyYW5zYWN0aW9uX2tleSkKKTsKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgc21zX3JwdF9vcmRlcl9ieV9jYXJkKAogICAgc3Vic2NyaWJlcl9pZCB0ZXh0LAogICAgYWZmaWxpYXRlX2JpbiB0ZXh0LAogICAgdnNzX3Byb2Nlc3NvciB0ZXh0LAogICAgd2luZG93X2lkIHRleHQsCiAgICBjcGQgdGV4dCwKICAgIGFjcXVpcmluZ19iaW4gdGV4dCwKICAgIGNhcmRfbnVtYmVyIHRleHQsCiAgICBpc3N1aW5nX2JpbiB0ZXh0LAogICAgcmV0cmlldmFsX3JlZmVyZW5jZV9udW1iZXIgdGV4dCwKICAgIHRyYW5zbWlzc2lvbl9kYXRlX2FuZF90aW1lIHRleHQsCiAgICB0cmFuc2FjdGlvbl9rZXkgdGV4dCwKICAgIGZ1bmRfdHJhbnNmZXJfc3JlIHRleHQsCiAgICBsb3dlc3RfbGV2ZWxfc3JlIHRleHQsCiAgICB2ZXJzaW9uIHRleHQsCiAgICBkYXRhX3N1YnNldCBibG9iLAogICAgUFJJTUFSWSBLRVkgKChzdWJzY3JpYmVyX2lkLCBhZmZpbGlhdGVfYmluLCB2c3NfcHJvY2Vzc29yLCAgd2luZG93X2lkLCBjcGQpLCBmdW5kX3RyYW5zZmVyX3NyZSwgbG93ZXN0X2xldmVsX3NyZSwgY2FyZF9udW1iZXIsIHRyYW5zYWN0aW9uX2tleSkKKTsKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgc21zX3JwdF9vcmRlcl9ieV90cmFudG0oCiAgICBzdWJzY3JpYmVyX2lkIHRleHQsCiAgICBhZmZpbGlhdGVfYmluIHRleHQsCiAgICB2c3NfcHJvY2Vzc29yIHRleHQsCiAgICB3aW5kb3dfaWQgdGV4dCwKICAgIGNwZCB0ZXh0LAogICAgYWNxdWlyaW5nX2JpbiB0ZXh0LAogICAgY2FyZF9udW1iZXIgdGV4dCwKICAgIGlzc3VpbmdfYmluIHRleHQsCiAgICByZXRyaWV2YWxfcmVmZXJlbmNlX251bWJlciB0ZXh0LAogICAgdHJhbnNtaXNzaW9uX2RhdGVfYW5kX3RpbWUgdGV4dCwKICAgIHRyYW5zYWN0aW9uX2tleSB0ZXh0LAogICAgZnVuZF90cmFuc2Zlcl9zcmUgdGV4dCwKICAgIGxvd2VzdF9sZXZlbF9zcmUgdGV4dCwKICAgIHZlcnNpb24gdGV4dCwKICAgIGRhdGFfc3Vic2V0IGJsb2IsCiAgICBQUklNQVJZIEtFWSAoKHN1YnNjcmliZXJfaWQsIGFmZmlsaWF0ZV9iaW4sIHZzc19wcm9jZXNzb3IsICB3aW5kb3dfaWQsIGNwZCksIGZ1bmRfdHJhbnNmZXJfc3JlLCBsb3dlc3RfbGV2ZWxfc3JlLCB0cmFuc21pc3Npb25fZGF0ZV9hbmRfdGltZSwgdHJhbnNhY3Rpb25fa2V5KQopOwoKCi8vIFRhYmxlcyBmb3IgQ2xlYXJpbmcgUG9zdCBQcm9jZXNzb3IKCkNSRUFURSBLRVlTUEFDRSBJRiBOT1QgRVhJU1RTIG92bl9jbHJwcAoJV0lUSCBSRVBMSUNBVElPTiA9IHsKCQknY2xhc3MnIDogJ1NpbXBsZVN0cmF0ZWd5JywKCQkncmVwbGljYXRpb25fZmFjdG9yJyA6IDEKfTsKCkNSRUFURSBUQUJMRSBJRiBOT1QgRVhJU1RTIG92bl9jbHJwcC5jbGVhcmluZ19jaWJfZGVzdG5fYnlfc3RsbXRfd2luZG93ICgKICAgIGNwZCBEQVRFLAogICAgc3RsbXRfd2luZG93X2lkIGludCwKICAgIGNpYiBpbnQsCiAgICBQUklNQVJZIEtFWSgoY3BkLHN0bG10X3dpbmRvd19pZCksY2liKQopOwoKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgb3ZuX2NscnBwLmNsZWFyaW5nX3N1YnNjcmliZXJfZGVzdG5fYnlfc3RsbXRfd2luZG93ICgKICAgIGNwZCBEQVRFLAogICAgc3RsbXRfd2luZG93X2lkIGludCwKICAgIHN1YnNjcmliZXJfaWQgaW50LAogICAgUFJJTUFSWSBLRVkoKGNwZCwgc3RsbXRfd2luZG93X2lkKSwgc3Vic2NyaWJlcl9pZCkKKTsKCi8vIFRlbXBvcmFyeSB3b3Jrc3BhY2UgdGFibGUgdW50aWwgd2UgZGV0ZXJtaW5lIHdoaWNoIHRhYmxlIGNsZWFyaW5nIHdpbGwgYmUgdXNpbmcKQ1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgb3ZuX2NscnBwLnRyYW5zYWN0aW9uX2xpZmVjeWNsZSAoCiAgICAgbGNfZ3JvdXBfa2V5IHRleHQsCiAgICAgYnVzaW5lc3Nfa2V5IHRleHQsCiAgICAgd29ya3NwYWNlX2tleSB0ZXh0LAogICAgIHdvcmtzcGFjZSBibG9iLAogICAgIFBSSU1BUlkgS0VZIChsY19ncm91cF9rZXksIGJ1c2luZXNzX2tleSwgd29ya3NwYWNlX2tleSkKKSBXSVRIIGRlZmF1bHRfdGltZV90b19saXZlID0gJzE1NTUyMDAwJzsK
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: cassandraschema
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R1
+---
+apiVersion: v1
+data:
+  topics.txt: b3ZuLnRpbWVyCm92bi5kZWFkLmxldHRlci50aW1lcgpvdm4ucmV0cnkudGltZXIKb3ZuLmF0ci50aW1lb3V0Cm92bi5kZWFkLmxldHRlci5hdHIudGltZW91dApvdm4ucmV0cnkuYXRyLnRpbWVvdXQKb3ZuLm1zZ19jb21wbGV0aW9uCm92bi5hZHZpY2Uuc3RvcmFnZQpvdm4ucmV0cnkuYWR2aWNlLnN0b3JhZ2UKb3ZuLmRlYWQubGV0dGVyLmFkdmljZS5zdG9yYWdlCm92bi5hZHZpY2UucmVjb3ZlcnkKb3ZuLnJldHJ5LmFkdmljZS5yZWNvdmVyeQpvdm4uZGVhZC5sZXR0ZXIuYWR2aWNlLnJlY292ZXJ5Cm92bi50ZXN0LmNvbmZpZwpvdm4uZ2VuZXJhdGUucmRzbXMucmVwb3J0cwpvdm4ucmV0cnkuZ2VuZXJhdGUucmRzbXMucmVwb3J0cwpvdm4uZGVhZC5sZXR0ZXIuZ2VuZXJhdGUucmRzbXMucmVwb3J0cwpvdm4udHJhbnNhY3Rpb24uY2xlYXJlZApvdm4ucmV0cnkudHJhbnNhY3Rpb24uY2xlYXJlZApvdm4uZGVhZC5sZXR0ZXIudHJhbnNhY3Rpb24uY2xlYXJlZApvdm4uZ2VuZXJhdGUuZHVhbC5mcmFnbWVudApvdm4ucmV0cnkuZ2VuZXJhdGUuZHVhbC5mcmFnbWVudApvdm4uZGVhZC5sZXR0ZXIuZ2VuZXJhdGUuZHVhbC5mcmFnbWVudApvdm4uZ2VuZXJhdGUuc21zLmZyYWdtZW50Cm92bi5yZXRyeS5nZW5lcmF0ZS5zbXMuZnJhZ21lbnQKb3ZuLmRlYWQubGV0dGVyLmdlbmVyYXRlLnNtcy5mcmFnbWVudApvdm4uY2xvc2Uud2luZG93Cm92bi5yZXRyeS5jbG9zZS53aW5kb3cKb3ZuLmRlYWQubGV0dGVyLmNsb3NlLndpbmRvdwpvdm4uZ2VuZXJhdGUuc21zLnJlcG9ydHMKb3ZuLnJldHJ5LmdlbmVyYXRlLnNtcy5yZXBvcnRzCm92bi5kZWFkLmxldHRlci5nZW5lcmF0ZS5zbXMucmVwb3J0cwpvdm4ucmVwbGljYXRlX3dvcmtzcGFjZS5pZC4yCm92bi5yZXBsaWNhdGVfd29ya3NwYWNlLmlkLjMKb3ZuLnJldHJ5LnJlcGxpY2F0ZV93b3Jrc3BhY2UuaWQuMgpvdm4ucmV0cnkucmVwbGljYXRlX3dvcmtzcGFjZS5pZC4zCm92bi5kZWFkX2xldHRlci5yZXBsaWNhdGVfd29ya3NwYWNlLmlkLjIKb3ZuLmRlYWRfbGV0dGVyLnJlcGxpY2F0ZV93b3Jrc3BhY2UuaWQuMwpvdm4uYXBwbHkucmVwbGljYXRlX3dvcmtzcGFjZQpvdm4ucmV0cnkuYXBwbHkucmVwbGljYXRlX3dvcmtzcGFjZQpvdm4uZGVhZF9sZXR0ZXIuYXBwbHkucmVwbGljYXRlX3dvcmtzcGFjZQpvdm4udGVzdC5hcHBseS5yZXBsaWNhdGVfd29ya3NwYWNlCgo=
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: kafkatopics
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cassandra
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R1
+spec:
+  ports:
+    - name: tcp-9042-9042
+      port: 9042
+      protocol: TCP
+      targetPort: 9042
+  selector:
+    name: cassandrapod
+  type: ClusterIP
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: cassandra-deployment
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: cassandrapod
+  template:
+    metadata:
+      labels:
+        name: cassandrapod
+    spec:
+      containers:
+      - image: 'nonprodregistry.visa.com/np-0030023/ovk8cassndra:ovk8cassndra-master_6'
+        imagePullPolicy: Always
+        name: cassandra-container
+        ports:
+          - containerPort: 9042
+            protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "1"
+            memory: 2Gi
+        securityContext: 
+          allowPrivilegeEscalation: false
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /usr/mware/vaultcredentials
+          name: vault-token
+        - mountPath: /usr/app/config
+          name: files
+        - mountPath: /conf
+          name: configs
+        - mountPath: /tmp
+          name: tmpconfigs
+        - mountPath: /tmp/cassandra
+          name: cassandraschema      
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: vault-token
+      - emptyDir: {}
+        name: files
+      - emptyDir: {}
+        name: configs
+      - emptyDir: {}
+        name: tmpconfigs
+      - name: cassandraschema
+        secret:
+          secretName: cassandraschema  
+  test: false
+  triggers:
+    - type: ConfigChange
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R2
+spec:
+  ports:
+    - name: tcp-9092-9092
+      port: 9092
+      protocol: TCP
+      targetPort: 9092
+  selector:
+    name: kafkapod
+  type: ClusterIP
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: kafka-deployment
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: kafkapod
+  template:
+    metadata:
+      labels:
+        name: kafkapod
+    spec:
+      containers:
+      - image: 'nonprodregistry.visa.com/np-0030023/ovk8kafka:ovk8kafka-master_7'
+        imagePullPolicy: Always
+        name: kafka-container
+        ports:
+          - containerPort: 9092
+            protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 1Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /usr/mware/vaultcredentials
+          name: vault-token
+        - mountPath: /usr/app/config
+          name: files
+        - mountPath: /conf
+          name: configs
+        - mountPath: /tmp
+          name: tmpconfigs
+        - mountPath: /tmp/kafka
+          name: kafkatopics
+      dnsPolicy: ClusterFirst
+      initContainers:
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: vault-token
+      - emptyDir: {}
+        name: files
+      - emptyDir: {}
+        name: configs
+      - emptyDir: {}
+        name: tmpconfigs
+      - name: kafkatopics
+        secret:
+          secretName: kafkatopics
+  test: false
+  triggers:
+    - type: ConfigChange
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: messageprocessor
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R3
+spec:
+  ports:
+    - name: tcp-9001-9001
+      port: 9001
+      protocol: TCP
+      targetPort: 9001
+  selector:
+    name: mppod
+  type: ClusterIP
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mp-deployment
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: mppod
+  template:
+    metadata:
+      labels:
+        name: mppod
+    spec:
+      containers:
+      - image: 'nonprodregistry.visa.com/np-0030023/ovk8mp:ovk8mp-master_142'
+        imagePullPolicy: Always
+        name: mp-container
+        ports:
+          - containerPort: 9001
+            protocol: TCP
+        resources:
+          limits:
+            cpu: 250m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      initContainers:
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - type: ConfigChange
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mediator
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R4
+spec:
+  ports:
+    - name: tcp-9001-9001
+      port: 9001
+      protocol: TCP
+      targetPort: 9001
+    - name: tcp-8050-8050
+      port: 8050
+      protocol: TCP
+      targetPort: 8050
+  selector:
+    name: mediatorpod
+  type: ClusterIP
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mediator-deployment
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: mediatorpod
+  template:
+    metadata:
+      labels:
+        name: mediatorpod
+    spec:
+      containers:
+      - image: 'nonprodregistry.visa.com/np-0030023/ovk8med:ovk8med-master_46'
+        imagePullPolicy: Always
+        name: mediator-container
+        ports:
+          - containerPort: 9001
+            protocol: TCP
+          - containerPort: 8050
+            protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      initContainers:
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - type: ConfigChange
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: messagepostprocessor
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R5
+spec:
+  ports:
+    - name: tcp-9005-9005
+      port: 9005
+      protocol: TCP
+      targetPort: 9005
+  selector:
+    name: mpppod
+  type: ClusterIP
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mpp-deployment
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R5
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: mpppod
+  template:
+    metadata:
+      labels:
+        name: mpppod
+    spec:
+      containers:
+      - image: 'nonprodregistry.visa.com/np-0030023/ovk8mpp:ovk8mpp-master_13'
+        imagePullPolicy: Always
+        name: mpp-container
+        ports:
+          - containerPort: 9005
+            protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      initContainers:
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - type: ConfigChange
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timer
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R6
+spec:
+  ports:
+    - name: tcp-8080-8080
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    name: timerpod
+  type: ClusterIP
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: timer-deployment
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R6
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: timerpod
+  template:
+    metadata:
+      labels:
+        name: timerpod
+    spec:
+      containers:
+      - image: 'nonprodregistry.visa.com/np-0030023/ovk8timer:ovk8timer-master_11'
+        imagePullPolicy: Always
+        name: timer-container
+        ports:
+          - containerPort: 8080
+            protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      initContainers:
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - type: ConfigChange
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hsmwrapper
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R7
+spec:
+  ports:
+    - name: tcp-8080-8080
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    - name: tcp-5501-5501
+      port: 5501
+      protocol: TCP
+      targetPort: 5501
+  selector:
+    name: hsmwrappod
+  type: ClusterIP
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: hsmwrap-deployment
+  namespace: ovk8nightly-development-business
+  labels:
+    applicationNo: !!str 0030023
+    componentName: ovn-ct-auth-1
+    dataCenter: OCE
+    deploymentModelName: OVN_K8s_DM16
+    domain: visa.com
+    envName: Development
+    envType: Development
+    network: CONTAINER-NON-PROD-GEN
+    project: OVK8NIGHTLY
+    zone: Business
+    requestedFor: jiasun
+    resourceKey: R7
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: hsmwrappod
+  template:
+    metadata:
+      labels:
+        name: hsmwrappod
+    spec:
+      containers:
+      - image: 'nonprodregistry.visa.com/np-0030023/ovk8hsmwrap:ovk8hsmwrap-master_8'
+        imagePullPolicy: Always
+        name: hsmwrap-container
+        ports:
+          - containerPort: 8080
+            protocol: TCP
+          - containerPort: 5501
+            protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      initContainers:
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - type: ConfigChange
+

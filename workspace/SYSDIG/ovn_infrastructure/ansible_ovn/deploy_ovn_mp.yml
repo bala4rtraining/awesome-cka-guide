@@ -1,0 +1,8 @@
+---
+- include: ../ovn_vars.yml
+
+- name: install ovn_mp
+  hosts: ovn_mp
+  gather_facts: yes
+  roles:
+    - ovn_mp

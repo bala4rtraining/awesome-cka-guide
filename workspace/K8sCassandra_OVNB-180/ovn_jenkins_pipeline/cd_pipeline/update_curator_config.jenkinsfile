@@ -1,0 +1,33 @@
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  parameters {
+    string(defaultValue: "", description: 'any extra vars to be passed', name: 'extra_vars')
+    string(defaultValue: "master", description: 'branch', name: 'branch')
+  }
+  stages {
+    stage('Checkout ovn_infrastructure repo') {
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${branch}"
+      }
+    }
+    stage('Update Curator Config') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook playbook: 'ansible_ovn/update_curator_config.yml',
+                          inventory: 'inventories/$CLUSTER/$DATACENTER',
+                          credentialsId: 'ENV.root_key',
+                          colorized: true,
+                          forks: 5,
+                          sudoUser: null,
+                          extras: '$extra_vars'
+        }
+      }
+    }
+  }
+}

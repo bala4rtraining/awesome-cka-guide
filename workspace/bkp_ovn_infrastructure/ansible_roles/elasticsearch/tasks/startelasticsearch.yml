@@ -1,0 +1,51 @@
+---
+- name: start elasticsearch service on {{ es_node }}
+  service: name=elasticsearch state=started 
+     
+- name: wait for the node {{ es_node }} to join cluster
+  uri: 
+    url: http://{{ es_node_cluster }}:{{ elasticsearch_port }}/_cat/nodes
+    method: GET
+    return_content: yes 
+  register: response
+  until: response.content.find("{{ es_node }}") != -1
+  retries: 5
+  delay: 10
+  when: elasticsearch_ssl == "false"
+
+- name: enable sharding 
+  uri:
+    url: http://{{es_node_cluster}}:{{ elasticsearch_port }}/_cluster/settings
+    method: PUT
+    body: '{ "transient": {  "cluster.routing.allocation.enable" : "all"} }'
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+  when: elasticsearch_ssl == "false"
+
+- name: wait for the node {{ es_node }} to join cluster
+  uri: 
+    url: https://{{ es_node_cluster }}:{{ elasticsearch_port }}/_cat/nodes
+    method: GET
+    return_content: yes 
+    client_cert: "{{ elasticsearch_client_cert_path }}"
+    client_key: "{{ elasticsearch_client_key_path }}"
+    validate_certs: no
+  register: response
+  until: response.content.find("{{ es_node }}") != -1
+  retries: 5
+  delay: 10
+  when: elasticsearch_ssl == "true"
+
+- name: enable sharding 
+  uri:
+    url: https://{{es_node_cluster}}:{{ elasticsearch_port }}/_cluster/settings
+    method: PUT
+    body: '{ "transient": {  "cluster.routing.allocation.enable" : "all"} }'
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+    client_cert: "{{ elasticsearch_client_cert_path }}"
+    client_key: "{{ elasticsearch_client_key_path }}"
+    validate_certs: no
+  when: elasticsearch_ssl == "true"

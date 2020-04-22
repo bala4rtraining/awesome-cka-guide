@@ -1,0 +1,8 @@
+# playbook for running the installing kerberos_server.
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=kerberos_server
+
+- name: Install and configure kerberos server
+  hosts: kerberos_server
+  roles:
+    - { role: kerberos, dispatch: ['kerberos_server'] }

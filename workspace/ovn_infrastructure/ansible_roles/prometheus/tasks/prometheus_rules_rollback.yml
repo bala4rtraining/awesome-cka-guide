@@ -1,0 +1,23 @@
+---
+- name: rollback alert rules files from backup directory
+  copy:
+    src: "{{ prometheus_rule_path }}/backup/{{ dir_val.src}}"
+    dest: "{{ prometheus_rule_path }}"
+    mode: "{{ dir_val.mode }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    remote_src: true
+  with_items: "{{ prometheus_rule_files }}"
+  loop_control:
+    loop_var: dir_val
+
+- name: ensure prometheus is started and enabled to start at boot.
+  service:
+    name: prometheus
+    state: started
+    enabled: yes
+
+- name: reload prometheus config
+  service:
+    name: prometheus
+    state: reloaded

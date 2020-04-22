@@ -1,0 +1,17 @@
+[Unit]
+Description=Mock MVS
+After=network.target
+
+[Service]
+Type=simple
+User={{mockmvs_username}}
+Group={{mockmvs_username}}
+Restart=always
+RestartSec=3
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+ExecStart={{mockmvs_install_dir}}/bin/mockmvs -config={{mockmvs_install_dir}}/config/mockmvs.yml
+
+[Install]
+WantedBy=multi-user.target

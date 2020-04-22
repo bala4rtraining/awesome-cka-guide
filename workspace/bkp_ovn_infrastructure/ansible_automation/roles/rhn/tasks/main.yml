@@ -1,0 +1,11 @@
+---
+- name: install rhn trusted cert
+  yum:
+    name: "{{ redhat_network_ssl_cert_fetch_url }}"
+    state: present
+    validate_certs: no
+
+- name: remove yum cache
+  file:
+    path: /var/cache/yum/x86_64
+    state: absent

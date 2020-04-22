@@ -1,0 +1,42 @@
+---
+- name: Creates backup directory for keeping statsd mapping
+  file:
+    path: "{{ statsd_exporter_config_dir }}/backup/"
+    state: directory
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0750"
+
+- name: copy statsd mapping file to backup directory
+  copy:
+    src: "{{ statsd_exporter_config_dir }}/statsd_mapping.conf"
+    dest: "{{ statsd_exporter_config_dir }}/backup/"
+    mode: "0644"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    remote_src: true
+
+- name: deploy statsd_exporter mapping config
+  template:
+    src: "statsd_mapping.conf.j2"
+    dest: "{{ statsd_exporter_config_dir }}/statsd_mapping.conf"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+  register: statsd_config_result
+
+- name: reload system service configs.
+  shell: systemctl daemon-reload
+  when: statsd_config_result.changed == true
+
+- name: enable and start statsd_exporter package.
+  service:
+    name: statsd_exporter
+    state: restarted
+  when: statsd_config_result.changed == true
+
+- name: ensure statsd_exporter is started and enabled to start at boot.
+  service:
+    name: statsd_exporter
+    state: started
+    enabled: yes

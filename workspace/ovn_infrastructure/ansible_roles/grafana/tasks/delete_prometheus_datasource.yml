@@ -1,0 +1,32 @@
+---
+# It deletes prometheus datasources using grafana datasource api's
+
+- name: loop through all the datasources to get the datasource id with auth proxy
+  command: curl -sS -H 'X-WEBAUTH-USER:{{ grafana_admin_user }}' --noproxy 127.0.0.1 -XGET -i 'http://127.0.0.1:{{grafana_port}}/api/datasources/id/{{environment_name|upper}}Prometheus-{{item}}' -H "Content-Type:application/json" 
+  with_items:
+    - 'A-active'
+    - 'B-active'
+    - 'A-standby'
+    - 'B-standby'
+  register: datasource_id_with_auth_proxy
+  when: grafana_auth_proxy_enabled
+
+- name: loop through all the datasources to get the datasource id
+  command: curl -sS --noproxy 127.0.0.1 -i -XGET 'http://{{ grafana_admin_user }}:{{ grafana_admin_pass }}@127.0.0.1:{{grafana_port}}/api/datasources/id/{{environment_name|upper}}Prometheus-{{item}}' -H "Content-Type:application/json" 
+  with_items:
+    - 'A-active'
+    - 'B-active'
+    - 'A-standby'
+    - 'B-standby'
+  register: datasource_id_without_auth_proxy
+  when: not grafana_auth_proxy_enabled
+
+- name: delete all the prometheus datasources with auth proxy
+  command: curl -sS -H 'X-WEBAUTH-USER:{{ grafana_admin_user }}' --noproxy 127.0.0.1 -XDELETE -i 'http://127.0.0.1:{{grafana_port}}/api/datasources/{{item.stdout_lines[-1][6:-1]}}' -H "Content-Type:application/json"
+  with_items: "{{datasource_id_with_auth_proxy.results}}"
+  when: grafana_auth_proxy_enabled
+
+- name: delete all the prometheus datasources without auth proxy
+  command: curl -sS --noproxy 127.0.0.1 -i -XDELETE 'http://{{ grafana_admin_user }}:{{ grafana_admin_pass }}@127.0.0.1:{{grafana_port}}/api/datasources/{{item.stdout_lines[-1][6:-1]}}' -H "Content-Type:application/json"
+  with_items: "{{datasource_id_without_auth_proxy.results}}"
+  when: not grafana_auth_proxy_enabled

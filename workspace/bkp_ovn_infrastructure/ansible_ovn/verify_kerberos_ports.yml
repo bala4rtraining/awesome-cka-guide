@@ -1,0 +1,8 @@
+# verify kerberos ports
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=kerberos_server
+
+- name: verify kerberos ports
+  hosts: kerberos_server
+  roles:
+    - { role: kerberos, dispatch: ['verify_ports'] }

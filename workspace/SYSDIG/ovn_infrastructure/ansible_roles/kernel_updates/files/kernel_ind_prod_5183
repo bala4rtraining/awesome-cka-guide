@@ -1,0 +1,10 @@
+kernel
+kernel-tools
+kernel-tools-libs
+kernel-abi-whitelists
+kernel-tools-libs-devel
+kernel-headers
+kernel-debug-devel
+kernel-devel
+kernel-doc
+kernel-debug

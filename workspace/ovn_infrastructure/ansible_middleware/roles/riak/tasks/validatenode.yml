@@ -1,0 +1,15 @@
+##remove node - take the node out of the cluster
+---
+
+- name: Validate node is part of riak cluster
+  shell: "riak-admin cluster status |grep {{ nodename_prefix }}@{{ hostvars[item].ansible_default_ipv4.address }} |grep valid"
+  delegate_to: "{{ groups['ovn_riak_servers'][0] }}"
+  ignore_errors: True
+  register: validatenode
+  with_items: "{{ target_hosts.split(',')| list| unique }}"
+
+- name: node validation
+  command: echo test 
+  with_items:
+    - "{{ validatenode.results }}"
+  when: item.rc == 0

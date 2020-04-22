@@ -1,0 +1,18 @@
+[Unit]
+Description=XDC Sync Server 
+After=network.target
+
+[Service]
+Type=simple
+User=hdfs
+Group=hdfs
+#Restart=always
+RestartSec=3
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+WorkingDirectory={{ xdc_sync_install_dir }}
+ExecStart={{ xdc_sync_install_dir }}/{{ xdc_sync_artifact }}/bin/ovn_clearing_xdc_sync
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,24 @@
+# Playbook to disable TLS 1.2 for hdfs cluster.
+# Assumption: hdfs cluster is already installed with SSL/Kerberos.
+# Pass hadoop_enable_tls = False/True to disable/enable tls on cluster.
+# Pass hadoop_enable_kerberos = False/True to disable/enable kerberos on cluster.
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=hdfs_HA_All_nodes
+
+# stop hadoop services in specific order
+- name:  stop all hadoop services
+  hosts: hdfs_HA_All_nodes:!zookeeper
+  roles:
+    - { role: hadoop, dispatch: ['stop-all'] }
+
+# update hadoop configuration files (core-site.xml and hdfs-site.xml)
+- name: update config on all hdfs nodes
+  hosts: hdfs_HA_All_nodes:!zookeeper
+  roles:
+    - { role: hadoop, dispatch: ['update-config'] }
+
+# start hadoop cluster
+- name:  start all hadoop services
+  hosts: hdfs_HA_All_nodes:!zookeeper
+  roles:
+    - { role: hadoop, dispatch: ['start-all'] }

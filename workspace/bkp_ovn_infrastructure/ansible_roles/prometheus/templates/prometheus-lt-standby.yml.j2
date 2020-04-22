@@ -1,0 +1,63 @@
+global:
+  scrape_interval:     10s
+  evaluation_interval: 15s
+
+  external_labels:
+      prometheus_server: '{% if prometheus_use_fqdn == "true" %}{{ ansible_fqdn }}{% else %}{{ inventory_hostname }}{% endif %}'
+      datacenter_id: '{{ prometheus_datacenter_id }}'
+      environment: '{{ environment_name }}'
+ 
+rule_files:
+
+scrape_configs:
+  - job_name: '{{ prometheus_context_path }}'
+{% if prometheus_ssl_enabled == 'true'  %}
+    scheme: https
+    tls_config:
+      ca_file: {{ prometheus_nginx_ssl_client_certificate }}
+      cert_file: {{ prometheus_nginx_ssl_certificate_path }}
+      key_file: {{ prometheus_nginx_ssl_certificate_key_path }}
+{% endif %}
+    metrics_path: "/{{ prometheus_app_context_path }}/metrics"  
+    relabel_configs:
+       - source_labels: [__address__]
+         regex: '(.*)(:.*)'
+         target_label: hostname
+         replacement: "$1"
+    static_configs:
+      - targets:
+{% for node in groups.prometheus_server|default( {} ) %}
+{% if hostvars[node].ansible_fqdn is defined and prometheus_use_fqdn == "true" %}
+        - "{{ hostvars[node].ansible_fqdn }}:{{ nginx_default_port }}"
+{% else %}
+        - "{{ hostvars[node].inventory_hostname }}:{{ nginx_default_port }}"
+{% endif %}
+{% endfor %}
+        labels:
+          service_name: prometheus
+
+  - job_name: 'federate'
+    scrape_interval: 30s
+    honor_labels: true
+{% if prometheus_ssl_enabled == 'true'  %}
+    scheme: https
+    tls_config:
+      ca_file: {{ prometheus_nginx_ssl_client_certificate }}
+      cert_file: {{ prometheus_nginx_ssl_certificate_path }}
+      key_file: {{ prometheus_nginx_ssl_certificate_key_path }}
+{% endif %}
+    metrics_path: '/{{ prometheus_app_context_path }}/federate'
+    params:
+      'match[]':
+        - '{job="statsd_metrics"}'
+    static_configs:
+      - targets:
+{% for node in groups.prometheus_server %}
+{% if 'prometheus_mode' in hostvars[node] and hostvars[node].prometheus_mode == 'lt-active' %}
+{% if hostvars[node].ansible_fqdn is defined and prometheus_use_fqdn == "true" %}
+        - "{{ hostvars[node].ansible_fqdn }}:{{ nginx_default_port }}"
+{% else %}
+        - "{{ hostvars[node].inventory_hostname }}:{{ nginx_default_port }}"
+{% endif %}
+{% endif %}
+{% endfor %}

@@ -1,0 +1,111 @@
+---
+# tasks file for graphite  (includes carbon and whisper requisites)
+- name: includes overrides specific to the distribution+version (e.g. Centos7)
+  include_vars: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
+
+- set_fact: graphite_port={{ graphite_port }}
+
+- name: install rpms
+  yum: name="{{download_path_url}}/{{item}}.rpm" state=installed
+  with_items: '{{ graphite_rpms }}'
+
+- name: set permissions for init.d service files
+  file: path=/etc/init.d/carbon-relay mode=755
+  when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '6'
+
+- name: Install Graphite Dependencies for Redhat
+  yum: "name={{ item }} state=present"
+  with_items: '{{ graphite_pkgs }}'
+  when: ansible_os_family == 'RedHat'
+
+- name: Define temp directories
+  file: path={{item}}/ state=directory mode=755
+  with_items:
+     - /tmp/graphite-web
+     - /tmp/carbon
+     - /tmp/whisper
+
+- name: unarchive tarball at the remote system
+  unarchive: src={{artifactory_host}}/{{ archive_ref_graphiteweb }} dest=/tmp/graphite-web copy=no
+
+- name: Apply patch to graphite (graphite-web 0.9.12 needs patch if running with Django > 1.5)
+  command: find ./ -type f -exec sed -i -e 's/from\ django\.conf\.urls\.defaults\ import\ \*/from\ django\.conf\.urls\ import\ \*/g' {} \; chdir=/tmp/graphite-web/
+  when: apply_graphite_patch
+
+- name: check dependencies graphite-web
+  command: python check-dependencies.py chdir=/tmp/graphite-web/
+
+- name: install graphite-web using setup.py
+  command: python setup.py install chdir=/tmp/graphite-web/
+
+- name: Create apache group
+  group: name=apache system=yes state=present
+
+- name: Create apache user
+  user: >
+    name=apache
+    createhome=no
+    group=apache
+    system=yes
+    state=present
+
+- name: set permissions for opt-graphite directory
+  file: path=/opt/graphite/ owner=apache group=apache state=directory mode=755
+
+- name: set permissions for apache
+  file: path={{item}}/ owner=apache group=apache recurse=yes state=directory
+  with_items:
+    - /opt/graphite/storage
+    - /opt/graphite/conf
+    - /opt/graphite/webapp
+
+- name: Disable apache default port 80
+  replace: dest=/etc/httpd/conf/httpd.conf regexp='^Listen 80' replace='#Listen 80'
+  when: disable_port_80
+
+- name: unarchive tarball at the remote system
+  unarchive: src={{artifactory_host}}/{{ archive_ref_carbon }} dest=/tmp/carbon copy=no
+
+- name: install carbon using setup.py
+  command: python setup.py install chdir=/tmp/carbon
+
+- name: unarchive tarball at the remote system
+  unarchive: src={{artifactory_host}}/{{ archive_ref_whisper }} dest=/tmp/whisper copy=no
+
+- name: install whisper using setup.py
+  command: python setup.py install chdir=/tmp/whisper/
+
+- name: set permissions for newly installed python packages
+  file: path={{python_lib}} mode="u=rwX,g=rX,o=rX" recurse=yes state=directory
+
+- name: install configuration files for graphite and carbon
+  template: src={{item.src}} dest={{item.dest}} mode={{item.mode}}
+  with_items:
+    - "{{ graphite_templates }}"
+    - "{{ service_templates }}"
+
+- name: initialize the django sqlite database
+  command: python manage.py syncdb --noinput chdir=/opt/graphite/webapp/graphite/
+
+# graphite.db database can be accessed by apache and root
+# graphite.db database will generate errors in /var/log/httpd/error_log on initial launch as
+# root and apache are the only two identities populating configuration settings in graphic.db
+# 8 processes/threads created from httpd: 1 process/thread assigned as root, 7 processes/threads assigned as apache
+- name: set permission for sqlite database
+  file: path=/opt/graphite/storage/graphite.db owner=apache group=apache
+
+- name: start carbon-cache service
+  service: name=carbon-cache state=restarted
+
+- name: start carbon-relay service
+  service: name=carbon-relay state=restarted
+
+- name: start httpd service
+  service: name=httpd state=restarted
+
+- name: delete temporary archive directories from /tmp/
+  file: path={{item}} state=absent
+  with_items:
+    - /tmp/graphite-web/
+    - /tmp/carbon/
+    - /tmp/whisper/

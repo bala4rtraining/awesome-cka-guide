@@ -1,0 +1,6 @@
+---
+ftps_cert_file: ../config/prod.cambodia-oce.ovn_manager.visa.full.crt
+ftps_address: 10.184.254.27
+
+feed_dir: "/var/vsftpd/prodcdb/ovn_cdb"
+subscription_dir: "/var/vsftpd/prodcdb/ovn_cdb"

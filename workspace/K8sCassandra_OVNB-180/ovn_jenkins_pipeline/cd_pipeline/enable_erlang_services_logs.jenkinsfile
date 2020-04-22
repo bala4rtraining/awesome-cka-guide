@@ -1,0 +1,44 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+
+  parameters {
+      string(defaultValue: "", description: "Artifactory URL", name: "artifactory_url")
+      string(defaultValue: "", description: "Branch name", name: "branch")
+      string(defaultValue: "", description: "Erlangservices plugin version", name: "fluent_plugin_parser_erlangservices_version")
+  }
+ 
+
+  stages {
+     stage('Set cluster variables') {
+         // boilerplate for stage must be the first stage
+         // in all the cd pipeline jobs.
+         // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+         steps {
+           setClusterAndDatacenter(env);
+         }
+     }
+     stage("GitSCM checkout for ovn_infrastructure"){
+       steps {
+         checkout poll: false, scm: [$class: 'GitSCM', branches: [[name: "$branch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git']]]
+       }
+     }
+     stage('Deploy erlang services logs config') {
+       steps {
+         ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", playbook: 'ansible_td_agent/enable_erlang_services_logs.yml', extras: "-e artifactory_url=$artifactory_url -e fluent_plugin_parser_erlangservices_version=$fluent_plugin_parser_erlangservices_version "
+         }
+       }
+     }
+  }
+}

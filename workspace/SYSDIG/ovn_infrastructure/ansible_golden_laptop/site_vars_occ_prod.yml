@@ -1,0 +1,51 @@
+# This is a site specific file for OVN cluster in OCC prod 
+#
+
+
+#
+# For Cumulus hardware switch only 
+# (OCC Prod MAC addresses)
+#
+global_ovn_switch_hw_name_leaf1: ovn-leaf-sw-1
+global_ovn_switch_hw_leaf1_mgmt_mac: 14:18:77:00:59:00
+
+global_ovn_switch_hw_name_leaf2: ovn-leaf-sw-2
+global_ovn_switch_hw_leaf2_mgmt_mac: 14:18:77:00:40:00
+
+global_ovn_switch_hw_name_leaf3: ovn-leaf-sw-3
+global_ovn_switch_hw_leaf3_mgmt_mac: 14:18:77:00:45:00
+
+global_ovn_switch_hw_name_spine1: ovn-spine-sw-1
+global_ovn_switch_hw_spine1_mgmt_mac: 14:18:77:01:24:00
+
+global_ovn_switch_hw_name_spine2: ovn-spine-sw-2
+global_ovn_switch_hw_spine2_mgmt_mac: 14:18:77:00:c5:00
+
+global_ovn_switch_hw_name_border_leaf1: ovn-border-leaf-sw-1
+global_ovn_switch_hw_border_leaf1_mgmt_mac: 14:18:77:01:23:00
+
+global_ovn_switch_hw_name_border_leaf2: ovn-border-leaf-sw-2
+global_ovn_switch_hw_border_leaf2_mgmt_mac: 14:18:77:00:b4:00
+
+# OOB switches
+
+global_ovn_switch_hw_name_oob_mgmt: ovn-oob-ogl-sw
+global_ovn_switch_hw_name_oob_mgmt_mac: 64:00:6a:cd:6c:a0
+
+
+
+#
+# For on-site Orange servers HP DL360 
+# (OCC prod orange server 1st 1G port MAC addresses)
+#
+
+
+global_ovn_cluster_orange_hw_rack1_hostname: ovn-orange-hp-1
+global_ovn_cluster_orange_hw_rack1_mgmt_mac: 1c:98:ec:14:8d:b0
+
+global_ovn_cluster_orange_hw_rack2_hostname: ovn-orange-hp-2
+global_ovn_cluster_orange_hw_rack2_mgmt_mac: 1c:98:ec:14:8d:c4
+
+global_ovn_cluster_orange_hw_rack3_hostname: ovn-orange-hp-3
+global_ovn_cluster_orange_hw_rack3_mgmt_mac: 1c:98:ec:11:28:20
+

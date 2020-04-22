@@ -1,0 +1,41 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+        choice(name:'enable_nginx_ssl', choices: 'true\nfalse', description: 'true for dev, test and prod env \n false for perf and cert env')
+		string(name: 'branch', defaultValue: '', description: 'Enter the release branch details')
+		string(name: 'extra_vars', defaultValue: '', description: 'any extra vars')
+  }
+  stages {
+     stage('Set cluster variables') {
+         // boilerplate for stage must be the first stage
+         // in all the cd pipeline jobs.
+         // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+         steps {
+           setClusterAndDatacenter(env);
+         }
+     }
+     stage("GitSCM checkout for ovn_infrastructure"){
+       steps {
+         git credentialsId: '', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${params.branch}"
+       }
+     }
+     stage('Deploy fluentd pipeline') {
+       steps {
+         ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", playbook: 'ansible_td_agent/deploy_input_config.yml',  extras: "-e enable_nginx_ssl=${params.enable_nginx_ssl}  -e @config/${env.ENV}.vars.secret.yml --vault-password-file ~/.vault-${env.ENV} ${params.extra_vars} --become"
+         }
+       }
+     }
+  }
+}

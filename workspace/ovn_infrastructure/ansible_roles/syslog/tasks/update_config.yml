@@ -1,0 +1,14 @@
+---
+- name: backup the old config file
+  command: "cp /etc/rsyslog.conf /etc/rsyslog-{{ lookup('pipe', 'date +%Y-%m-%d-%H:%M:%S') }}.conf"
+
+#Update the config file
+- name: install configuration files for syslog
+  template: src={{ dir_val.src }} dest={{ dir_val.dest }} mode={{ dir_val.mode }}
+  with_items:
+   - "{{ syslog_config }}"
+  loop_control:
+    loop_var: dir_val
+
+- name: restart the rsyslog daemon in all cases
+  service: name=rsyslog state=restarted

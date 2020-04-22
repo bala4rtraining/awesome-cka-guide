@@ -1,0 +1,16 @@
+---
+- name: Copy zookeeper systemd configuration unit file
+  template:
+    src: zookeeper.service.j2
+    dest: /etc/systemd/system/zookeeper.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Ensure zookeeper is disabled
+  systemd:
+    name: zookeeper
+    state: stopped
+    daemon_reload: yes
+    enabled: no
+    

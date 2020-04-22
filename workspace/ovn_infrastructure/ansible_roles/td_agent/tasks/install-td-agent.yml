@@ -1,0 +1,28 @@
+---
+- name: uninstall td_agent if present
+  yum:
+    name: td-agent
+    state: absent
+
+- name: install td_agent
+  yum:
+    name: td-agent-3.1.1-0.el7.x86_64
+    state: present
+
+- name: change ownership of dir /opt/td-agent to {{ td_agent_user }}
+  file:
+    path: /opt/td-agent/
+    mode: "0750"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    recurse: yes
+
+- name: Restart fluentd service.
+  systemd:
+    name: td-agent
+    state: restarted
+
+- name: ensure td-agent is started 
+  systemd:
+    name: td-agent
+    state: started

@@ -1,0 +1,27 @@
+---
+kibana_reverse_proxy_enabled: true
+kibana_nginx_enable_ssl: "true"
+kibana_basepath: "/kibana-dev1"
+kibana_reverse_proxy_path: "kibana-dev1"
+
+grafana_reverse_proxy_enabled: true
+grafana_auth_proxy_enabled: true
+grafana_nginx_enable_ssl: "true"
+grafana_reverse_proxy_url: "https://ovndev-1.visa.com/grafana-dev1/"
+grafana_reverse_proxy_path: "grafana-dev1"
+
+nginx_enable_ssl: "true"
+vss_output_context_path: "vss-output-dev1"
+
+prometheus_datacenter_id: "DEV-DC1"
+prometheus_external_host: "ovndev-1.visa.com"
+alertmanager_context_path: "alertmanager-dev1"
+alertmanager_app_context_path: "alertmanager-dev1-app"
+prometheus_context_path: "prometheus-dev1"
+prometheus_app_context_path: "prometheus-dev1-app"
+
+
+elastalert_env: "DEV-DC1"
+
+prometheus_public: |
+ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+qSBE3RhFQedj6H7Zh8n1VYp0lKjJwjMpDmx+mHsymPnyX7yED1NktdPAYa3q+K9bVRcwYb4SWRigXavXcyxM0SkUA7os2NxzKjeNjAyjhGececX1RF7KfQ3UUwoyk9fcdNfI2LBGpeBdChKHWr+WQt8jQIqo562tsZNKDKz/hdPmcTZbe8gBcWvIDmcLRTdRYDt8qge8MUKigzMe+y6vlavHUNHCmBSkAQvqNRY2BT8tFYtkyPe7O2SXsd/BWNEYEMUbqN1Yt/xrYqBXnmlwjRzxQ/kKJHK3ZEK2evcsN1HWMIauaX3HtMlrKxuSC0G6Po/42EMIe5c1jHzlqVY1 dev

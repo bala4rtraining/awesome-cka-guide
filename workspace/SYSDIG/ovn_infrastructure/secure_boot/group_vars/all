@@ -1,0 +1,70 @@
+ovngit_host: 'http://sl55ovnapq01.visa.com/git/@pod1/'
+centos_mirror: '{{ovngit_host}}mirror/centos/7.2/2016-04-01:'
+orig_kernel_ver: 3.10.0-327.el7
+kernel_ver: 3.10.0-327.3.1.el7
+grub_ver: 2.02-0.33.el7.centos.1
+visa_grub_ver: 2.02-0.33.el7.centos.visa.1
+shim_rel: 1.el7.centos
+shim_ver: 0.9-{{shim_rel}}
+shim_signed_ver: 0.9-2.el7
+grub_passwd: sha512.10000.E74B165AA218880EEA631DAA20188FE6DEA9CE37D01CA1D2B57D9507BECE8AB92992EBBB486FD283D261831B361AABFBA4CDBA4FCACD91AB15B35C27742D3AF5.B9ED038DA7ADAE3BEBEA23536F7F273E42A234D4C79319DA42DBE015167806C11EBAC34402002C7FA94C465C891D223A150D1E3103392C1EDC7D1F8930E08E93
+dhcp_server_addr: 192.168.76.2
+ks_secure_boot: |
+  %pre
+  #!/bin/sh
+  VISA_INITRD=visa-initrd-virtio
+  lsblk -S|grep HP && VISA_INITRD=visa-initrd-hp
+  echo $VISA_INITRD  > /tmp/visa-initrd
+  %end
+
+  %packages --ignoremissing --excludedocs
+  visa-grub
+  %include /tmp/visa-initrd
+  %end
+
+  %post --nochroot --log=/mnt/sysimage/root/post-secure_boot.log
+
+  # Delete previous boot entries
+  efibootmgr | grep "Visa Signed" | sed 's/Boot\([0-9A-F][0-9A-F][0-9A-F][0-9A-F]\).*/\1/' |
+  xargs -r -n 1 efibootmgr -B -b
+
+  # Add boot entry
+  #efibootmgr -c -d /dev/sda -p 1 -l \\EFI\\centos\\shim-centos.efi -L "Visa Signed CentOS (Legacy)"
+  efibootmgr -c -d /dev/sda -p 1 -l \\EFI\\visa\\grub.efi -L "Visa Signed CentOS"
+
+  # Tip machine over into Secure Boot mode
+  /visa/efi-updatevar -e -f /visa/uefi_db.esl db
+  /visa/efi-updatevar -e -f /visa/uefi_KEK.esl    KEK
+  /visa/efi-updatevar    -f /visa/uefi_PK.auth     PK
+
+  #remove boot menu entries for *.sig files
+  sed -i '/^menuentry.*\.sig/,/^}/ d' /mnt/sysimage/boot/efi/EFI/centos/grub.cfg
+
+  cat >> /mnt/sysimage/usr/share/grub/grub-mkconfig_lib <<"END"
+  # to prevent grub from creating boot menu entries for *.sig files
+  # copy original function
+  test -n "$(declare -f grub_file_is_not_garbage)" || return
+  eval "${_/grub_file_is_not_garbage/grub_file_is_not_garbage_orig}"
+
+  # override garbage check function
+  grub_file_is_not_garbage () {
+    case "$1" in
+      *.sig) return 1 ;;
+    esac
+    grub_file_is_not_garbage_orig "$1"
+  }
+  END
+  %end
+ks_provisioning_auth: |
+  group --name=vagrant --gid=501
+  user --name=vagrant --password=vagrant --plaintext --uid=501 --gid=501 --groups=wheel
+
+  %post
+  echo "vagrant"|passwd --stdin vagrant
+  echo "vagrant        ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers.d/vagrant
+  echo "Defaults:vagrant !requiretty"                 >> /etc/sudoers.d/vagrant
+  chmod 0440 /etc/sudoers.d/vagrant
+  %end
+ks_root_auth: |
+  rootpw --plaintext vagrant
+  #--iscrypted

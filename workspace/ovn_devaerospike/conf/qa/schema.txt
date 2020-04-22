@@ -1,0 +1,4 @@
+create index stateq on ovn_devintegration.window_state (state) string
+create index sett_idCpd on ovn_devintegration.window_correlation (sett_w_id:cpd) string
+create index stateq on ovn_qaintegration.window_state (state) string
+create index sett_idCpd on ovn_qaintegration.window_correlation (sett_w_id:cpd) string

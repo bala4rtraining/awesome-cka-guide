@@ -1,0 +1,8 @@
+#
+# This file specifies the host (machine or VM)
+# that will be configured as a OVN Golden Laptop (OGL)
+# It should match the IP address and SSH port 
+# this host is using
+#
+[OGL_host]
+golden_laptop ansible_ssh_host=10.172.41.142 ansible_ssh_port=8022

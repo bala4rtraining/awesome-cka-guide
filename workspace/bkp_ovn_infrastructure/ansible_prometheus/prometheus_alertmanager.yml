@@ -1,0 +1,63 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=prometheus_alertmanager
+
+- name: install alertmanager, nginx_auth without ssl enabled
+  hosts: prometheus_alertmanager
+  gather_facts: yes
+  roles:
+    - nginx
+    - nginx_auth
+    - { role: prometheus, dispatch: ['prometheus_alertmanager'] }
+  vars:
+    - alertmanager_ssl_enabled: "false"
+    - nginx_enable_ssl: "false"
+    - nginx_sites:
+        default:
+          - listen {{ nginx_default_port }}
+          - server_name localhost
+    - nginx_configs:
+        alertmanager_upstream:
+          - upstream alertmanager {
+              server localhost:{{ alertmanager_port }};
+            }
+        auth_upstream:
+          - upstream authServer {
+              server {{nginx_auth_host}}:{{nginx_auth_port}};
+            }
+        websockets:
+          - map $http_upgrade $connection_upgrade {
+              default upgrade;
+              '' close;
+            }
+    - nginx_locations:
+      - site: default
+        locations:
+          - name: alertmanager
+            location:
+              - location /{{ alertmanager_context_path }}/ {
+                  auth_request /authorization-proxy/alertmanager;
+                  proxy_set_header            Connection              $connection_upgrade;
+                  proxy_set_header            Upgrade                 $http_upgrade;
+                  proxy_set_header            Host                    $host;
+                  proxy_set_header            X-Real-IP               $remote_addr;
+                  proxy_set_header            X-Forwarded-For         $proxy_add_x_forwarded_for;
+                  proxy_set_header            X-Forwarded-Proto       $scheme;
+
+                  error_page 403 /forbidden;
+                  proxy_pass http://alertmanager;
+                }
+              - location /{{ alertmanager_app_context_path }}/ {
+                  proxy_pass http://alertmanager/{{ alertmanager_context_path }}/;
+                }
+
+          - name: authorizer
+            location:
+              - location /authorization-proxy {
+                  internal;
+                  proxy_set_header X-Original-URI $request_uri;
+                  proxy_set_header X-Original-Method $request_method;
+                  proxy_pass http://authServer;
+                }
+              - location /forbidden {
+                  proxy_pass http://authServer;
+                }

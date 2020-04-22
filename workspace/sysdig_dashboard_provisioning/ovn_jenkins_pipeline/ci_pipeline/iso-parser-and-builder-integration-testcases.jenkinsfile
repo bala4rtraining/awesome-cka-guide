@@ -1,0 +1,101 @@
+//
+// This pipeline is used to perform the integration testcases on ISO Parser and Builder
+//
+ 
+pipeline {
+     agent {
+         docker {
+           image 'ovn-docker.artifactory.trusted.visa.com/ovn-dsl-tools:43'
+           label 'ovn_build'
+            }
+     }
+     environment {
+         GOFLAGS='-mod=readonly'
+         GOPROXY='https://artifactory.trusted.visa.com/api/go/ovn-go-virtual-plusdev'
+         GOSUMDB='off'
+         JQ_PATH='/usr/bin/jq'
+     }
+     options {
+         ansiColor('xterm-256color')
+         disableConcurrentBuilds()
+         skipDefaultCheckout()
+         timeout(time: 1, unit: 'HOURS')
+     }
+     parameters {
+        string(name: 'DSL_Pipeline_Branch', defaultValue: 'master', description: 'Enter the DSL pipeline branch details')
+        string(name: 'ISO_Parser_Branch', defaultValue: 'master', description: 'Enter the ISO parser branch details')
+    }
+ 
+     stages {
+         stage('Clone DSL pipeline repo'){
+             steps{
+                 git credentialsId: 'stash', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn-dsl-pipeline.git', branch: "${params.DSL_Pipeline_Branch}"
+             }
+         }
+         stage('Clone ISO Parser & Builder Repo'){
+             steps{
+                 git credentialsId: 'stash', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn-iso-message.git', branch: "${params.ISO_Parser_Branch}"
+             }
+         }
+         stage('Prepare') {
+             steps {
+                 sh '''
+                 [ -f /etc/docker-release ] && cat /etc/docker-release
+                 printenv | sort
+                 go version
+                 '''
+             }
+         }
+ 
+         stage('Build') {
+             steps {
+                 sh '''
+                 make clean test
+                 '''
+             }
+         }
+     }
+         post {
+            success {
+                script{
+                 def successMailRecipients = "NAOVNTEST@visa.com,GDLBLRsachazhiorg@visa.com,suiyer@visa.com,GDLBLRrkrishn3ext@visa.com,princjai@visa.com,rmore@visa.com,gruhela@visa.com,rganji@visa.com,gboddeti@visa.com,sshet@visa.com,susenpat@visa.com,sikakarl@visa.com"  
+                 def message = ''
+                    message += '<div><img width="223" height="305" src="https://jenkins.io/images/logos/cute/cute.png"></div>'
+                    message += '<p>ISO Parser and Builder Module integration tests have passed. Please find Console Output for more details.</p>'
+                    message += '<p style="font-weight:bold;font-size:12.0pt;">Console Output:</p>'
+                    message += """<p><a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>"""
+                                                         
+                 emailext body: """
+                    <div style="font-family: calibri;">
+                      ${message}
+                    </div>
+                    """,
+                 mimeType: 'text/html',
+                 subject: 'ISO Parser & Builder Testing Status - Passed',
+                 to: "${successMailRecipients}",
+                 replyTo: "${successMailRecipients}"
+                }
+                   }
+            failure {
+                script{
+                 def failureMailRecipients = "GDLBLRsachazhiorg@visa.com,GDLBLRrkrishn3ext@visa.com,susenpat@visa.com,sikakarl@visa.com" 
+                 def message = ''
+                     message += '<div><img width="233" height="272" src="https://jenkins.io/images/logos/fire/fire.png"></div>'
+                     message += '<p>ISO Parser and Builder Module integration tests have failed. Please find Console Output for more details.</p>'
+                    message += '<p style="font-weight:bold;font-size:12.0pt;">Console Output:</p>'
+                    message += """<p><a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>"""
+                 emailext body: """
+                         <div style="font-family: calibri;">
+                         ${message}
+                         </div>
+                         """,
+                 mimeType: 'text/html',
+                 subject: 'ISO Parser & Builder Testing Status - Failed',
+                 to: "${failureMailRecipients}",
+                 replyTo: "${failureMailRecipients}"
+                }
+            }       
+    }
+}
+
+ 

@@ -1,0 +1,28 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=graphite,grafana
+
+
+# Place SELinux into permissive mode
+- name: SELinux in Permissive mode
+  hosts: graphite
+  become: yes
+  become_method: sudo
+  roles:
+    - { role: selinux, dispatch: permissive }
+
+
+# Run graphite role
+- name: Run the graphite role for the graphite host in the inventory
+  hosts: graphite
+  roles:
+     - graphite
+
+
+# Run grafana role
+- name: Run the grafana role for the grafana host in the inventory
+  hosts: grafana
+  roles:
+     - { role: grafana, dispatch: ['deploy_grafana'] }
+  vars:
+    graphite_host: "{{ hostvars[groups['graphite'][0]]['ansible_fqdn'] }}"
+    graphite_port: "{{ hostvars[groups['graphite'][0]]['graphite_port'] }}"

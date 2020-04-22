@@ -1,0 +1,5 @@
+---
+# tasks file for consul (CentOS 7 specific)
+                                            
+- name: Ensure Consul service is stopped and disabled on boot
+  service: name={{ consul_service_name }} state=stopped enabled=no

@@ -1,0 +1,6 @@
+set timeout=10
+menuentry 'Install Visa CentOS 7.X (SecureBoot)' --unrestricted {
+  linuxefi  uefi/vmlinuz ip=dhcp inst.ks=http://{{ogl_mgmt_int_ip}}/ks/{{ogl_centos_secureboot_ks_file}} inst.noshell
+  initrdefi uefi/initrd.img
+}
+#inst.noshell inst.cmdline

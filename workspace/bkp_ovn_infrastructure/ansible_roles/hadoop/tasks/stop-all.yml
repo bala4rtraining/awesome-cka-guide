@@ -1,0 +1,30 @@
+# Tasks for stopping hadoop services in specific order
+---
+
+- name: stop datanode services
+  service:
+    name: hadoop-hdfs-datanode
+    state: stopped
+  when: inventory_hostname in groups['hadoop_datanodes']
+  ignore_errors: True
+
+- name: stop namenode services
+  service:
+    name: hadoop-hdfs-namenode
+    state: stopped
+  when: inventory_hostname in groups['hadoop_namenodes']
+  ignore_errors: True
+
+- name: stop zkfc services
+  service:
+    name: hadoop-hdfs-zkfc
+    state: stopped
+  when: inventory_hostname in groups['hadoop_namenodes']
+  ignore_errors: True
+
+- name: stop journalnode services
+  service:
+    name: hadoop-hdfs-journalnode
+    state: stopped
+  when: inventory_hostname in groups['journalnodes']
+  ignore_errors: True

@@ -1,0 +1,50 @@
+
+##check if it is laready installed - not required to check the version
+- name: update limits
+  copy: src=etc_security_limits.d_riak.conf dest={{ security_limits_dir }}/{{riak_config_file}} owner=root group=root mode=0644
+
+- name: create sysctl.d
+  file: dest={{ sysctl_dir }} state=directory
+
+- name: configure sysctl
+  template: src=etc_sysctl.d_riak.conf.j2 dest={{ sysctl_dir }}/{{riak_config_file}} owner=root group=root mode=0644
+  notify: update sysctl
+
+- name: check riak installed already
+  command: rpm -q {{ riak_rpm }}
+  ignore_errors: True
+  register: is_installed
+
+- name: install riak
+  yum: name="{{ riak_url }}" state=present
+  when: is_installed.rc != 0
+
+- name: create the ovn data directory
+  file: >
+    dest={{ ovn_data_dir }}
+    state=directory
+    recurse=no
+    owner=root
+    group=root
+    mode=755
+
+- name: create data directory for riak
+  file: >
+    path={{ riak_conf.platform_data_dir }}
+    state=directory
+    owner=riak
+    group=riak
+
+- name: write riak.conf from template
+  template: src="etc_riak_riak.conf.j2" dest={{ riak_install_dir }}/{{riak_config_file}} 
+  notify:
+    - "restart riak"
+    - "wait for kv"
+    
+- name: start riak
+  systemd:
+    daemon_reload: yes
+    name: riak
+    state: started
+    enabled: True 
+  notify: wait for kv

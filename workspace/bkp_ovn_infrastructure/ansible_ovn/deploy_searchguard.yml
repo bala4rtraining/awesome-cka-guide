@@ -1,0 +1,39 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+
+# playbook for deploying the server certificates
+- name: deploy the sever certificates for elasticsearch 
+  hosts: elasticsearch
+  roles:
+    - certificates
+  vars:
+    - elasticsearch_config_dir: "/etc/elasticsearch"
+    - cert_data: "{{ elasticsearch_searchguard_cert }}"
+    - ca_cert_data: "{{ elasticsearch_searchguard_ca_cert }}"
+    - key_data: "{{ elasticsearch_searchguard_key }}"
+    - cert_path: "{{ elasticsearch_config_dir}}"
+    - key_path: "{{ elasticsearch_config_dir }}"
+    - ca_cert_path: "{{ elasticsearch_config_dir }}"
+    - ca_cert_name: elasticsearch_searchguard_ca_cert.pem
+    - cert_name: elasticsearch_searchguard_cert.pem
+    - key_name: elasticsearch_searchguard_key.pem
+    
+
+# playbook for running the searchguard role.
+- name: run the searchguard playbook to install or re-install searchguard plugin for elasticsearch and client certs
+  hosts: elasticsearch
+  roles:
+    - certificates
+    - {role: elasticsearch, dispatch: ['deploy_searchguard']}
+  vars:
+    - elasticsearch_config_dir: "/etc/elasticsearch"
+    - elasticsearch_client_ssl_enabled: "true"
+    - cert_data: "{{ elasticsearch_client_cert }}"
+    - ca_cert_data: "{{ elasticsearch_client_ca_cert }}"
+    - key_data: "{{ elasticsearch_client_key }}"
+    - cert_path: "{{ elasticsearch_config_dir}}"
+    - key_path: "{{ elasticsearch_config_dir }}"
+    - ca_cert_path: "{{ elasticsearch_config_dir }}"
+    - ca_cert_name: elasticsearch_client_ca_cert.pem
+    - cert_name: elasticsearch_client_cert.pem
+    - key_name: elasticsearch_client_key.pem

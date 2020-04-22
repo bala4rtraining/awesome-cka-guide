@@ -1,0 +1,2 @@
+ssh_directory: "/etc/ssh"
+sudoers_config_directory: "/etc/sudoers.d"

@@ -1,0 +1,13 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: Master and Certificate job task dispatcher
+  include: "{{ item }}.yml" # assumes no nested includes from loops
+  with_items: "{{ dispatch|default([]) }}"
+  when: "dispatch != []"

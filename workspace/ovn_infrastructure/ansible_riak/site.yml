@@ -1,0 +1,22 @@
+---
+## This site.yml file isn't intended to be used by itself for any purpose other than
+## to keep the current Jenkins riak deploy job from breaking.
+##
+## At some point this file could be reworked to fit the normal use case of a site.yml
+## file, but right now it's just a wrapper for all these different parts the Jenkins
+## job expects to happen.
+##
+## Future Jenkins jobs that need to interact with Riak should do so by running these,
+## or other, top-level playbooks directly in separate build steps.
+
+# provision riak nodes
+- include: provision.yml
+
+# join the provisioned riak nodes into a cluster 
+- include: admin_join.yml
+
+# run playbooks to apply OVN app specific properties 
+- include: configure_advice.yml
+- include: configure_opdb.yml
+- include: configure_clearing.yml
+- include: configure_settlement.yml

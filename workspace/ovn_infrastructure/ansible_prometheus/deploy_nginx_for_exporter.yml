@@ -1,0 +1,105 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: install nginx for all prometheus exporters
+  hosts: all:!cumulus_switch:!ovn_manager
+  roles:
+    - nginx
+  vars:
+    - nginx_enable_ssl: "false"
+    - nginx_sites:
+        prometheus_exporter:
+          - listen {{ nginx_exporter_port }}
+          - server_name localhost
+    - nginx_configs:
+        exporter_upstream:
+          - upstream node_exporter {
+              server 127.0.0.1:{{ node_exporter_port }};
+            }
+          - upstream fluentd {
+              server 127.0.0.1:{{ fluentd_exporter_port }};
+            }
+          - upstream statsd_exporter {
+              server 127.0.0.1:{{ statsd_exporter_port }};
+            }
+          - upstream elasticsearch_exporter {
+              server 127.0.0.1:{{ elasticsearch_exporter_port }};
+            }
+          - upstream haproxy_exporter {
+              server 127.0.0.1:{{ haproxy_exporter_port }};
+            }
+          - upstream pushgateway_exporter {
+              server 127.0.0.1:{{ pushgateway_exporter_port }};
+            }
+          - upstream kafka_jmxexporter {
+              server 127.0.0.1:{{ kafka_jmxexporter_port }};
+            }
+          - upstream zookeeper_jmxexporter {
+              server 127.0.0.1:{{ zookeeper_jmxexporter_port }};
+            }
+          - upstream hdfs_jmxexporter_namenode {
+              server 127.0.0.1:{{ hadoop_namenode_jmxexporter_port }};
+            }
+          - upstream hdfs_jmxexporter_datanode {
+              server 127.0.0.1:{{ hadoop_datanode_jmxexporter_port }};
+            }
+          - upstream ovn_monitoring_exporter {
+              server 127.0.0.1:{{ ovn_monitoring_exporter_port }};
+            }
+          - upstream process_exporter {
+              server 127.0.0.1:{{ process_exporter_port }};
+            }
+
+    - nginx_locations:
+      - site: prometheus_exporter
+        locations:
+          - name: prometheus_exporters
+            location:
+              - location {{ node_exporter_telemetry_path }} {
+                  rewrite {{ node_exporter_telemetry_path }} /metrics break;
+                  proxy_pass http://node_exporter;
+                }
+              - location {{ fluentd_exporter_telemetry_path }} {
+                   rewrite {{ fluentd_exporter_telemetry_path }} /metrics break;
+                   proxy_pass http://fluentd;
+                }
+              - location {{ statsd_exporter_telemetry_path }} {
+                  rewrite {{ statsd_exporter_telemetry_path }} /metrics break;
+                  proxy_pass http://statsd_exporter;
+                }
+              - location {{ elasticsearch_exporter_telemetry_path }} {
+                  rewrite {{ elasticsearch_exporter_telemetry_path }} /metrics break;
+                  proxy_pass http://elasticsearch_exporter;
+                }
+              - location {{ haproxy_exporter_telemetry_path }} {
+                  rewrite {{ haproxy_exporter_telemetry_path }} /metrics break;
+                  proxy_pass http://haproxy_exporter;
+                }
+              - location {{ pushgateway_exporter_telemetry_path }} {
+                  rewrite {{ pushgateway_exporter_telemetry_path }} /metrics break;
+                  proxy_pass http://pushgateway_exporter;
+                }
+              - location {{ kafka_jmxexporter_telemetry_path }} {
+                  rewrite {{ kafka_jmxexporter_telemetry_path }} /metrics break;
+                  proxy_pass http://kafka_jmxexporter;
+                }
+              - location {{ zookeeper_jmxexporter_telemetry_path }} {
+                  rewrite {{ zookeeper_jmxexporter_telemetry_path }} /metrics break;
+                  proxy_pass http://zookeeper_jmxexporter;
+                }
+              - location {{ hdfs_jmxexporter_namenode_telemetry_path }} {
+                  rewrite {{ hdfs_jmxexporter_namenode_telemetry_path }} /metrics break;
+                  proxy_pass http://hdfs_jmxexporter_namenode;
+                }
+              - location {{ hdfs_jmxexporter_datanode_telemetry_path }} {
+                  rewrite {{ hdfs_jmxexporter_datanode_telemetry_path }} /metrics break;
+                  proxy_pass http://hdfs_jmxexporter_datanode;
+                }
+              - location {{ ovn_monitoring_exporter_telemetry_path }} {
+                  rewrite {{ ovn_monitoring_exporter_telemetry_path }} /metrics break;
+                  proxy_pass http://ovn_monitoring_exporter;
+                }
+              - location {{ process_exporter_telemetry_path }} {
+                  rewrite {{ process_exporter_telemetry_path }} /metrics break;
+                  proxy_pass http://process_exporter;
+                }

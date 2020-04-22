@@ -1,0 +1,90 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,localhost,!cumulus_switch,!ovn_manager
+
+# Site specific host information
+- name: Gather facts to determine elasticsearch + graphite host information
+  hosts: elasticsearch:graphite:ovn_mediator_servers:ovn_switch_servers
+  gather_facts: yes
+
+- name: Set Elastic Search Hostname based on eserv_type=lbonly host attribute
+  hosts: all:!cumulus_switch:!ovn_manager
+  tasks:
+    - set_fact: elasticsearch_host="{{ item }}"
+      with_items: "{{ groups['elasticsearch'] }}"
+      when: hostvars[item].eserv_type == "lbonly"
+
+- name: Run deployment of metrics collector toml scripts
+  hosts: all:!cumulus_switch:!ovn_manager:!ovn_mediator_servers:!ovn_switch_servers:!ovn_riak_servers:!ovn_multidc_sync:!ovn_umf_broker:!ovn_umf_delivery:!ovn_vitalsigns_delivery
+  vars:
+     carbon_host: "{{ groups['graphite'][0] }}"
+     heka_log_templates: "{{ metrics_templates }}"
+  roles:
+     - { role: heka, dispatch: ['provision'] }
+     - { role: heka, dispatch: ['deploy'] }
+
+- name: Run deployment of metrics collector toml scripts
+  hosts: ovn_mediator_servers:ovn_switch_servers:ovn_riak_servers:ovn_multidc_sync:ovn_umf_broker:ovn_umf_delivery:ovn_vitalsigns_delivery
+  vars:
+     carbon_host: "{{ groups['graphite'][0] }}"
+     heka_log_templates: "{{ metrics_templates }}"
+     heka_udp_repeater_statsd_port: "9126"
+  roles:
+     - { role: heka, dispatch: ['provision'] }
+     - { role: heka, dispatch: ['deploy'] }
+     - { role: prometheus, dispatch: ['udp_repeater'], when: rhel_centos_7 }
+
+- name: Run deployment of heka toml scripts for all ovn erlang servers
+  hosts: ovn_mediator_servers:ovn_switch_servers:ovn_riak_servers:ovn_multidc_sync:ovn_umf_broker:ovn_umf_delivery:ovn_vitalsigns_delivery
+  vars:
+     carbon_host: "{{ groups['graphite'][0] }}"
+     heka_log_templates: "{{ ovnlog_templates }}"
+  roles:
+     - { role: heka, dispatch: ['provision'] }
+     - { role: heka, dispatch: ['deploy'] }
+
+- name: Run deployment of heka toml scripts for kafka
+  hosts: kafka:zookeeper
+  vars:
+     carbon_host: "{{ groups['graphite'][0] }}"
+     heka_log_templates: "{{ kafkalog_templates }}"
+  roles:
+     - { role: heka, dispatch: ['provision'] }
+     - { role: heka, dispatch: ['deploy'] }
+
+- name: Run deployment of heka toml scripts for Collection and Settlement jobs
+  hosts: nomad_client
+  vars:
+     carbon_host: "{{ groups['graphite'][0] }}"
+     heka_log_templates: "{{ collectionlog_templates }}"
+  roles:
+     - { role: heka, dispatch: ['provision'] }
+     - { role: heka, dispatch: ['deploy'] }
+
+- name: add the log forwarding for elasticsearch using heka
+  hosts: elasticsearch
+  roles:
+     - { role: heka, dispatch: ['provision'] }
+     - { role: heka, dispatch: ['deploy'] }
+  vars:
+     carbon_host: "{{ groups['graphite'][0] }}"
+     heka_log_templates: "{{ elasticsearchlog_templates }}"
+
+
+- name: add the log forwarding for hadoop
+  hosts: hadoop_namenodes:hadoop_datanodes
+  roles:
+     - { role: heka, dispatch: ['provision'] }
+     - { role: heka, dispatch: ['deploy'] }
+  vars:
+     carbon_host: "{{ groups['graphite'][0] }}"
+     heka_log_templates: "{{ hadooplog_templates }}"
+
+
+- name: add the log forwarding for ovn_xdc_sync logs
+  hosts: ovn_xdc_sync
+  roles:
+     - { role: heka, dispatch: ['provision'] }
+     - { role: heka, dispatch: ['deploy'] }
+  vars:
+     carbon_host: "{{ groups['graphite'][0] }}"
+     heka_log_templates: "{{ xdc_sync_log_templates }}"

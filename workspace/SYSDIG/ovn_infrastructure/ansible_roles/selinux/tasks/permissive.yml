@@ -1,0 +1,3 @@
+# Set SELinux to permissive mode
+- name: SELinux to permissive mode (no change in policy)
+  selinux: policy={{ selinux_policy }} state=permissive

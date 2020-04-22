@@ -1,0 +1,52 @@
+// this jenkinsfile is used to trigger automate_diskclean in ovn_infrastructure/ansible_ovn repo
+// pass the hosts as parameters  as a single host or multiple. e.g: sl73ovnapdxxx:sl73ovnapdyyy:sl73ovnapdzzz
+
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+        string(name: 'HOST_NAME', defaultValue: '', description: 'Give the hostname  for one host sl73ovnapdxxx, for multiple sl73ovnapdxxx:sl73ovnapdyyy:sl73ovnapdzzz ')
+  }
+  stages {
+    stage("Dry run to grab parameters") {
+      steps {
+        script {
+             if ("${BUILD_NUMBER}" == "1") {
+             currentBuild.result = 'ABORTED'
+             error('DRY RUN COMPLETED. JOB PARAMETERIZED.')
+                    }
+                }
+            }
+        }
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+    stage('checkout SCM'){
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "master"
+      }
+    }
+    stage('clean disk space') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', limit: '${HOST_NAME}', inventory: "inventories/", playbook: 'ansible_ovn/automate_diskclean.yml'
+        }
+      }
+    }
+  }
+}

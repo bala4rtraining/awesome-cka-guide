@@ -1,0 +1,2 @@
+[test_server]
+192.168.10.4 ansible_user='root' ansible_ssh_pass='{{ current_password }}'

@@ -1,0 +1,36 @@
+
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all
+
+- name: deploy DSE TSR remediation script
+  hosts: all
+  tasks:
+       
+      # unarchive  ovn_postinstall without copying
+    - name: unarchive ovn_postinstall.tar
+      unarchive:
+        src: "{{ thirdparty_release_artifactory_url }}/{{ ovn_postinstall_tarball }}"
+        dest: /opt/app/
+        copy: no
+
+      # run ovn_tsr script
+    - name: change dir tsrtest and execute shell
+      command: /opt/app/tsrtest/ovn_tsr.sh
+      
+      # reboot server after the script execution
+    - name: Reboot triggered
+      command: /sbin/shutdown -r +1 "Ansible-triggered Reboot"
+      async: 0
+      poll: 0
+
+    - name: (reboot) Wait for server to restart
+      wait_for_connection:
+      delay: 75
+
+  vars:
+    thirdparty_release_artifactory_url: "https://artifactory.trusted.visa.com/ovn/repo"
+    ovn_postinstall_tarball: "OVN_postinstall.tar"
+
+
+
+    

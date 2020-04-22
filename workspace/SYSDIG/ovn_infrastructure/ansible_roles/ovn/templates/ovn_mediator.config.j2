@@ -1,0 +1,82 @@
+[
+  {kernel,[
+    {inet_dist_use_interface, {{erlang_dist_ip}}},
+    {inet_dist_listen_min, {{inet_dist_listen_min}}},
+    {inet_dist_listen_max, {{inet_dist_listen_max}}}
+  ]},
+
+  {mediator, [
+    {netiso_ip,   {{netiso_ip}}},
+    {netiso_port, {{netiso_port}}},
+    {netiso_ssl_options, {{netiso_ssl_options}}},
+    {netiso_socket_inactivity_timeout, {{netiso_socket_inactivity_timeout}}},
+    {netcontext_ip,   {{netcontext_ip}}},
+    {netcontext_port, {{netcontext_port}}},
+    {environment, {{environment_name}}},
+    {data_dir,    "{{data_dir}}"},
+    {local_instance, {{local_instance}}},
+    {remote_instances, {{remote_instances | default('[]')}}},
+    {vip_connector, {{vip_connector}}},
+    {mock_vip, {{mock_vip_ports}}},
+    {cluster_seed_nodes, {{mediator_nodes}}},
+    {cluster_membership_mode, {{cluster_membership_mode}}},
+    {cluster_retry_spec, {{cluster_retry_spec}}},
+    {pull_key, "{{pull_key}}"}
+  ]},
+
+  {pooler, [{metrics_module, ovn_metric},
+            {pools, [ {{riak_endpoints_pooler_config}},
+                      {{mediator_endpoints_pooler_config}}
+                      |
+                      [{{forward_handlers_pooler_config}}]
+                    ]
+            }]
+  },
+
+  {ovn_acceptor, [
+    {services, [
+      {from_switch, [{service_ip,   {{mediator_acceptor_ip_for_switch}}},
+                     {service_port, {{mediator_acceptor_port_for_switch}}},
+                     {ssl_options,  []},
+                     {handler,      mediator_switch_handler}]},
+      {netiso,      [{service_ip,   {{netiso_ip}}},
+                     {service_port, {{netiso_port}}},
+                     {protocol,     mediator_netiso_handler}]},
+      {from_instance_{{remote_instance | default('none')}}, [
+                                           {service_ip,   {{forward_handler_ip}}},
+                                           {service_port, {{forward_handler_port}}},
+                                           {protocol,     ovn_acceptor_protocol},
+                                           {handler,      mediator_envelope_handler}
+                                          ]}
+    ]}
+  ]},
+
+  {lager, [
+    {colored, true},
+    {crash_log, "{{log_dir}}/{{hostvars[inventory_hostname].ansible_hostname}}.crash.log"},
+    {crash_log_size, 0},
+    {crash_log_date, ""},
+    {error_logger_hwm, undefined},
+    {handlers, [
+      {lager_syslog_backend, ["mediator", local1, info]},
+      {lager_file_backend, [{file, "{{log_dir}}/{{hostvars[inventory_hostname].ansible_hostname}}.mediator.log"}, {level, debug}, {size, 104857600}, {count, 5}]}
+      ]}
+    ]},
+
+    {vmstats, [
+      {base_key, "mediator"}
+    ]},
+
+    {ovn_profile, [
+      {data_dir, "{{profile_dir}}"},
+      {use_profile_in_deps, {{use_profile_in_deps}}}
+    ]},
+
+  {ovn_advice, [
+    {advice_nodes, {{mediator_nodes}}},
+    {with_responses_timeout, {{advice_timeout_with_responses}}},
+    {without_responses_timeout, {{advice_timeout_without_responses}}},
+    {retry_interval, {{advice_retry_interval}}}
+  ]}
+
+].

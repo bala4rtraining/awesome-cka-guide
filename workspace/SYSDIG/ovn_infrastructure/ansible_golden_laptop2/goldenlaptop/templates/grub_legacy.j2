@@ -1,0 +1,19 @@
+default vesamenu.c32
+prompt 1
+timeout 100
+
+display boot.msg
+
+label kick
+  menu label Install OVN Rescue Server with ^Kickstart 
+  menu default
+  kernel vmlinuz
+  append initrd=initrd.img inst.ks=http://{{ogl_mgmt_int_ip}}/{{ogl_legacy_ks_dir}}/{{ogl_legacy_ks_file}}
+
+label rescue
+  menu label ^Rescue installed system
+  kernel vmlinuz
+  append initrd=initrd.img rescue
+label local
+  menu label Boot from ^local drive
+  localboot 0xffff

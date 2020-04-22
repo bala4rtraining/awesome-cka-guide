@@ -1,0 +1,13 @@
+---
+consul_domain: "consul.ic3.com"
+consul_datacenter: "ovndc"
+consul_node_name: "{{ ansible_hostname }}"
+consul_advertise_addr: "{{ ansible_default_ipv4.address }}"
+consul_bind_addr: "{{ ansible_default_ipv4.address }}"
+consul_client_addr: "{{ ansible_default_ipv4.address }}"
+consul_acl_enforce_version_8: false
+consul_log_level: "INFO"
+consul_bootstrap_expect: "{{ groups['consul_server'] | length }}"
+consul_url: "https://artifactory.trusted.visa.com/ovn/repo/consul/consul_1.0.1_linux_amd64.zip"
+
+

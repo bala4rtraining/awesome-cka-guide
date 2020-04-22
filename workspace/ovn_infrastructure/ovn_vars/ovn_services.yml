@@ -1,0 +1,24 @@
+---
+# List of OVN services
+ovn_services:
+  ovn_mp:
+    group_name: ovn_mp
+    local_admin_port: 8080
+    local_port: 1234
+    use:
+      - tls
+      - http2
+  ovn_mediator:
+    group_name: ovn_mediator_servers
+    local_admin_port: 8080
+    local_port: 2345
+    use:
+      - tls
+      - http2
+  ovn_advice:
+    group_name: ovn_advice_servers
+    local_admin_port: 8080
+    local_port: 3456
+    use:
+      - tls
+      - http2

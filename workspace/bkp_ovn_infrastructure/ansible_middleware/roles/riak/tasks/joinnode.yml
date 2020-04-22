@@ -1,0 +1,17 @@
+---
+- name: join riak cluster
+  riak: >
+    command=join
+    target_node="{{ nodename_prefix }}@{{ hostvars[groups['ovn_riak_servers'][0]].ansible_default_ipv4.address }}"
+    http_conn={{ riak_conf.listener_http_internal }} 
+
+- name: wait for nodes to settle
+  pause: seconds=10
+
+- name: plan cluster changes
+  riak: command=plan http_conn={{ riak_conf.listener_http_internal }}
+  notify:
+    - wait for ring
+    - commit cluster changes
+    - wait for handoffs
+

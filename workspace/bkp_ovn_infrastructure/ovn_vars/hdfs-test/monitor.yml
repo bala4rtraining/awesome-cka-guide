@@ -1,0 +1,8 @@
+---
+kibana_png: "kibanaOvnTEST.png"
+
+grafana_nginx_enable_ssl: "true"
+kibana_nginx_enable_ssl: "true"
+#This will be used for constructing the link/URL back to prometheus source pages from alertmanager pages via reverse proxy(ovnmanager).
+prometheus_external_host: "ovntest.visa.com"
+nginx_enable_ssl: "true"

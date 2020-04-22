@@ -1,0 +1,43 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+   
+     string(name: 'HOST_NAME', defaultValue: '', description: 'Give the hostname  or all or group name. e.g: ovn_switch_servers ')
+     string(name: 'TSR_REMEDIATION_PLAYBOOK_NAME', defaultValue: '', description: 'Enter name of the playbook ex. tsr_4977, tsr_8886 etc.')
+}
+  stages {
+    stage("Dry run to grab parameters") {
+      steps {
+        script {
+             if ("${BUILD_NUMBER}" == "1") {
+             currentBuild.result = 'ABORTED'
+             error('DRY RUN COMPLETED. JOB PARAMETERIZED.')
+                    }
+                }
+            }
+        }
+    stage('checkout SCM'){
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    stage('TSR Remediation') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', limit: '${HOST_NAME}', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", playbook: 'ansible_tsr_remediation/main.yml', extras: '-e tsr_id="${TSR_REMEDIATION_PLAYBOOK_NAME}"'
+        }
+      }
+    }
+  }
+}

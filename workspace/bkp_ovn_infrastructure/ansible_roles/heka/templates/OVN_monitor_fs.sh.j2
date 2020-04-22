@@ -1,0 +1,34 @@
+#!/bin/sh
+## {{ ansible_managed }}
+# Filename: OVN_monitor_fs.sh
+# Purpose:  Shell script to monitor or watch the disk space usage
+#           alert by sending message to the syslog (which is monitored by elastalert)
+# Dependencies:   logger
+#
+# -------------------------------------------------------------------------
+# Exclude list of unwanted monitoring, if several partions then use "|" to separate the partitions.
+# An example: EXCLUDE_LIST="/dev/hdd1|/dev/hdc5"
+EXCLUDE_LIST="/auto/ripper|map|devfs|mnt"
+#
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#
+function threshold_check() {
+while read output;
+do
+  usep=$(echo $output | awk '{ print $1}' | cut -d'%' -f1)
+  partition=$(echo $output | awk '{print $2}')
+
+  if [ $usep -ge 99 ]; then
+     logger -p syslog.crit -t {{ monitoring_tag }} -s "Alert: $partition is out of disk space $usep%"
+  elif [ $usep -ge 80 ] ; then
+     logger -p syslog.warning -t {{ monitoring_tag }} -s "Alert: $partition Almost out of disk space $usep%"
+  fi
+done
+}
+if [ "$EXCLUDE_LIST" != "" ]; then
+  df -PH | grep -vE "^Filesystem|tmpfs|cdrom|${EXCLUDE_LIST}" | awk '{print $5 " " $6}' | threshold_check
+else
+  df -PH | grep -vE "^Filesystem|tmpfs|cdrom" | awk '{print $5 " " $6}' | threshold_check
+fi
+
+

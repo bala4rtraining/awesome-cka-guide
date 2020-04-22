@@ -1,0 +1,107 @@
+---
+- name: create prometheus group
+  group: name={{ prometheus_group }}  state=present
+
+- name: create alertmanager user
+  user:
+    name: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    createhome: no
+    comment: "Alertmanager User"
+    state: present
+
+- name: Adding existing user {{ prometheus_user }} to group {{ cert_group }}
+  user: 
+    name: "{{ prometheus_user }}"
+    groups: "{{ cert_group }}"
+    append: "yes"
+
+- name: create alertmanager install directory {{ alertmanager_install_dir }}
+  file:
+    dest: "{{ alertmanager_install_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    state: directory
+
+- name: check if {{ alertmanager_archive_base }} is already provisioned
+  stat:
+    path: "{{ alertmanager_install_dir }}/{{ alertmanager_archive_base }}"
+  register: alertmanager_provision_status
+
+- name: deploy alertmanger package.
+  unarchive:
+    src: "{{ alertmanager_archive }}"
+    dest: "{{ alertmanager_install_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0755"
+    copy: no
+    validate_certs: no
+  when: alertmanager_provision_status.stat.exists == false
+
+- name: link to alertmanager base directory {{ alertmanager_base_dir }}
+  file:
+    src: "{{ alertmanager_archive_base }}"
+    dest: "{{ alertmanager_base_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+
+- name: create alertmanager directories {{ alertmanager_data_dir }}, {{ alertmanager_config_dir }}
+  file:
+    dest: "{{item}}"
+    state: directory
+    recurse: "yes"
+    mode: "0750"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  with_items:
+    - "{{ alertmanager_data_dir }}"
+    - "{{ alertmanager_config_dir }}"
+
+- name: install template files in {{ alertmanager_config_dir }} for email
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  with_items: "{{ alertmanager_template_files }}"
+
+- name: deploy alertmanager config
+  template:
+    src: "alertmanager.yml.j2"
+    dest: "{{ alertmanager_config_dir }}/alertmanager.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+  register: alertmanager_config_result
+
+- name: deploy alertmanager service
+  template:
+    src: "alertmanager.service.j2"
+    dest: "/etc/systemd/system/alertmanager.service"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+  register: alertmanager_service_result
+
+- name: reload system service configs.
+  shell: systemctl daemon-reload
+  when: >
+    alertmanager_service_result.changed == true
+
+- name: Restart alertmanager service.
+  service:
+    name: alertmanager
+    state: restarted
+  when: >
+    alertmanager_config_result.changed == true or
+    alertmanager_service_result.changed == true
+
+- name: Ensure alertmanager is started and enabled to start at boot.
+  service:
+    name: alertmanager
+    state: started
+    enabled: yes

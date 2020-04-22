@@ -1,0 +1,6 @@
+---
+
+- name: remove sudo package
+  yum:
+    name: sudo
+    state: absent

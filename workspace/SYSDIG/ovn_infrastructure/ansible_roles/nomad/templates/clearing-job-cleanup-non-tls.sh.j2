@@ -1,0 +1,21 @@
+#!/bin/bash
+
+###########################################################################################################
+# we use this below curl command for post and get calls to interact with Nomad via web interface
+# jq is a json parser. installing jq is part of nomad deploy. When we deploy fresh we still have the
+# previous installed jobs in the queue. To remove these jobs we call this curl command and post a message
+# to initiate the garbage collector trigger.
+# This interface is only available via web interface and hence the curl used.
+###########################################################################################################
+
+curl -L  http://{{ ansible_nodename }}:{{ nomad_server_http_port }}/v1/jobs | jq -r '.[].ID' | while read id ; do
+    if [[ "$id" != *"VSS"* ]] && [[ "$id" != *"configInitNomad"* ]] && [[ "$id" != *"configRunNomad"* ]] && [[ "$id" != *"delivery_job"* ]];
+    then
+      echo "Deleting clearing job ${id}"
+      curl -v -L --request DELETE http://{{ ansible_nodename }}:{{ nomad_server_http_port }}/v1/job/${id}
+    else
+      echo "Skipping non clearing job ${id}"
+    fi
+done
+ curl -v -L --request PUT http://{{ ansible_nodename }}:{{ nomad_server_http_port }}/v1/system/gc
+ {{nomad_server_install_dir}}/nomad status -address=http://{{ ansible_nodename }}:{{ nomad_server_http_port }}

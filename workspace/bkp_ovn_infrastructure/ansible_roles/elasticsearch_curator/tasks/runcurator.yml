@@ -1,0 +1,20 @@
+---
+- debug:
+    var: curator_cron
+
+- name: cleanup step to delete old curator cleanup config
+  file:
+    path: /etc/elasticsearch_curator/curator_cleanup_config_old_indicies.yml
+    state: absent
+
+- debug:
+    var: curator_log_patterns_old_indicies
+
+- name: copy curator delete config file to run on demand
+  template:
+    src: curator_cleanup_cron_config.j2
+    dest: /etc/elasticsearch_curator/curator_cleanup_config_old_indicies.yml
+    mode: "0644"
+
+- name: execute curator for newly created config file
+  command: "curator --config /etc/elasticsearch_curator/curator_config.yml /etc/elasticsearch_curator/curator_cleanup_config_old_indicies.yml"

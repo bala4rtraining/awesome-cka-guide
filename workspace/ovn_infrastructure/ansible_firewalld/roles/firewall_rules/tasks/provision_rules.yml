@@ -1,0 +1,52 @@
+---
+- name: check the visa-selinux-policy package
+  shell: "yum list installed visa-selinux-policy"
+  register: result_vsp
+  ignore_errors: "true"
+- debug: msg="{{ result_vsp.stdout }}"
+
+- name: uninstall visa-selinux-policy package if it's installed
+  yum:
+    name: visa-selinux-policy-7.3-1.1
+    state: absent
+  when: result_vsp.rc == 0
+
+- name: Provision firewalld if it is not already installed
+  yum:
+    name: firewalld
+    state: present
+  when: >
+    enable_firewall_rules_push
+    
+- name: Ensure firewalld is running
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  when: >
+    enable_firewall_rules_push
+
+- name: check the firewalld service status
+  shell: "systemctl status firewalld"
+  register: result_sts
+- debug: msg="{{ result_sts.stdout }}"
+
+- name: Deploy firewalld rich-rule on the target host
+  script: "{{ firewalld_rich_rule_script }}"
+  with_first_found:
+    - "{{ _workdir }}/{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}.sh"
+  loop_control:
+    loop_var: firewalld_rich_rule_script
+  register: firewall_push_result
+  when: >
+    enable_firewall_rules_push
+  ignore_errors: true
+
+- name: Reload firewalld rules
+  shell: |
+    firewall-cmd --reload
+  when: >
+    enable_firewall_rules_push and
+    (firewall_push_result.changed is defined and firewall_push_result.changed == true)
+    

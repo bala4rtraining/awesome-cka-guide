@@ -1,0 +1,18 @@
+---
+# global switch to enable/disable kafka
+disable_kafka_connection: "false"
+
+# should be generated based on the topic name and datacenter id (local_instance, remote_instance)
+tran_log_kafka_topic: "ovn_tran_log_id{{local_instance}}"
+station_state_kafka_topic: "ovn_station_state_id{{local_instance}}"
+cdb_state_kafka_topic: "ovn_cdb_state_id{{local_instance}}"
+cas_state_kafka_topic: "ovn_cas_state_id{{local_instance}}"
+xdc_state_kafka_topic: "ovn_xdc_state_id{{local_instance}}"
+remote_tran_log_kafka_topic: "ovn_tran_log_id{{remote_instance}}"
+remote_station_state_kafka_topic: "ovn_station_state_id{{remote_instance}}"
+remote_cdb_state_kafka_topic: "ovn_cdb_state_id{{remote_instance}}"
+remote_cas_state_kafka_topic: "ovn_cas_state_id{{remote_instance}}"
+remote_xdc_state_kafka_topic: "ovn_xdc_state_id{{remote_instance}}"
+kafka_topic_names: '["{{tran_log_kafka_topic}}", "{{station_state_kafka_topic}}", "{{cdb_state_kafka_topic}}", "{{cas_state_kafka_topic}}", "{{remote_tran_log_kafka_topic}}", "{{remote_station_state_kafka_topic}}", "{{remote_cdb_state_kafka_topic}}", "{{remote_cas_state_kafka_topic}}", "{{xdc_state_kafka_topic}}" ,"{{remote_xdc_state_kafka_topic}}"]'
+kafka_mirror_topics: "{{remote_tran_log_kafka_topic}},{{remote_station_state_kafka_topic}},{{remote_cdb_state_kafka_topic}},{{remote_cas_state_kafka_topic}}"
+kafka_mirror_topics_new_consumer: "{{remote_tran_log_kafka_topic}}|{{remote_station_state_kafka_topic}}|{{remote_cdb_state_kafka_topic}}|{{remote_cas_state_kafka_topic}}"

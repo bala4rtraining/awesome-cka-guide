@@ -1,0 +1,61 @@
+---
+- name: Add yum repository to fetch packages from artifactory
+  yum_repository:
+    description: base-artifactory
+    name: base-artifactory
+    baseurl: http://{{ ansible_host }}/ovn-centos-base-el7
+    enabled: yes
+  when: path_to_artifactory_not_present
+    
+- name: Edit yum proxy conf
+  blockinfile:
+    dest: /etc/yum.conf
+    block: |
+      proxy=http://{{ ansible_host }}:12345
+    insertafter: EOF
+  when: path_to_artifactory_not_present
+
+- name: Edit Gateway ports in ssh config
+  blockinfile:
+    dest: /etc/ssh/sshd_config
+    block: |
+      GatewayPorts yes
+  when: path_to_artifactory_not_present
+
+- name: Bring up interface eno49 at boot time
+  blockinfile:
+    dest: /etc/rc.d/rc.local
+    block: |
+      ifup eno49
+    insertafter: EOF
+
+- name: Restart ssh daemon
+  service:
+    name: sshd
+    state: restarted
+  when: path_to_artifactory_not_present
+  
+- name: Update all packages except for kernel
+  yum: name={{ item }} state=latest update_cache=yes
+  with_lines: cat "roles/update_packages/files/{{ patch_filename }}"
+  
+- name: Copy secure boot disable scripts
+  copy:
+    src: roles/update_packages/files/de_sb.tgz
+    dest: /
+  become: yes
+  become_method: sudo
+  when: disable_secure_boot
+
+- name: Disable secure boot
+  script:
+    roles/update_packages/files/de_sb.sh
+  when: disable_secure_boot
+
+# shutdown -r is different from reboot.  For any reboot, run reboot command
+- name: Reboot server
+  command: /sbin/reboot
+  async: 0
+  poll: 0
+  ignore_errors: true
+  when: disable_secure_boot

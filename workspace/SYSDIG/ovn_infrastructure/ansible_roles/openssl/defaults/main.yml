@@ -1,0 +1,13 @@
+---
+openssl_cert_country_name: US
+openssl_cert_state_name: California
+openssl_cert_locality_name: Foster City
+openssl_cert_organization_name: VISA
+openssl_cert_organizational_unit_name: Network Processing
+openssl_cert_days: 3650
+openssl_cert_name: localhost
+openssl_cert_hosts: ['127.0.0.1']
+openssl_cert_common_name: "{{ lookup('dig',openssl_cert_hosts[0] + '/PTR')[0:-1] }}"
+openssl_cert_output_path: /tmp
+openssl_rootCA_keyfile: "{{openssl_cert_output_path}}/rootCA.key"
+openssl_rootCA_cert: "{{openssl_cert_output_path}}/rootCA.crt"

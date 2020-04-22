@@ -1,0 +1,11 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: restart cas-ui-server
+  service: name=cas-ui-server enabled=yes state=restarted

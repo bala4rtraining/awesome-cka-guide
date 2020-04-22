@@ -1,0 +1,14 @@
+{
+    "allow_user_certificates": true,
+    "allow_user_key_ids": false,
+    "allowed_users": "cd",
+    "allowed_critical_options": "none",
+    "allowed_extensions": "permit-pty",
+    "default_extensions": [{
+        "permit-pty": ""
+    }],
+    "key_type": "ca",
+    "default_user": "cd",
+    "ttl": "262800h",
+    "max_ttl": "262800h"
+}

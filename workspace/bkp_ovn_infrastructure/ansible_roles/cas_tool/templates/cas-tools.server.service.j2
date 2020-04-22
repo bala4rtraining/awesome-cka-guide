@@ -1,0 +1,17 @@
+[Unit]
+Description=Cas-tools server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+Restart=always
+RestartSec=3
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+ExecStart={{cas_tool_server_install_dir}}/cas-tools-server -config={{cas_tool_server_install_dir}}/cas-tools.yaml
+
+[Install]
+WantedBy=multi-user.target

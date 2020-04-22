@@ -1,0 +1,4 @@
+- name: cassandra task dispatcher
+  include: "{{ item }}.yml" # assumes no nested includes from loops
+  with_items: "{{ dispatch|default([]) }}"
+  when: "dispatch != []"

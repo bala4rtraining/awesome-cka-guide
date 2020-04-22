@@ -1,0 +1,28 @@
+######
+# This script generates firewalld rules in csv file.
+# 
+# 1. The first pass is performed by `generate_src_port_by_dest_ip.yml`
+# 2. The second pass is performed by `generate_uniq_src_port_by_dest_ip.yml`
+# 3. The third pass produces the `/tmp/firewall_rules.csv` file.
+######
+
+- name: Reconstitute `_firewall_rules_var`
+  include_vars:
+    file: "{{ _firewall_rules_vars_file }}"
+
+- name: produce csv file for excel
+  copy:
+    content: |
+      source, destination, port
+      {% for dest in _firewall_rules_var -%}
+      {% if dest.rules is iterable %}
+      {% for rule in dest.rules | sort(attribute='port') | sort(attribute='src') %}
+      {% if rule.state == 'enabled' -%}
+        {{ rule.src }},{{ dest.ip }},{{ rule.port }}/{{ rule.protocol }}
+      {% endif %}
+      {% endfor %}
+      {% endif %}
+      {% endfor %}
+    dest: /tmp/firewall_rules.csv
+  delegate_to: 127.0.0.1
+  

@@ -1,0 +1,15 @@
+#######
+#!!! Please DO NOT EDIT.  This configuration is maintained by Ansible !!!
+#######
+
+/var/log/ovn_nginx_auth/*.log {
+        daily
+        dateext
+        dateyesterday
+        missingok
+        rotate 14
+        compress
+        delaycompress
+        notifempty
+        create 0755 {{nginx_auth_username}} {{nginx_auth_group}} 
+}

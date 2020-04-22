@@ -1,0 +1,31 @@
+---
+# Remove open jdk and install Jre ---
+#- name: uninstall java other than jre
+#  yum:
+#    name: java-1.8.0-openjdk
+#    state: absent
+
+- name: <1-3 COMMON_prereq> uninstall jdk if found
+  yum:
+    name: jdk
+    state: present
+- name:
+  yum:
+    name: jre
+    state: present
+
+- name: <2-3 COMMON_prereq> install sudo if it's not installed
+  yum:
+    name: sudo
+    state: present
+
+- name: <3-3 COMMON_prereq> ensure unzip is installed
+  yum:
+    name: unzip
+    state: latest
+
+- name:
+  yum:
+    name: jsp
+    state: present
+

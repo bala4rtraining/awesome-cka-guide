@@ -1,0 +1,7 @@
+---
+feed_dir: "/var/vsftpd/prodcdb/ovn_cdb"
+subscription_dir: "/var/vsftpd/prodcdb/ovn_cdb"
+# VIP CDB EF sync parms
+# The space after the first single quote is required for domain
+vip_ef_sync_domain: ' ["Indonesia"]'
+vip_ef_sync_sequence_prefix: "SE"

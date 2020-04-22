@@ -1,0 +1,7 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: Enable admin api for Prometheus Snapshot
+  hosts: '{{ host_name }}'
+  roles:
+    - { role: prometheus, dispatch: ['enable_admin_api'] }

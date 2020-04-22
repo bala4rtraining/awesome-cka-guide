@@ -1,0 +1,2 @@
+@Library('ovn-shared-library') _
+cdTemplate_InvokeAnsiblePlaybook('ovn_infrastructure', '$RELEASE_BRANCH', 'ansible_ovn/update_packages.yml','-e @config/$ENV.vars.secret.yml --vault-password-file=~/.vault-$ENV -e validate_packages = "true" -e patch_filename = "patch_ind_prod_5798"')

@@ -1,0 +1,298 @@
+#
+# This file defines the OVN
+# 2spine 3leaf+1leaf topology for 
+# internal eBGP
+# routing configuration
+#
+# The site-specific vars, e.g. IP, ASN #,
+# are defined by the top-level bgp-vars.yml
+# file.
+#
+# Definitions of subnets
+#
+
+
+networks:
+    #
+    # subnets
+    #
+    ovn-leaf1-subnet:
+        network: "{{ ip_subnet }}.32/27"
+        source: ["ovn-leaf1"]
+    ovn-leaf2-subnet:	
+        network: "{{ ip_subnet }}.64/27"
+        source: ["ovn-leaf2"]
+    ovn-leaf3-subnet:
+        network: "{{ ip_subnet }}.96/27"
+        source: ["ovn-leaf3"]
+    ovn-leaf4-subnet:
+        network: "{{ ip_subnet }}.128/27"
+        source: ["ovn-leaf4"]
+
+
+    ovn-border-leaf1-subnet-non-cumulus:
+        network: "{{ ip_subnet }}.200/30"
+        source: ["ovn-border-leaf1"]
+
+
+    ovn-border-leaf2-subnet-non-cumulus:
+        network: "{{ ip_subnet }}.204/30"
+        source: ["ovn-border-leaf2"]
+
+
+    ovn-border-leaf1-subnet-ea:
+        network: "{{ ip_subnet }}.0/29"
+        source: ["ovn-border-leaf1", "ovn-border-leaf2"]
+
+
+    ovn-border-leaf2-subnet-ea:
+        network: "{{ ip_subnet }}.8/29"
+        source: ["ovn-border-leaf1", "ovn-border-leaf2"]
+
+
+
+    ovn-border-leaf1-subnet-ha:
+        network: "{{ ip_subnet }}.16/29"
+        source: ["ovn-border-leaf1", "ovn-border-leaf2"]
+
+
+    ovn-border-leaf2-subnet-orange:
+        network: "{{ ip_subnet }}.24/29"
+        source: ["ovn-border-leaf1", "ovn-border-leaf2"]
+
+
+
+
+    #
+    # Loopbacks
+    #
+    ovn-leaf1-loopback:
+        network: "{{ ip_subnet }}.249/32"
+        source: ["ovn-leaf1"]
+    ovn-leaf2-loopback:
+        network: "{{ ip_subnet }}.248/32"
+        source: ["ovn-leaf2"]
+    ovn-leaf3-loopback:
+        network: "{{ ip_subnet }}.247/32"
+        source: ["ovn-leaf3"]
+    ovn-leaf4-loopback:
+        network: "{{ ip_subnet }}.246/32"
+        source: ["ovn-leaf4"]
+    ovn-spine1-loopback:
+        network: "{{ ip_subnet }}.255/32"
+        source: ["ovn-spine1"]
+    ovn-spine2-loopback:
+        network: "{{ ip_subnet }}.254/32"
+        source: ["ovn-spine2"]
+    ovn-border-leaf1-loopback:
+        network: "{{ ip_subnet }}.253/32"
+        source: ["ovn-border-leaf1"]
+    ovn-border-leaf2-loopback:
+        network: "{{ ip_subnet }}.252/32"
+        source: ["ovn-border-leaf2"]
+
+
+#
+# Definitions of interfaces
+#
+
+interfaces:
+
+     ovn-leaf1:
+
+         hostname: "{{ ovn_leaf1_hostname }}"
+         loopback: "{{ ip_subnet }}.249"
+         asn: "{{ asn_ovn_leaf1 }}"
+         networks:
+             bridge:
+                 ports: ["swp1","swp2","swp3","swp4","swp5","swp6","swp7","swp8","swp9","swp10"]
+                 vlan_ids: ["241"]
+                 vlans:
+                    "241":
+                      ip: "{{ ip_subnet }}.33/27"
+                      ports: ["swp1","swp2","swp3","swp4","swp5","swp6","swp7","swp8","swp9","swp10"]
+
+         neighbors:
+             # Dell S4048
+             swp49:
+             swp50: 
+             
+     ovn-leaf2:
+       
+         hostname: "{{ ovn_leaf2_hostname }}"
+         loopback: "{{ ip_subnet }}.248"
+         asn: "{{ asn_ovn_leaf2 }}"
+         networks:
+             bridge:
+                 ports: ["swp1","swp2","swp3","swp4","swp5","swp6","swp7","swp8","swp9","swp10"]
+                 vlan_ids: ["251"]
+                 vlans:
+                    "251":
+                      ip: "{{ ip_subnet }}.65/27"
+                      ports: ["swp1","swp2","swp3","swp4","swp5","swp6","swp7","swp8","swp9","swp10"]
+
+         neighbors:
+             # Dell S4048	
+             swp49:
+             swp50: 
+
+     ovn-leaf3:
+
+         hostname: "{{ ovn_leaf3_hostname }}"
+         loopback: "{{ ip_subnet }}.247"
+         asn: "{{ asn_ovn_leaf3 }}"
+         networks:
+             bridge:
+                 ports: ["swp1","swp2","swp3","swp4","swp5","swp6","swp7","swp8","swp9", "swp10"]
+                 vlan_ids: ["261"]
+                 vlans:
+                    "261":
+                      ip: "{{ ip_subnet }}.97/27"
+                      ports: ["swp1","swp2","swp3","swp4","swp5","swp6","swp7","swp8","swp9","swp10"]
+
+         neighbors:
+             # Dell S4048
+             swp49:
+             swp50: 
+
+
+     ovn-leaf4:
+
+         hostname: "{{ ovn_leaf4_hostname }}"
+         loopback: "{{ ip_subnet }}.246"
+         asn: "{{ asn_ovn_leaf4 }}"
+         networks:
+             bridge:
+                 ports: ["swp1","swp2","swp3","swp4","swp5","swp6","swp7","swp8","swp9", "swp10"]
+                 vlan_ids: ["271"]
+                 vlans:
+                    "271":
+                      ip: "{{ ip_subnet }}.129/27"
+                      ports: ["swp1","swp2","swp3","swp4","swp5","swp6","swp7","swp8","swp9","swp10"]
+
+         neighbors:
+             # Dell S4048
+             swp49:
+             swp50: 
+
+
+     ovn-spine1:
+
+        hostname: "{{ ovn_spine1_hostname }}"       
+        loopback: "{{ ip_subnet }}.255"
+        asn: "{{ asn_ovn_spines }}"
+
+        neighbors:
+           # Dell S4048
+           # swp49:
+           # swp50:
+           # swp51:
+           # swp52:
+           # swp53:
+          # Dell S6010
+            swp1:
+            swp2:
+            swp3:
+            swp4:
+            swp5:
+            swp6:
+
+
+
+     ovn-spine2:
+
+        hostname: "{{ ovn_spine2_hostname }}"       
+        loopback: "{{ ip_subnet }}.254"
+        asn: "{{ asn_ovn_spines }}"
+
+        neighbors:
+           # Dell S4048
+           # swp49:
+           # swp50:
+           # swp51:
+           # swp52:
+           # swp53:
+          # Dell S6010
+            swp1:
+            swp2:
+            swp3:
+            swp4:
+            swp5:
+            swp6:
+
+     ovn-border-leaf1:
+
+         hostname: "{{ ovn_border_leaf1_hostname }}"       
+         loopback: "{{ ip_subnet }}.253"
+         asn: "{{ asn_ovn_borders }}"
+
+         bonds:
+             peerlink:
+                 name: "peerlink"
+                 bond_slaves: ["swp51", "swp52"]
+
+         networks:
+             bridge:
+                 ports: ["swp2","swp3","swp4","swp5","peerlink"]
+                 vlan_ids: ["230", "231","232","233"]
+                 vlans:
+                     "230":
+                         ip: "{{ ip_subnet }}.1/29"
+                         ports: ["swp2"]
+                     "231":
+                         ip: "{{ ip_subnet }}.9/29"
+                         ports: ["swp3"]
+                     "232":
+                         ip: "{{ ip_subnet }}.17/29"
+                         ports: ["swp4"]
+                     "233":
+                         ip: "{{ ip_subnet }}.25/29"
+                         ports: ["swp5"]
+
+
+
+         neighbors:
+             # Dell S4048
+             swp49:
+             swp50: 
+
+         neighbors_non_cumulus:
+             swp1: "{{ ip_subnet }}.202"
+
+     ovn-border-leaf2:
+
+         hostname: "{{ ovn_border_leaf2_hostname }}"       
+         loopback: "{{ ip_subnet }}.252"
+         asn: "{{ asn_ovn_borders }}"
+
+         bonds:
+            peerlink:
+                 name: "peerlink"
+                 bond_slaves: ["swp51", "swp52"]
+
+         networks:
+             bridge:
+                 ports: ["swp2","swp3","swp4","swp5","peerlink"]
+                 vlan_ids: ["230", "231","232","233"]
+                 vlans:
+                     "230":
+                         ip: "{{ ip_subnet }}.1/29"
+                         ports: ["swp2"]
+                     "231":
+                         ip: "{{ ip_subnet }}.9/29"
+                         ports: ["swp3"]
+                     "232":
+                         ip: "{{ ip_subnet }}.17/29"
+                         ports: ["swp4"]
+                     "233":
+                         ip: "{{ ip_subnet }}.25/29"
+                         ports: ["swp5"]
+
+
+         neighbors:
+             # Dell S4048
+             swp49:
+             swp50: 
+
+         neighbors_non_cumulus:
+             swp1: "{{ ip_subnet }}.206"

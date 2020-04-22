@@ -1,0 +1,21 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+# This playbook changes the permissions of service files to 644 in order to avoid flooding of elasticsearch logs (with world inaccessible error and executable bit set error).
+- name: fix permissions for sytemd service files
+  hosts: all:!cumulus_switch:!ovn_manager
+  gather_facts: no
+  tasks:
+    - name: check that files exist
+      stat:
+        path: "{{item}}"
+      with_items:
+        - /etc/systemd/system/permission.service
+        - /usr/lib/systemd/system/auditd.service
+        - /usr/lib/systemd/system/ebtables.service
+      register: files
+
+    - name: change file permission
+      file: path={{ item.stat.path }} mode="0644"
+      with_items: "{{ files.results }}"
+      when: item.stat.exists == True

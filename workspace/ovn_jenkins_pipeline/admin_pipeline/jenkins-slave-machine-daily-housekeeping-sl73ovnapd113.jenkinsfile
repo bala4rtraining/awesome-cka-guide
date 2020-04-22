@@ -1,0 +1,3 @@
+@Library('ovn-housekeeping-shared-library') _
+
+adminDailyJenkinsSlaveMachineClean("sl73ovnapd113")

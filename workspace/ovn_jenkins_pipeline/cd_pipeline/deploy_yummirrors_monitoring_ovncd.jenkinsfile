@@ -1,0 +1,90 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+        booleanParam(name: 'deploy_node_exporter', defaultValue: false, description: 'if you want to deploy, select the checkbox')
+        booleanParam(name: 'deploy_nginx_ssl', defaultValue: false, description: 'if you want to deploy, select the checkbox')
+        booleanParam(name: 'deploy_fluentd_forward', defaultValue: false, description: 'if you want to deploy service, select the checkbox.')
+		choice(name:'enable_nginx_ssl', choices: 'true\nfalse', description: 'Set true for fluentd forwarder else false')
+		booleanParam(name: 'deploy_prometheus_alerts', defaultValue: false, description: 'if you want to deploy service, select the checkbox.')
+		booleanParam(name: 'deploy_prometheus_config', defaultValue: false, description: 'if you want to deploy service, select the checkbox.')
+		booleanParam(name: 'rollback_fluentd_conf', defaultValue: false, description: 'if you want to deploy service, select the checkbox.')
+        string(name: 'branch', defaultValue: '', description: 'Enter the release branch details')
+        string(name: 'extra_vars', defaultValue: '', description: 'any extra vars')
+    }
+
+    stages {
+
+        stage('Checkout ovn_infrastructure repo') {
+            steps{
+                git credentialsId: '', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${params.branch}"
+            }
+        }
+
+        stage('Deploy node exporter') {
+            when { expression { return params.deploy_node_exporter } }
+            steps {
+                ansiColor('xterm') {
+                echo "Deploy node exporters"
+                ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file ~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: 'ansible_prometheus/deploy_node_exporter_yummirrors.yml'
+                }
+            }
+        }
+
+        stage('Deploy Nginx SSL') {
+            when { expression { return params.deploy_nginx_ssl } }
+            steps {
+                ansiColor('xterm') {
+                echo "Deploy Nginx SSL"
+                ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file ~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: 'ansible_prometheus/deploy_nginx_with_ssl_for_exporter_yummirrors.yml'
+                }
+            }
+        }
+		
+        stage('Deploy Fluentd forwarder') {
+            when { expression { return params.deploy_fluentd_forward } }
+            steps {
+                ansiColor('xterm') {
+                echo "Deploy Fluentd forwarder"
+                ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", playbook: 'ansible_td_agent/deploy_input_config_yummirrors.yml',  extras: "-e enable_nginx_ssl=${params.enable_nginx_ssl}  -e @config/${env.ENV}.vars.secret.yml --vault-password-file ~/.vault-${env.ENV} ${params.extra_vars} --become"
+                }
+            }
+        }
+
+        stage('Deploy Prometheus alerts') {
+            when { expression { return params.deploy_prometheus_alerts } }
+            steps {
+                ansiColor('xterm') {
+                echo "Deploy Prometheus alerts"
+                ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: 'ansible_prometheus/deploy_prometheus_alerts.yml'
+                }
+            }
+        }		
+
+        stage('Deploy Prometheus configuration') {
+            when { expression { return params.deploy_prometheus_config } }
+            steps {
+                ansiColor('xterm') {
+                echo "Deploy Prometheus configuration"
+                ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: 'ansible_prometheus/deploy_prometheus_config_with_ssl.yml'
+                }
+            }
+        }
+		
+        stage('Rollback fluentd configuration') {
+            when { expression { return params.rollback_fluentd_conf } }
+            steps {
+                ansiColor('xterm') {
+                echo "Rollback fluentd configuration"
+                ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: 'ansible_td_agent/remove_td_agent_yummirrors_conf.yml'
+                }
+            }
+        }		
+    }
+}

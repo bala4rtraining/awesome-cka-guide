@@ -1,0 +1,142 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  triggers {
+    cron('H 0 * * *')
+  }
+  environment {
+        status = 100
+        any_changes=false
+    }
+
+  stages {
+
+    stage('Fetch previous commits lists'){
+      steps{
+        copyArtifacts filter: '*.txt', fingerprintArtifacts: true, projectName: 'fetch_recent_commits_disabled_playbooks', selector: lastSuccessful(), target: 'commits_list'
+      }
+    }
+
+    stage('Checking for changes in master') {
+      steps{
+        script{
+          status=sh(returnStatus: true, script: "./jenkins-sh/check_commits.sh master")
+          if (status == 12){
+            any_changes=true
+          }
+          else if (status==0){
+            echo "No changes in disabled playbooks in master branch"
+          }
+        }
+      }
+    }
+    stage('Checking for changes in int-epic1') {
+      steps{
+        script{
+          status=sh(returnStatus:true, script: "jenkins-sh/check_commits.sh epic-1")
+          if (status == 12){
+            any_changes=true
+          }
+          else if (status==0){
+            echo "No Changes in int-epic1"
+          }
+        }
+      }
+    }
+
+    stage('Checking for changes in int-epic4') {
+      steps{
+        script{
+          status=sh(returnStatus:true, script: "jenkins-sh/check_commits.sh epic-4")
+          if (status == 12){
+            any_changes=true
+          }
+          else if (status==0){
+            echo "No Changes in int-epic4"
+          }
+        }
+      }
+    }
+
+    stage('Checking for changes in int-epic5') {
+      steps{
+        script{
+          status=sh(returnStatus:true, script: "jenkins-sh/check_commits.sh epic-5")
+          if (status == 12){
+            any_changes=true
+          }
+          else if (status==0){
+            echo "No Changes in int-epic5"
+          }
+        }
+      }
+    }
+
+    stage('Checking for changes in int-epic6') {
+      steps{
+        script{
+          status=sh(returnStatus:true, script: "jenkins-sh/check_commits.sh epic-6")
+          if (status == 12){
+            any_changes=true
+          }
+          else if (status==0){
+            echo "No Changes in int-epic6"
+          }
+        }
+      }
+    }
+
+    stage('Checking for changes in int-epic7') {
+      steps{
+        script{
+          status=sh(returnStatus:true, script: "jenkins-sh/check_commits.sh epic-7")
+          if (status == 12){
+            any_changes=true
+          }
+          else if (status==0){
+            echo "No Changes in int-epic7"
+          }
+        }
+      }
+    }
+
+    stage('Checking for changes in int-epic8') {
+      steps{
+        script{
+          status=sh(returnStatus:true, script: "jenkins-sh/check_commits.sh epic-8")
+          if (status == 12){
+            any_changes=true
+          }
+          else if (status==0){
+            echo "No Changes in int-epic8"
+          }
+        }
+      }
+    }
+
+    stage('archiving artifacts'){
+      steps{
+        archiveArtifacts 'changed_playbooks_*.txt'
+      }
+    }
+
+    stage('Fail if any changes above'){
+      steps{
+        script{
+          if (any_changes==true){
+            error("!!!!!!!!!!!!!!     Some changes have occured in disabled playbooks !!!!!!!!!!!!!!!")
+          }
+        }
+      }
+    }
+
+
+  }
+}

@@ -1,0 +1,14 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+
+# simple playbook for running the elasticsearch role to do a rolling upgrade 
+# serial:1 to make sure that the playbook is executed on the hosts serially one by one 
+# to facilitate rolling upgrade of elastic search .
+- name: run the elasticsearch playbook to upgrade elasticsearch
+  hosts: elasticsearch
+  serial: 1
+  vars: 
+   rolling_upgrade: true
+  gather_facts: yes
+  roles:
+     - {role: elasticsearch, dispatch: ['deployelastic']}

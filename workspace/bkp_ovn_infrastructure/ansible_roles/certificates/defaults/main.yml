@@ -1,0 +1,14 @@
+cert_data: "{{ nginx_cert | default('<sample_cert>') }}"
+cert_name: "{{ inventory_hostname }}.pem"
+cert_path: "/etc/pki/tls/certs"
+
+key_data: "{{ nginx_key | default('<sample_key>') }}"
+key_name: "{{ inventory_hostname }}.pem"
+key_path: "/etc/pki/tls/private"
+
+ca_cert_data: "{{ nginx_ca_cert | default('<sample_ca_cert>') }}"
+ca_cert_name: "bundle.pem"
+ca_cert_path: "/etc/pki/tls/certs"
+
+cert_user: "was"
+cert_group: "was"

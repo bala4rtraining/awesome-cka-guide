@@ -1,0 +1,20 @@
+#####
+# PLEASE DO NOT EDIT!!!!  Maintained by Ansible!!!!!
+#####
+[Unit]
+Description=The Alertmanager handles alerts sent by client applications such as the Prometheus server
+Documentation=https://prometheus.io/docs/alerting/alertmanager/
+
+[Service]
+Restart=on-failure
+User={{ alertmanager_user }}
+WorkingDirectory={{ alertmanager_base_dir }}
+ExecStart={{ alertmanager_base_dir }}/alertmanager \
+  -config.file {{ alertmanager_base_dir }}/alertmanager.yml \
+  -storage.path  {{ alertmanager_install_dir }}/data \
+  -data.retention {{ alertmanager_retention }} \
+  -web.listen-address 127.0.0.1:{{ alertmanager_port }}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

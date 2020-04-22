@@ -1,0 +1,17 @@
+{% set servars = servers[ansible_hostname] %}
+
+$ORIGIN .
+$TTL {{default_ttl}}
+{{servars.dns_zone_reverse}}     IN SOA  {{servars.dns_zone_forward_ns}}.{{servars.dns_zone_forward}}. admin.{{servars.dns_zone_forward}}. (
+                                {{default_serial}}         ; serial
+                                {{default_refresh}}         ; refresh (1 minute)
+                                {{default_retry}}         ; retry (1 minute)
+                                {{default_expire}}     ; expire (1 week)
+                                {{default_min}}       ; minimum (1 hour)
+
+                                )
+                        NS      {{servars.dns_zone_forward_ns}}.{{servars.dns_zone_forward}}.
+$ORIGIN {{servars.dns_zone_reverse}}.
+
+{{servars.dns_zone_forward_ns}}   A   {{servars.subnet_int_ip}}
+

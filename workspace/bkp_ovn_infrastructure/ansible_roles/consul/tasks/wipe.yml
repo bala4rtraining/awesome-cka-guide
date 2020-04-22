@@ -1,0 +1,33 @@
+---
+# Remove tasks file for consul
+
+# CentOS specific tasks for consul
+- name: Include CentOS specific variables
+  include_vars: "CentOS.yml"
+
+- include: CentOS/CentOS_stop.yml
+    
+- include: CentOS/CentOS_wipe.yml
+
+- name: Remove Consul to installation directory
+  file: >
+      path={{ consul_install_dir }}/consul
+      state=absent
+
+- name: Remove Consul configuration directory
+  file: >
+    path={{ consul_config_dir }}
+    state=absent
+
+- name: Remove Consul data directory
+  file: >
+    path={{ consul_data_dir }}
+    state=absent
+    
+- name: Remove Consul user
+  user: >
+    name={{ consul_user }}
+    state=absent
+
+- name: Remove Consul group
+  group: name={{ consul_group }} state=absent

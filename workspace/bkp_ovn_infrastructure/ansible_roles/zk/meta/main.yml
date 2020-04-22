@@ -1,0 +1,4 @@
+---
+dependencies:
+- {role: prometheus, dispatch: ['jmx_exporter'], when: monitor_zookeeper_using_prometheus == "true"}
+- {role: kerberos, dispatch: [], when: zookeeper_enable_client_authentication == "true" or zookeeper_enable_server_authentication == "true"}

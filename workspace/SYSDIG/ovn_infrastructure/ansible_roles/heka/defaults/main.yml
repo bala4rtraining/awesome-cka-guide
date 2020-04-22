@@ -1,0 +1,92 @@
+---
+# defaults file for heka
+elasticsearch_port: 9200
+elasticsearch_host: "127.0.0.1"
+syslogd_port: 10514
+syslogd_host: "127.0.0.1"
+heka_statsd_port: "{{ '8125' if rhel_centos_6 else heka_udp_repeater_statsd_port|default('8125') }}"
+statsd_host: "127.0.0.1"
+carbon_port: 2003
+carbon_host: "127.0.0.1"
+heka_agent_user: "heka"
+heka_agent_group: "heka"
+
+#
+# The following tag is used here to set the Heka DEFAULT buffer settings
+#
+
+heka_cache_dir: "/var/cache/hekad"
+heka_total_buffer_size: 0
+heka_action_on_max_buffer: '"shutdown"'
+heka_buffer_file_size: 0
+heka_cursor_update_count: 0
+
+
+#
+# The following tag is used to pull both rpm and deb files from ovngit
+#
+download_path_url: "{{ artifactory_url }}/ovn-extra-el7"
+
+validate_certs: yes
+
+service_templates:
+ - { src: hekad.service.RHEL6.j2, dest: /etc/rc.d/init.d/hekad, mode: '0755' }
+
+heka_templates: []
+
+metrics_templates: []
+
+monitoring_tag: ovnmonitor
+
+### this is the placeholder for grouping the log templates depending on what type of system we are deploying to.
+### (we probably could improve this wta with an inventory based way of identifying the services that need logs)
+heka_log_templates: []
+
+ovnlog_templates:
+ - { src: hekad.rsyslog.conf.j2, dest: /etc/rsyslog.d/hekad.rsyslog.conf, mode: '0644' }
+ - { src: ovnlogs.toml.j2, dest: /etc/heka.d/ovnlogs.toml, mode: '0644' }
+ - { src: ovn_log.lua, dest: /usr/share/heka/lua_decoders/ovn_log.lua, mode: '0644' }
+ - { src: CRC32.lua, dest: /usr/share/heka/lua_modules/CRC32.lua, mode: '0644' }
+
+kafkalog_templates:
+ - { src: kafkalogs.toml.j2, dest: /etc/heka.d/kafkalogs.toml, mode: '0644', required_dir: /var/log/kafka }
+
+collectionlog_templates:
+ - { src: collectionlogs.toml.j2, dest: /etc/heka.d/collectionlogs.toml, mode: '0644', required_dir: /var/log/ovn_clearing_jobs }
+
+hadooplog_templates:
+  - {src: hadooplogs.toml.j2, dest: /etc/heka.d/hadooplogs.toml, mode: '0644', required_dir: /var/log/hadoop-hdfs }
+
+xdc_sync_log_templates:
+  - {src: ovn_xdc_sync.toml.j2, dest: /etc/heka.d/ovn_xdc_sync.toml, mode: '0644', required_dir: /var/log/ovn_xdc_sync }
+
+elasticsearchlog_templates:
+ - { src: elasticsearchlogs.toml.j2, dest: /etc/heka.d/elasticsearchlogs.toml, mode: '0644', required_dir: /var/log/elasticsearch }
+
+cumuluslog_templates:
+  - {src: cumuluslog.toml.j2, dest: /etc/heka/conf.d/cumuluslog.toml, mode: '0644', required_dir: /var/log/quagga }
+
+heka_rpms: heka-0_10_0-linux-amd64
+heka_deb: heka_0.10.0_amd64
+yum_pkgs: []
+deploy: true
+provision: true
+
+heka_config_dirs:
+  - path: "{{ heka_cache_dir }}"
+    owner: heka
+    group: heka
+    mode: "0755"
+    state: directory
+
+  - path: /var/log/hekad
+    owner: heka
+    group: heka
+    mode: "0755"
+    state: directory
+
+  - path: "{{ heka_conf_dir }}"
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory

@@ -1,0 +1,19 @@
+---
+
+- name: Ensures consul system config directory exists
+  file:
+    path: "{{dir.system}}"
+    owner: "{{consul.user}}"
+    group: "{{consul.group}}"
+    state: directory
+
+- name: Create Consul systemd configuration
+  template:
+    src: consul.service.j2
+    dest: "{{ dir.system }}/consul.service"
+    owner: root
+    group: root
+    mode: 0600
+  notify: 
+    - restart consul
+

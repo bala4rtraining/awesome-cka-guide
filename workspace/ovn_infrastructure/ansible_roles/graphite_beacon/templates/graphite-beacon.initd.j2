@@ -1,0 +1,114 @@
+## {{ ansible_managed }}
+#!/bin/bash
+# graphite-beacon   startup script for graphite-beacon
+# pidfile:           /var/run/graphite-beacon.pid
+# chkconfig: 2345 99 01
+
+### BEGIN INIT INFO
+# Provides: graphite-beacon
+# Required-Start: cgconfig
+# Required-Stop:
+# Should-Start:
+# Should-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description: graphite-beacon control
+# Description:
+### END INIT INFO
+
+if [ $(id -u) -ne 0 ]; then
+    echo "This script can be run by root only. Exiting."
+    exit 4
+fi
+
+NAME=graphite-beacon
+PIDFILE=/var/run/$NAME.pid
+LOCKFILE=/var/lock/subsys/$NAME
+gr_beacon_DIR=/var/lib/graphite-beacon
+gr_beacon_USER=grbeacon
+gr_beacon_BIN=/usr/bin/$NAME
+CONFIG_FILE=$gr_beacon_DIR/config.json
+
+. /etc/rc.d/init.d/functions
+
+[ -e /etc/sysconfig/$NAME ] && . /etc/sysconfig/$NAME
+
+start() {
+    [ -x $gr_beacon_BIN ] || exit 5
+    [ -f $CONFIG_FILE ] || exit 6
+    echo -n $"Starting $NAME: "
+    cd $gr_beacon_DIR
+    daemon --user="$gr_beacon_USER" --pidfile="$PIDFILE" "$gr_beacon_BIN --config=$CONFIG_FILE 2>&1 | /bin/logger -p daemon.info -t $NAME > /dev/null 2>&1 &"
+    retval=$?
+    pid=$(ps -ef | grep python | grep $NAME | awk '{print $2}')
+    if [ -n "$pid" ]; then
+        echo $pid > "$PIDFILE"
+    fi
+    echo
+    [ $retval -eq 0 ] && touch "$LOCKFILE"
+    return $retval
+}
+
+stop() {
+    echo -n $"Stopping $NAME: "
+    killproc -p "$PIDFILE" -d 10 "$NAME"
+    retval=$?
+    echo
+    [ $retval -eq 0 ] && rm -f "$LOCKFILE" "$PIDFILE"
+    return $retval
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+force_reload() {
+    restart
+}
+
+rh_status() {
+    # run checks to determine if the service is running or use generic status
+    status $NAME
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+
+case "$1" in
+    start)
+        rh_status_q && exit 0
+        $1
+        ;;
+    stop)
+        rh_status_q || exit 0
+        $1
+        ;;
+    restart)
+        $1
+        ;;
+    reload)
+        rh_status_q || exit 7
+        $1
+        ;;
+    force-reload)
+        force_reload
+        ;;
+    status)
+        rh_status
+        ;;
+    condrestart|try-restart)
+        rh_status_q || exit 0
+        restart
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
+        exit 2
+esac
+exit $?

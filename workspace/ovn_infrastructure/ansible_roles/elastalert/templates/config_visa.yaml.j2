@@ -1,0 +1,11 @@
+## {{ ansible_managed }}
+#Visa specific Global configs used only by Netcool plugin
+#These values are used to populate subject and other fields in VISA alerts
+#
+Region: {{ Netcool_region }}   # string used for Netcool 'Region' e.g. CONSOLE/SUPPRESS
+Environment: {{ elastalert_env }} # string inserted in Freetext field of email for netcool , TEST/DEV/PROD/CERT
+OVN_AHA: {{ OVN_AHA }}  # Default AHA code assigned for all Netcool: 'OriginType'
+DestinationConsole: {{ Netcool_DestinationConsole }}    # Netcool string e. g Network/Opensystems
+netcool_email: {{ Netcool_email }}  
+
+

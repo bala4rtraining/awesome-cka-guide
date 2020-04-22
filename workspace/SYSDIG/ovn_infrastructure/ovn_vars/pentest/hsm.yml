@@ -1,0 +1,16 @@
+---
+hsm_servers:
+- '10.207.43.92'
+
+simulate_hsm_responses: 'true'
+hsm_pools: |
+      [[{name, hsm1},
+        {group, hsm},
+        {init_count, 2},
+        {max_count, 4},
+        {member_start_timeout, {15, sec}},
+        {start_mfa, {ovn_switch_hsm, start_link, ["0001", "{{ hsm_servers[0] }}", 2500, 10000]}}]]
+hsm_ssl_opts: |
+      [{certfile,   "{{hsm_cert_dir}}/test.ovn.visa.com.crt.pem"},
+       {cacertfile, "{{hsm_cert_dir}}/ca_chain.vica4.pem"},
+       {keyfile,    "{{hsm_cert_dir}}/test.ovn.visa.com.key.pem"}]

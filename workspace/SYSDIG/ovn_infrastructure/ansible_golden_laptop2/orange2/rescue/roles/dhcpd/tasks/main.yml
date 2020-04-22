@@ -1,0 +1,162 @@
+---
+# tasks file for dhcpd
+
+#
+# For Cumulus booting by ONIE
+#
+
+- name: Create a cumulus directory under /var/www/html on rescue to hold provisioning script
+  file:
+    path:  "{{ rescue_cumulus_path }}"
+    state: directory
+    mode:  0755
+
+- name: Setup the Cumulus provisioning script 
+  template:
+    src:  "{{item}}"
+    dest: "{{ rescue_cumulus_path }}/{{item}}.sh"
+    mode: "u=rx,g=rx"
+  with_items:
+    - "{{cumulus_prov_oob_sw_file}}.j2"
+    - "{{cumulus_prov_other_sw_file}}.j2"
+
+#
+# simulation user: vagrant
+# real hw user: root
+#
+- name: Create SSH key on rescue
+  user:
+    name: root
+    #name: vagrant
+    generate_ssh_key: yes 
+
+
+- name: Place the rescue SSH public key to /var/www/html/cumulus for switches to retrive
+  copy:
+    src: /root/.ssh/id_rsa.pub
+    #src: /home/vagrant/.ssh/id_rsa.pub
+    dest: "{{ rescue_cumulus_path }}/authorized_keys"
+
+- name: Copy Cumulus installer to /var/www/html/cumulus (Assume the image is on the rescue sever)
+  copy:
+    src:  "cumulus/{{ cumulus_image_name }}"
+    dest: "{{ rescue_cumulus_path }}"
+  tags:
+    - image
+
+- name: Make a softlink to the Cumulus installer
+  file:
+    src: "{{ rescue_cumulus_path }}/{{ cumulus_image_name }}"
+    dest: "{{ rescue_cumulus_path }}/onie-installer"
+    state: link
+
+- name: Copy the Cumulus license file
+  copy:
+    src: "cumulus/{{item}}"
+    dest: "{{rescue_cumulus_path}}/{{item}}"
+  with_items:
+    - license.txt
+    - license.txt.10G
+    - license.txt.1G
+    - license.txt.40G
+
+
+#
+# Centos7 server legacy boostrapping
+#
+
+- name: Copy PXE server files to the right directory except for the GRUB loader
+  copy: src=centos7/pxelinux dest=/var/lib/tftpboot/
+
+- name: Create pxelinux/pxelinux.cfg directory
+  file: path=/var/lib/tftpboot/pxelinux/pxelinux.cfg state=directory mode=0755
+
+- name: Copy the GRUB loader template to overwrite the default
+  template: src=grub_legacy_for_rescue.j2 dest=/var/lib/tftpboot/pxelinux/pxelinux.cfg/default
+
+  
+- name: Create a directory under /var/www/html on the rescue to hold kickstart file
+  file: path=/var/www/html/{{rescue_legacy_ks_dir}} state=directory mode=0755
+
+- name: Copy the kickstart tempalte to the rescue
+  template: src=rescue_legacy_ks.j2 dest=/var/www/html/{{rescue_legacy_ks_dir}}/{{rescue_legacy_ks_file}}
+
+- name: Create a diretory under /var/www/html to hold Centos7 Install source
+  file: path=/var/www/html/{{rescue_legacy_install_src_dir}} state=directory mode=0755
+
+
+#
+# For legacy BIOS boot
+#  (The legacy Centos7 ISO file should have been in /root)
+#
+  
+- name: Mount the Centos7 ISO for installation
+  mount: name=/var/www/html/{{rescue_legacy_install_src_dir}} src=/root/{{rescue_legacy_centos7_iso}} fstype=iso9660 opts=ro state=mounted
+
+
+
+#
+# secureboot
+#
+- name: Patch a Ansible bug when copying large files
+  copy:
+    src: /root/orange2/dataloader.py
+    dest: /usr/lib/python2.7/site-packages/ansible/parsing/
+    mode: 0755
+    
+    
+- name: Create uefi directory under /var/lib/tftpboot
+  file: path="{{rescue_tftp_boot}}/uefi" state=directory mode=0755
+
+- name: Create directories to hold repos
+  file: path=/var/www/html/{{item}} state=directory mode=0755
+  with_items:
+     - repo/centos
+     - repo/visa
+     - ks
+  
+- name: Copy the efi tarball (contains GRUB loader) 
+  unarchive: src=/root/efi.tar.gz dest="{{ rescue_tftp_boot }}/uefi" mode=0755 copy=yes
+            
+- name: Copy the secureboot KS template
+  template: src=/root/rescue_ks_sb.j2 dest=/var/www/html/ks/min-ks.cfg
+                
+- name: Copy the Centos repo for SB (centos7_1511)
+  unarchive: src=/root/centos7_1511.tar.gz dest=/var/www/html/repo/centos mode=0755 copy=yes
+
+- name: Copy the Visa CentosLiveOS to overwrite the squashfs for SB (centos_liveos)
+  unarchive: src=/root/centos_liveos.tar.gz dest=/var/www/html/repo/centos  mode=0755 copy=yes
+
+- name: Copy the Visa repo (visa_repo)
+  unarchive: src=/root/visa_repo.tar.gz dest=/var/www/html/repo/visa mode=0755 copy=yes
+  
+
+#
+# set up static routes on rescue to reach
+# the VLANs that has baremetal servers to be PXEbooted
+#
+
+# - name: Set up static routes from rescue to subnets
+#   shell: ip route add "{{ip_subnet}}.{{item.ip}}/{{item.len}}" via  "{{ip_subnet}}.25" dev  "{{rescue.int_10g_border_sw.subnet_int_ip_name}}"
+#   with_items:
+#     - ip: 16
+#       len: 29
+#     - ip: 32
+#       len: 27
+#     - ip: 64
+#       len: 27
+#     - ip: 96
+#       len: 27
+#     - ip: 128
+#       len: 27
+
+  
+
+
+#
+# DHCP server
+#
+
+- name: Configure DHCP server for oranges/rescue server
+  template: src=dhcpd_rescue.conf.j2 dest=/etc/dhcp/dhcpd.conf
+  notify: Restart DHCP server

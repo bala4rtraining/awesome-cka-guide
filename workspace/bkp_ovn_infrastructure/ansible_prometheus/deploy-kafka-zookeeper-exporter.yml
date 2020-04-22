@@ -1,0 +1,48 @@
+---
+# This playbook enables jmx exporter based monitoring for kafka and zookeeper
+- include: ../ovn_vars.yml ovn_vars_hosts=kafka,zookeeper
+
+- name: Enable monitoring for kafka
+  hosts: kafka
+  roles:
+    - { role: kafka, dispatch: ['enable-prometheus-monitoring-kafka'] }
+
+- name: Enable monitoring for zookeeper
+  hosts: zookeeper
+  roles:
+    - { role: prometheus, dispatch: ['jmx_exporter'] , when: monitor_zookeeper_using_prometheus == "true" }
+
+  tasks:
+    - name: create group for prometheus
+      group: name={{ prometheus_group }} state=present
+      when: monitor_zookeeper_using_prometheus == "true"
+
+    - name: add zookeeper user to prometheus group
+      user: >
+        name={{username}}
+        groups={{prometheus_group}}
+        state=present
+      when: monitor_zookeeper_using_prometheus == "true"
+
+    - name: zookeeper systemd configuration
+      template: >
+        src=../ansible_roles/zk/templates/zookeeper.service.j2
+        dest=/etc/systemd/system/zookeeper.service
+        owner={{username}}
+        group={{zookeeper_group}}
+        mode=0644
+
+    - name: reload zookeeper service configuration
+      command: systemctl daemon-reload
+
+    - name: restart zookeeper
+      service:
+        name: zookeeper
+        state: restarted
+        enabled: yes
+  vars:
+    - username: "zookeeper"
+    - zookeeper_group: "zookeeper"
+    - zookeeper_install_dir: "/opt/zookeeper"
+    - monitor_zookeeper_using_prometheus: "true"
+    - prometheus_group: "prometheus"

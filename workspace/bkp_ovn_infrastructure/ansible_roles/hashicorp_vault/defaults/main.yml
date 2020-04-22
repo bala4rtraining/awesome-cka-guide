@@ -1,0 +1,91 @@
+---
+# defaults file for vault
+
+artifactory_host: "{{ artifactory_url | default('https://artifactory.trusted.visa.com') }}"
+
+vault_version: 0.7.3
+#vault_sha256sum: 7517b21d2c709e661914fbae1f6bf3622d9347b0fe9fc3334d78a01d1e1b4ec2
+
+vault_backend: consul
+vault_disable_mlock: false
+vault_default_lease_ttl: "8760h"
+vault_max_lease_ttl: "8760h"
+vault_telemetry: false
+vault_config_dir: /etc/vault.d
+
+vault_backend_consul_path: "vault/"
+vault_backend_consul_datacenter: ''
+vault_backend_consul_token: ''
+vault_backend_consul_tls_skip_verify: false
+vault_backend_consul_tls_config_dir: "{{ vault_config_dir }}/ssl"
+vault_backend_consul_tls_ca_file: "{{ vault_backend_consul_tls_config_dir }}/consul_ca_cert.pem"
+vault_backend_consul_tls_cert_file: "{{ vault_backend_consul_tls_config_dir }}/consul_tls_server.pem"
+vault_backend_consul_tls_key_file: ''
+vault_backend_consul_tls_ca_certificate: ''
+vault_backend_consul_tls_certificate: ''
+
+vault_backend_zookeeper_advertise_addr: ''
+vault_backend_zookeeper_path: "vault/"
+vault_backend_zookeeper_address: "http://localhost:4001"
+
+vault_backend_etcd_advertise_addr: ''
+vault_backend_etcd_path: "vault/"
+vault_backend_etcd_address: "localhost:2181"
+
+vault_backend_s3_advertise_addr: ''
+vault_backend_s3_bucket: ''
+vault_backend_s3_access_key: ''
+vault_backend_s3_secret_key: ''
+vault_backend_s3_session_token: ''
+vault_backend_s3_region: ''
+
+vault_backend_mysql_advertise_addr: ''
+vault_backend_mysql_username: ''
+vault_backend_mysql_password: ''
+vault_backend_mysql_address: "127.0.0.1:3306"
+vault_backend_mysql_database: "vault"
+vault_backend_mysql_table: "vault"
+vault_backend_mysql_tls_ca_file: ''
+
+vault_backend_file_path: ''
+
+vault_listener_tcp_tls_disable: false
+vault_listener_tcp_tls_dir: "{{ vault_config_dir }}/ssl"
+vault_listener_tcp_tls_ca_file: "{{ vault_listener_tcp_tls_dir }}/vault_ca_cert.pem"
+vault_listener_tcp_tls_cert_file: "{{ vault_listener_tcp_tls_dir }}/vault_tls_server.pem"
+vault_listener_tcp_tls_key_file: "{{ vault_listener_tcp_tls_dir }}/vault_tls_private.key"
+vault_listener_tcp_tls_min_version: tls12
+vault_listener_tcp_tls_role_name: "vault-client-tls-{{ vic_identity | regex_replace(' $', '') }}"
+vault_listener_tcp_tls_certificate_fetch_api: "{{ bootstrap_vault_host }}/v1/pki/issue/{{ vault_listener_tcp_tls_role_name }}"
+default_iface: "{{ ansible_default_ipv4.alias }}"
+vault_listener_tcp_tls_ip_subject_alternative_names: >-
+  {% set join = joiner(",") %}
+  {%- for item in groups['ovn_cluster_vault_nodes'] -%}
+    {{ join() }}{{ hostvars[item]['ansible_'+default_iface]['ipv4']['address'] }}
+  {%- endfor -%}
+
+vault_telemetry_statsite_address: ''
+vault_telemetry_statsd_address: ''
+vault_telemetry_disable_hostname: false
+
+vault_service_port: 8200
+
+vault_artifact: vault_{{ vault_version }}_linux_amd64.zip
+vault_url: "{{ artifactory_host }}/ovn/repo/{{ vault_artifact }}"
+vault_download_dir: /root
+vault_install_dir: /usr/local/bin
+vault_pid_file: /var/run/vault.pid
+vault_log_file: /var/log/vault.log
+vault_user: vault
+vault_group: vault
+vault_service_name: vault
+vault_listener_tcp_address: "{{ inventory_hostname }}:{{ vault_service_port }}"
+vault_backend_consul_advertise_addr: "https://{{ inventory_hostname }}:{{ vault_service_port }}"
+vault_backend_consul_address: "127.0.0.1:8500"
+vault_backend_consul_scheme: "https"
+vault_backend_consul_redirect_addr: "{{ inventory_hostname }}:{{ vault_service_port }}"
+
+vault_num_key_shares: 3
+vault_num_key_threshold: 3
+vault_init_cred: /opt/vault.init.exist
+vault_token_file: .vault-token

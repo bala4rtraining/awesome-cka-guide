@@ -1,0 +1,159 @@
+java_home:                    "/usr/java/default"
+dstax511_system_service_dir:           "/etc/systemd/system"
+current_node_ip:              "{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
+dstax511_wrk_foldr:                    "/opt/app/datastax"
+dstax511_dse_base_ver:                 "dse-5.1.1"
+dstax511_dse_home:                     "{{dstax511_wrk_foldr}}/{{dstax511_dse_base_ver}}"
+dstax511_agent_base_ver:               "datastax-agent-6.1.3"
+dstax511_dse_agent_home:               "{{dstax511_wrk_foldr}}/{{dstax511_agent_base_ver}}"
+foodcritip_var:                "c3NoLoXJzYSBBQUFBQjNOemFDMXljMkVBQUFBREFRQUJBQUFCQVFEWmhSaWsvYTdlelpYUFJPTG1TWThvVlFEcVVLNlhGM2czakxrcVBJSlhRTGJDcU5RRXV1djdEWlBpc1VHdHgyN3ppZGhvaDBLM2pvWGcvdHY2MUZhblZRNW5wNVRoNGU5dzZRdkhJOVdtSG1CWkRNVXpSMWtZYTU0dExRYlBpWjRoRU1HL012TXVyY2hJNnMzbGp3cjMyWGFJTy8vZXNHWXl6MlBlc1A3d1h2Zm1wRVNVQnNCV2cvc3BkbTQyditiOUV4YWVzNFFubDdJb25vSkZLTDUwYjloMXFFQnErakl3emJ5WXBIbFhpZ3p0WVlZeEF0dXVIRUVIMmJjK0Q3QWZFb2svYjlqbVBDZiszZU9UYXlPYnZQU2lKd3hKbC9OTlNaOWRsUjBrTXRlbStxSG42bHc0azJaazczQ0JDY2R5cUE2cHdVY2pjY0JMa2RPLzlqMjUgY2Fzc2FuZHJhQHNsNTVjc2RhcHAwMDEudmlzYS5jb20Kc3NoLXJzYSBBQUFBQjNOemFDMXljMkVBQUFBREFRQUJBQUFCQVFDMVVrWERlOFYzU0Exc0l1dnE4ZWoxanBZck9RcXltYkZ2eExEN1BDZm1QK1V2TnQrTTZEc0lUOTZ5cisxUU5zT25GZHVYRTlJa3JrVm9BNkpndnNxL2pDdFNVOTRNRFlvWWJDSDlMOUNxaHdPTC9oN2paSzNWMEcrajVGM21Pc1QrbVFJNllaRm56UWxLcng1cWJUSzVJSmVCcGZWMlMvbWQ0VG1kbDFMbTJGN1pOc0c1Szl3bk5sbjQyVWFjZ3dzZUtXYUxyM3M2R0grNnNYWGtPMHVDUzc1MFZQOU9CUjV5VnpNcnNOR0Y1VGJVVjdjL2hydDRCSkRRT3k2a3dhNnhMUTl6bHJyalZjY2xuNW80YUhoMUQ4dklmVDhzT2tGKzd1M3hmSmFKYWFlcXZHWER1YVlHYTRDZW9ZdjNaQ1pIa2s1OTQvYkw2UW9sU2FjbHdPQ1QgY2Fzc2FuZHJhQHNsNzNjc2RhcHAwMDEudmlzYS5jb20K"
+foodcritiq_var:                "c3NoLXJzYSBBQUFBQjNOemFDMXljMkVBQUFBREFRQUJBQUFCQVFDL25haHUrb2Y2QWdXc2s1eEJzbktsWm8zT2czRDd3ZUxIQTRzNjJYeVNRUjBhVGJ6V1gxd09jSkpKWFlRN2lyclA5c1NYbTZwWG05ZTdMb1J6Rzg1eExUaFF3NStFb1pIbk9OdERwRXRPTWI1MG5qMHZpMkJtdnVCbU1RQjU3dWwwQ1pDV09lY3VCSmlJcXRQVHkyTUxzQ2dqclkzY3pTUlJKRFlMclVnQmp4TWtjTnh6T01xUGcwV05kaVN3am95UXQwamx4bVdnWVRJemxValBrdDZYMjhnb2d6L0N5eDVkL0VhSm9DNlFtRW93S1Z6OHBxSmJwbWsySlZzb1J6MWVhcGQ4VnZGSklOZXpvRmFmdFdzNlZiNEdxS0Q2TlpxSmhMcmFrNnp0clpBMi90eHlzc0Z0c1NOY0piSUY1a2k2SE5xU3VQUG55b2UvTnd0ZHEwWE4gY2Fzc2FuZHJhQHNsNzNjc2RhcHEwMDEudmlzYS5jb20K"
+dstax511_seed_addr_lst:                 "{{ groups['cassandra_seeds']|join(', ') }}"
+
+dstax511_ovn_datastax:
+  dstax511_dse:
+    user:                             "cassandra"
+    group:                            "cassandra"
+    home:                             "/home/cassandra"
+    ssh_home:                         "/home/cassandra/.ssh"
+    auth_keys_home:                   "/home/cassandra/.ssh/authorized_keys"
+    java_home:                        "{{java_home}}"
+    dstax511_repos_filename:                   "datastax.repo"
+    dstax511_repos_filepath:                   "/etc/yum.repos.d/datastax.repo"
+
+    dstax511_cluster_name:                     "test_cassandra"
+    dstax511_num_tokens:                       "256"
+    dstax511_concurrent_writes:                "32"
+    dstax511_snitch_mode:                      "GossipingPropertyFileSnitch"
+    dstax511_listen_address:                   "{{current_node_ip}}"
+    dstax511_rpc_address:                      "{{current_node_ip}}"
+    dstax511_concurrent_compactors:            "2"
+    dstax511_system_service_foldr:             "{{ dstax511_system_service_dir }}"
+    dstax511_compaction_throughput_mb_per_sec: "16"
+    dstax511_read_request_timeout_in_ms:       "5000"
+    dstax511_write_request_timeout_in_ms:      "2000"
+    dstax511_seedlist:                         "{{dstax511_seed_addr_lst}}"
+    rack:                             "RAC1"
+
+#    tar_version:                   "5.1.1"
+#    tar_basename:                  "dse"
+#    tar_base_ver:                  "{{dstax511_dse_base_ver}}"
+    dstax511_tar_name:                      "{{dstax511_dse_base_ver}}-bin.tar"
+    dstax511_tar_url:                       "https://artifactory.trusted.visa.com:80/ovn/repo/cassandra/{{dstax511_dse_base_ver}}-bin.tar"
+
+    dstax511_wrking_foldr:                  "{{dstax511_wrk_foldr}}"
+    dstax511_partition_foldr:               "{{dstax511_wrk_foldr}}"
+    dstax511_download_foldr:                "{{dstax511_wrk_foldr}}/downloads"
+    dstax511_tar_path:                      "{{dstax511_wrk_foldr}}/downloads/dse-5.1.1-bin.tar"
+    dstax511_ops_after_unzip_path:          "{{dstax511_dse_home}}"
+    dstax511_dse_home:                      "{{dstax511_dse_home}}"
+    dstax511_installed_foldr:               "{{dstax511_dse_home}}"
+    dstax511_softlnk_path:                  "{{dstax511_wrk_foldr}}/dse"
+    rsc_dse_conf_foldr_path:       "{{dstax511_dse_home}}/resources/dse/conf"
+    rsc_spark_foldr_path:          "{{dstax511_dse_home}}/resources/spark"
+    rsc_cassandra_conf_foldr_path: "{{dstax511_dse_home}}/resources/cassandra/conf"
+    rsc_tomcat_conf_foldr_path:    "{{dstax511_dse_home}}/resources/tomcat/conf"
+
+    rsc_cassandra_log_foldr:       "{{dstax511_dse_home}}/cassandra_logs/log"
+    rsc_audit_cassandra_log_foldr: "{{dstax511_dse_home}}/cassandra_logs/log/audit"
+
+    rsc_dse_log_foldr:             "{{dstax511_dse_home}}/dse_logs/log"
+    rsc_dse_audit_log_foldr:       "{{dstax511_dse_home}}/dse_logs/audit"
+
+    dstax511_tomcat_log_foldr:              "{{dstax511_dse_home}}/tomcat_logs/log"
+
+    dstax511_log4j_srvr_log_foldr:          "{{dstax511_dse_home}}/log4j_srvr_logs/log"
+    dstax511_pid_run_foldr:                 "/var/run/dse"
+
+    dstax511_startup_onboot:                "/etc/init.d/dse.init"
+    dstax511_numa:                          0
+    dstax511_swap_disabled:                 0
+    dstax511_solr_status:                   false
+#----- Cassandra will utilize these below folders and are configured/refered in cassandra.yml
+  dstax511_req_foldrs:
+    dstax511_data_file_directories:      "{{dstax511_dse_home}}/cassandra/data"
+    dstax511_saved_caches_directory:     "{{dstax511_dse_home}}/cassandra/saved_caches"
+    dstax511_commitlog_directory:        "{{dstax511_dse_home}}/cassandra/commitlog"
+    dstax511_runtime_foldr:              "{{dstax511_dse_home}}/cassandra/run/cassandra"
+    dstax511_log_directory:              "{{dstax511_dse_home}}/cassandra/log"
+    dstax511_backup_directory:           "{{dstax511_dse_home}}/cassandra/backup"
+    dstax511_locks_foldr:                "{{dstax511_dse_home}}/cassandra/lock/subsys"
+    dstax511_heapdump_directory:         "{{dstax511_dse_home}}/cassandra/data/heapdump"
+    dstax511_hints_foldr:                "{{dstax511_dse_home}}/cassandra/data/hints"
+    dstax511_cdc_raw_foldr:              "{{dstax511_dse_home}}/cassandra/data/cdc_raw"
+    dstax511_cql_cmd_foldr:              "{{dstax511_dse_home}}/cql_commands"
+    dstax511_pid_run_foldr:                 "/var/run/dse"
+
+  dstax511_agent:
+    user:                       "cassandra"
+    group:                      "cassandra"
+    home:                       "/home/cassandra"
+    dstax511_ssh_foldr:                  "/home/cassandra/.ssh"
+    dstax511_ver:                        "6.1.3"
+    dstax511_basename:                   "datastax-agent"
+    dstax511_base_with_ver:              "datastax-agent-6.1.3"
+    dstax511_tar:                        "datastax-agent-6.1.3.tar"
+    dstax511_tar_url:                    "https://artifactory.trusted.visa.com:80/ovn/repo/cassandra/datastax-agent-6.1.3.tar"
+    dstax511_wrking_foldr:               "{{dstax511_dse_agent_home}}"
+    dstax511_partition_foldr:            "{{dstax511_dse_agent_home}}"
+    dstax511_installed_foldr:            "{{dstax511_dse_agent_home}}/agent"
+    dstax511_lnk_to_install:             "{{dstax511_dse_agent_home}}/datastax-agent"
+    dstax511_download_foldr:             "{{dstax511_dse_agent_home}}/downloads"
+    dstax511_tar_path:                   "{{dstax511_dse_agent_home}}/downloads/datastax-agent-6.1.3.tar"
+    dstax511_conf_foldr_path:            "{{dstax511_dse_agent_home}}/agent/conf"
+    dstax511_system_service_foldr:       "{{ dstax511_system_service_dir }}"
+
+    dstax511_ops_server:                 "10.211.42.252"
+    dstax511_jmx_port:                   "7199"
+    dstax511_jmx_host:                   "{{current_node_ip}}"
+    dstax511_agent_rpc_interface:        "{{current_node_ip}}"
+    # OpsCenter runs on a different machine and is a stomp interface supported server.
+    dstax511_stomp_interface:            "{{ groups['cassandra_ops_server']|join(', ') }}"
+#---
+  dstax511_dse_init:
+    dstax511_dse_home_dir:                   "{{dstax511_dse_home}}"
+    dstax511_cassandra_conf_foldr:           "{{dstax511_dse_home}}/resources/cassandra/conf"
+    dstax511_spark_conf_folder:              "{{dstax511_dse_home}}/resources/spark"
+    dstax511_output_file_path:               "{{dstax511_dse_home}}/logs/ouput.log"
+#--- Mostly used by Solr. Solr is not used in our work.
+  dstax511_dse_default:
+    dstax511_log_foldr:                      "{{dstax511_dse_home}}/solr_logs/log"
+    dstax511_home_foldr:                     "{{dstax511_dse_home}}"
+#--- We dont use solr but retained the implementation for future usage
+  dstax511_solr:
+    dstax511_max_solr_concurrency_per_core:  2
+    dstax511_load_max_time_per_core:         1
+    dstax511_data_dir:                       "{{dstax511_dse_home}}/solr_data"
+    dstax511_solr_logs_foldr:                "{{dstax511_dse_home}}/solr_logs/log"
+    dstax511_solr_status:                   false
+
+  env:
+    max_heap_size:                  "512M"
+    heapdump_dir:                   "{{dstax511_dse_home}}/data/heapdump"
+
+  cql:
+    app_user:                       'app_user'
+    app_password:                   'app_password'
+    keyspace_name:                  'keyspace_name'
+    dc:                             "{{ vic_identity | regex_replace(' $', '') }}"
+dstax511_cql_passwd:            "cas_ocean0!"
+#default 4096
+#rpm_cassandra_file_name_url: "{{cassandra_artifact_repo_url}}/cassandra-3.11.1-1.noarch.rpm"
+#rpm_cassandra_file_name_path: "{{cassandra_download_directory}}/cassandra-3.11.1-1.noarch.rpm"
+#cassandra_artifact_repo_url: "http://sl73cirepoapp01.visa.com/pub/vblock/cassandra"
+
+# Required ports.. Enable on firewall. Cassandra nodes communicate on Gossip protocol.
+# firewall-cmd --list-all
+# firewall-cmd --zone=public --add-port=7199/tcp --permanent
+# firewall-cmd --zone=public --add-port=7000/tcp --permanent
+# firewall-cmd --zone=public --add-port=9160/tcp --permanent
+# firewall-cmd --zone=public --add-port=9042/tcp --permanent
+# firewall-cmd --reload
+# rpm -ivh --replacepkgs cassandra-3.11.1-1.noarch.rpm
+# wget https://artifactory.trusted.visa.com:80/ovn/repo/cassandra
+
+#7199 - JMX (was 8080 pre Cassandra 0.8.xx)
+#7000 - Internode communication (not used if TLS enabled)
+#7001 - TLS Internode communication (used if TLS enabled)
+#9160 - Thrift client API
+#9042 - CQL native transport port

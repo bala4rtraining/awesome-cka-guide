@@ -1,0 +1,58 @@
+---
+- name: Create Consul server directories
+  file:
+    state: directory
+    path: "{{ consul_server_dir }}"
+    owner: "{{ consul_user }}"
+    group: "{{ consul_group }}"
+    mode: 0700
+  with_items:
+     - "{{ consul_conf_dir }}/server"
+     - "{{ consul_conf_dir }}/ssl"
+  loop_control:
+    loop_var: consul_server_dir
+
+- name: Copy Consul server configuration
+  template:
+    force: yes
+    src: "{{ consul_server_conf.src }}"
+    dest: "{{ consul_server_conf.dest }}"
+    owner: "{{ consul_user }}"
+    group: "{{ consul_group }}"
+    mode: 0600
+  with_items:
+    - { src: "templates/server_config.j2", dest: "/etc/consul.d/server/config.json" }
+  loop_control:
+    loop_var: consul_server_conf
+
+- name: Copy server logrotate template to /etc/logrotate.d/
+  template:
+    force: yes
+    src: "{{ consul_server_logrotate_conf.src }}"
+    dest: "{{ consul_server_logrotate_conf.dest }}"
+    owner: "{{ consul_user }}"
+    group: "{{ consul_group }}"
+    mode: 0644
+  with_items:
+    - { src: "templates/server_logrotate.j2", dest: "/etc/logrotate.d/consul_server.conf" }
+  loop_control:
+    loop_var: consul_server_logrotate_conf
+
+- name: Consul server systemd
+  template:
+    force: yes
+    src: "{{ consul_server_systemd_conf.src }}"
+    dest: "{{ consul_server_systemd_conf.dest }}"
+    owner: "{{ consul_user }}"
+    group: "{{ consul_group }}"
+    mode: 0744
+  with_items:
+    - { src: "templates/server_systemd.j2", dest: "{{ consul_server_systemd_file }}" }
+  loop_control:
+    loop_var: consul_server_systemd_conf
+
+- name: Reload systemd
+  command: systemctl daemon-reload
+
+- name: Enable Consul server
+  command: systemctl enable consul_server.service

@@ -1,0 +1,46 @@
+---
+kibana_png: "kibanaOvnCERT.png"
+kibana_reverse_proxy_enabled: true
+kibana_nginx_enable_ssl: "false"
+kibana_basepath: "/kibana-cert"
+kibana_reverse_proxy_path: "kibana-cert"
+
+grafana_reverse_proxy_enabled: true
+grafana_auth_proxy_enabled: false
+grafana_nginx_enable_ssl: "false"
+grafana_reverse_proxy_url: "https://ovncert.visa.com/grafana-cert/"
+grafana_reverse_proxy_path: "grafana-cert"
+
+nginx_enable_ssl: "false"
+enable_nginx_ssl: "true"
+elasticsearch_client_ssl_enabled: "true"
+
+graphite_url: "http://10.13.201.112:5603"
+graphite_beacon_env: 'CERT'
+prometheus_datacenter_id: "CERT"
+alertmanager_context_path: "alertmanager-cert"
+alertmanager_app_context_path: "alertmanager-cert-app"
+prometheus_context_path: "prometheus-cert"
+prometheus_app_context_path: "prometheus-cert-app"
+vss_output_context_path: "vss-output-cert"
+alertmanager_email_to : "OVNPrometheusALERTS@visa.com"
+
+#This will be used for constructing the link/URL back to prometheus source pages from alertmanager pages via reverse proxy(ovnmanager).
+prometheus_external_host: "ovncert.visa.com"
+#This is added to support IP based deployment of prometheus for CERT and PERF environment. Hostname and fqdn does not work well in CERT and PERF environment
+prometheus_use_fqdn: "false"
+elasticsearch_use_fqdn: "false"
+elasticsearch_client_use_fqdn: "false"
+
+#elastalert related defines
+elasticsearch_port: 9200
+elastalert_config_use_ssl: False
+elastalert_config_es_url_prefix: '""'
+elastalert_env: "CERT"
+elasticsearch_heapsize: "16g"
+
+#HSM
+hsm_address: "10.13.201.99:1500"
+
+prometheus_public: |
+ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVEPtgskmPFCWrgvjFFnzQm774jVzaC+2n14ZXFVKXPE6viJiKp4It+GxZRYdUuNFbCxEuxyCqSttcb/BitfCYonXFC0gNi0TFEUKp0ikTnRjmYV1LCePP0sMqKQEvum0kfHzy7m2XJqFqBemoc1EQyTNQJCsukdfngCW67Mm3auFKks0sG/wwia2MrOR3q5fPH7kzdK8v7RrXkfdWzvFhIrKZikI6Ov8/O8T8WeHU7wOkGGCtOuT6K192btHUVq+fyiqNqeOH/feABw7xdZiyAlV4eM7I41iwq2TF+OE2m4x8PVWYrf8EHS49mizKDU5QuKhWsXco0IJsobwLoa+B cert

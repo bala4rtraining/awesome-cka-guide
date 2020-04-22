@@ -1,0 +1,43 @@
+// This template can be followed for all the cd jenkins pipelines
+@Library('ovn-shared-library') _
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  stages {
+    stage("Dry run to grab parameters") {
+       steps {
+          script {
+             if ("${BUILD_NUMBER}" == "1") {
+             currentBuild.result = 'ABORTED'
+             error('DRY RUN COMPLETED. JOB PARAMETERIZED.')
+                    }
+                }
+            }
+        }
+    stage('Set cluster variables') {
+         // boilerplate for stage must be the first stage
+         // in all the cd pipeline jobs.
+         // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+         steps {
+           setClusterAndDatacenter(env);
+         }
+     }
+    stage('name of the stage '){
+      steps{
+        ansiColor('xterm') {
+             //Place holder
+            //Invoke playbooks, etc.
+        }
+      }
+    }
+  }
+}

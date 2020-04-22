@@ -1,0 +1,191 @@
+---
+# Tasks configure pki mounts for various certificate generation needs by the cluster
+- name: Set configuration for pki backend
+  set_fact:
+    vault_pki_cfg:
+      type: pki
+      description: "Certificates for cluster operations"
+      config:
+        default_lease_ttl: "{{vault_default_lease_ttl}}"
+        max_lease_ttl: "{{vault_max_lease_ttl}}"
+
+- name: Check mount status
+  uri: >
+    url="https://{{ vault_listener_tcp_address }}/v1/sys/mounts"
+    method=GET
+    return_content=yes
+    HEADER_X-Vault-Token={{ cluster_vault_root_token }}
+    validate_certs=no
+    follow_redirects=yes
+  register: pki_mount_response
+# Will ignore certificates in requests until https://github.com/ansible/ansible/pull/18141 is merged
+
+- name: Mount and configure the pki backend for internal TLS communication certificates
+  uri: >
+    url="https://{{ vault_listener_tcp_address }}/v1/sys/mounts/pki"
+    method=POST
+    return_content=yes
+    HEADER_X-Vault-Token={{ cluster_vault_root_token }}
+    body='{{ vault_pki_cfg | to_json }}'
+    body_format=json
+    validate_certs=no
+    follow_redirects=yes
+# Will ignore certificates in requests until https://github.com/ansible/ansible/pull/18141 is merged
+  run_once: true
+  register: internal_pki_mount_response
+  failed_when: internal_pki_mount_response.status != 204
+  when: (pki_mount_response.content | from_json)['pki/'] is not defined
+
+- name: Set parameters for CA
+  set_fact:
+    vault_pki_ca_cfg:
+      common_name: "ovn-internal-pki-{{ vic_identity | regex_replace(' $', '') }}"
+
+- name: Check if the CA for internal certificates has been generated
+  uri: >
+    url="https://{{vault_listener_tcp_address }}/v1/pki/cert/ca"
+    method=GET
+    return_content=yes
+    HEADER_X-Vault-Token={{ cluster_vault_root_token }}
+    validate_certs=no
+    follow_redirects=yes
+# Will ignore certificates in requests until https://github.com/ansible/ansible/pull/18141 is merged
+  register: internal_ca_status
+
+- name: Generate a self-signed CA for internal certificate generation -- wipes private key
+  uri: >
+    url="https://{{vault_listener_tcp_address }}/v1/pki/intermediate/generate/internal"
+    method=POST
+    return_content=yes
+    HEADER_X-Vault-Token={{ cluster_vault_root_token }}
+    body='{{ vault_pki_ca_cfg | to_json }}'
+    body_format=json
+    validate_certs=no
+    follow_redirects=yes
+# Will ignore certificates in requests until https://github.com/ansible/ansible/pull/18141 is merged
+  register: ca_gen_response
+  run_once: true
+  when: (internal_ca_status.content | from_json)['data']['ca'] is not defined
+
+- name: Set parameters for Kafka role
+  set_fact:
+    vault_pki_kafka_role_cfg:
+      common_name: "kafka-client-tls-{{ vic_identity | regex_replace(' $', '') }}"
+      allow_subdomains: "true"
+      max_ttl: "{{ vault_default_lease_ttl }}"
+
+- name: Create role for Kafka TLS
+  uri: >
+    url="https://{{vault_listener_tcp_address }}/v1/pki/roles/kafka-client-tls-{{ vic_identity | regex_replace(' $', '') }}"
+    method=POST
+    return_content=yes
+    HEADER_X-Vault-Token={{ cluster_vault_root_token }}
+    body_format=json
+    body='{{ vault_pki_kafka_role_cfg | to_json }}'
+    validate_certs=no
+    follow_redirects=yes
+# Will ignore certificates in requests until https://github.com/ansible/ansible/pull/18141 is merged
+  register: kafka_role_gen_response
+  run_once: true
+  failed_when: kafka_role_gen_response.status != 204
+
+- name: Set parameters for remount request
+  set_fact:
+    ea_pki_remount_cfg:
+      from: "pki"
+      to: "external-pki"
+
+- name: Mount PKI on a dedicated path for external certificates (EA, etc)
+  uri: >
+    url="https://{{vault_listener_tcp_address }}/v1/sys/remount"
+    method=POST
+    return_content=yes
+    HEADER_X-Vault-Token={{ cluster_vault_root_token }}
+    body_format=json
+    body='{{ ea_pki_remount_cfg | to_json }}'
+    validate_certs=no
+    follow_redirects=yes
+# Will ignore certificates in requests until https://github.com/ansible/ansible/pull/18141 is merged
+  register: external_pki_remount_response
+  run_once: true
+  failed_when: external_pki_remount_response.status != 204
+  when: (pki_mount_response.content | from_json)['external-pki/'] is not defined
+
+- name: Set parameters for intermediate CA for external certificates
+  set_fact:
+    external_pki_ca_cfg:
+      common_name: "ovn-{{ vic_identity | regex_replace(' $', '') }}.visa.com"
+#Desire LINT checker for certificate field validation
+
+- name: Check if the CA for external certificates has been generated
+  uri: >
+    url="https://{{vault_listener_tcp_address }}/v1/external-pki/cert/ca"
+    method=GET
+    return_content=yes
+    HEADER_X-Vault-Token={{ cluster_vault_root_token }}
+    validate_certs=no
+    follow_redirects=yes
+# Will ignore certificates in requests until https://github.com/ansible/ansible/pull/18141 is merged
+  register: external_ca_status
+
+- name: Generate a CSR for external TLS communications -- wipes private key
+  uri: >
+    url="https://{{vault_listener_tcp_address }}/v1/external-pki/intermediate/generate/internal"
+    method=POST
+    return_content=yes
+    HEADER_X-Vault-Token={{ cluster_vault_root_token }}
+    body='{{ external_pki_ca_cfg | to_json }}'
+    body_format=json
+    validate_certs=no
+    follow_redirects=yes
+# Will ignore certificates in requests until https://github.com/ansible/ansible/pull/18141 is merged
+  register: external_ca_gen_response
+  run_once: true
+  when: (internal_ca_status.content | from_json)['data']['ca'] is not defined
+
+- name: Present this CSR to Visa GIS for signing
+  debug: msg={{ external_ca_gen_response.json.data.csr }}
+  when: external_ca_gen_response is defined
+
+- name: Set body for emplaced GIS certificate
+  set_fact:
+    external_pki_set_signed_body:
+      certificate: "{{ visa_vica_vault_certificate }}"
+  when: visa_vica_vault_certificate is defined
+
+- name: Emplace signed certificate from Visa GIS for external TLS communication (must replace CRLF with '\n' in visa_vica_vault_certificate variable)
+  uri: >
+    url="https://{{vault_listener_tcp_address }}/v1/external-pki/intermediate/set-signed"
+    method=POST
+    return_content=yes
+    HEADER_X-Vault-Token={{ cluster_vault_root_token }}
+    body='{{ external_pki_ca_cfg | to_json }}'
+    body_format=json
+    validate_certs=no
+    follow_redirects=yes
+  register: set_signed_ca_response
+  failed_when: set_signed_ca_response != 204
+  run_once: true
+  when: visa_vica_vault_certificate is defined
+
+- name: Set parameters for EA role
+  set_fact:
+    vault_pki_ea_role_cfg:
+      common_name: "ovn-ea-{{ vic_identity | regex_replace(' $', '') }}.visa.com"
+      allow_subdomains: "true"
+      max_ttl: "{{ vault_default_lease_ttl }}"
+
+- name: Create role for EA TLS
+  uri: >
+    url="https://{{vault_listener_tcp_address }}/v1/external-pki/roles/ovn-ea-{{ vic_identity | regex_replace(' $', '') }}"
+    method=POST
+    return_content=yes
+    HEADER_X-Vault-Token={{ cluster_vault_root_token }}
+    body_format=json
+    body='{{ vault_pki_ea_role_cfg | to_json }}'
+    validate_certs=no
+    follow_redirects=yes
+# Will ignore certificates in requests until https://github.com/ansible/ansible/pull/18141 is merged
+  register: ea_role_gen_response
+  run_once: true
+  failed_when: ea_role_gen_response.status != 204

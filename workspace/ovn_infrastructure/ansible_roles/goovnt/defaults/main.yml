@@ -1,0 +1,55 @@
+---
+goovnt_install_dir: "/opt/goovnt/"
+goovnt_rpm: "{{ release_artifactory_url }}/{{ goovnt_version }}.rpm"
+ssh_port: 22
+apftp_conf_path: "{{ goovnt_install_dir }}apftp_client/resources"
+goovnt_brokers: >
+  {% set join = joiner(",") %}
+  {% for item in groups['kafka'] -%}
+  {{ join() }}{{ item }}:{{kafka_port}}
+  {%- endfor %}
+gogovnt_group: "clearing"
+goovnt_topics: "clearing"
+goovnt_offset_report: true
+goovnt_request_required_acks: -1
+goovnt_queue_buffering_max_ms: 0
+goovnt_api_version_request: false
+goovnt_bcm_consumer_group: "goovnt_bcm_consumer_group"
+
+goovnt_user: "root"
+goovnt_group: "root"
+nomadserver: "{{ hostvars[groups['nomad_server'][0]]['ansible_default_ipv4']['address'] }}"
+nomad_port: "4646"
+
+crypto_dek_path: "/usr/local/share/key"
+crypto_salt: "45DCDC36657CE573"
+crypto_iv: "EDFC1313C7BB8A628FB782594AF01AF9"
+
+collection_directory: "/clearing/collection/"
+delivery_directory: "/clearing/delivery/"
+collection_output_directory: "/clearing/collection-output/"
+
+#clearing jobs variables
+ovn_clearing_install_dir: "/opt/app/jobs"
+ovn_clearing_rpm_name: "ovn_clearing_jobs"
+rpm_name_without_extn: "{{ovn_clearing_rpm_name}}-{{ovn_clearing_rpm_version}}"
+#rpm_resources_folder: "{{ovn_clearing_install_dir}}/{{rpm_name_without_extn}}/resources"
+rpm_resources_folder: "/opt/app/jobs/ovn_clearing_jobs-0.3.14-rc6/resources"
+ssl_trustStorePath_goovnt : "/etc/pki/ca-trust/extracted/java"
+ssl_keyStorePath_goovnt : "/usr/java/jre1.8.0_152/lib/security"
+ssl_keyStorePwd : "visa2006"
+ssl_trustStorePwd : "visa2006"
+ssl_keyStoreType : "JKS"
+ssl_trustStoreType : "JKS"
+
+client_ea_ip : "{{ hostvars[groups['ea_docker_hosts'][0]]['ansible_default_ipv4']['address'] }}"
+bridge_ea_ip : "{{ hostvars[groups['ea_docker_hosts'][0]]['ansible_default_ipv4']['address'] }}"
+ftps_auth_port : 21
+bridge_ea_connection_timeout : 30
+bridge_ftps_user : "ftp_user_1"
+bridge_ftps_password : "Ftp_pass_1"
+ftpproxy_port : 2121
+#-~-~-~-~-
+encryption_enabled: "false"
+encrypted_dek_path:  "/usr/local/share/key"
+salt:  "6DC1BEC453B3F9BF"

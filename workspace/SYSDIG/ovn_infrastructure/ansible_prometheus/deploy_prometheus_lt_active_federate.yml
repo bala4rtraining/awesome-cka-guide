@@ -1,0 +1,16 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: Make Prometheus lt-active federate from either active or standby
+  hosts: prometheus_server
+  roles:
+    - { role: prometheus, dispatch: ['prometheus_lt_active_federate_active_standby'] }
+  vars:
+    - prometheus_nginx_ssl_certificate_path: "/etc/pki/tls/certs/{{ inventory_hostname }}.pem"
+    - prometheus_nginx_ssl_certificate_key_path: "/etc/pki/tls/private/{{ inventory_hostname }}.pem"
+    - prometheus_nginx_ssl_client_certificate: "/etc/pki/tls/certs/bundle.pem"
+    - prometheus_ssl_enabled: "true"
+    - alertmanager_ssl_enabled: "true"
+    - nginx_exporter_ssl_enabled: "true"
+    - nginx_enable_ssl: "true"
+    - target_prometheus_host: "{{ target_prometheus }}"    

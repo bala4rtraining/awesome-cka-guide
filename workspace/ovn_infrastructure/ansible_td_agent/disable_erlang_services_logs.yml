@@ -1,0 +1,12 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: delete syslog config for fluentd 
+  hosts: ovn_mediator_servers:ovn_switch_servers:ovn_riak_servers:ovn_multidc_sync:ovn_umf_broker:ovn_umf_delivery:ovn_vitalsigns_delivery
+  roles:
+    - {role: syslog, dispatch: ['delete_fluentd_config']}
+
+- name: delete td-agent erlangservices configuration for erlangservices
+  hosts: ovn_mediator_servers:ovn_switch_servers:ovn_riak_servers:ovn_multidc_sync:ovn_umf_broker:ovn_umf_delivery:ovn_vitalsigns_delivery
+  roles:
+    - { role: td_agent, dispatch: ['delete-erlangservices-config'] }

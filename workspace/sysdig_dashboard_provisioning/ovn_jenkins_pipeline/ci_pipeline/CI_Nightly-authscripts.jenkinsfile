@@ -1,0 +1,287 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    options {
+        ansiColor('xterm')
+        timeout(time: 10, unit: 'MINUTES')
+        buildDiscarder(logRotator(daysToKeepStr: '60'))
+    }
+    parameters {
+        string(name: 'PIPELINE_BUILD_NUMBER', defaultValue: '', description: '')
+        string(name: 'PIPELINE_BRANCH', defaultValue: 'master', description: '')
+        string(name: 'MEDIATOR_OVNGIT_REF', defaultValue: '', description: '')
+        string(name: 'UMF_DELIVERY_OVNGIT_REF', defaultValue: '', description: '')
+        string(name: 'VITALSIGNS_DELIVERY_OVNGIT_REF', defaultValue: '', description: '')
+        string(name: 'MULTIDC_SYNC_OVNGIT_REF', defaultValue: '', description: '')
+        string(name: 'SWITCH_OVNGIT_REF', defaultValue: '', description: '')
+        string(name: 'VIP_EF_SYNC_OVNGIT_REF', defaultValue: '', description: '')
+        booleanParam(name: 'DO_STAGE_CLEAN', defaultValue: false, description: 'Whether or not to clean the workspace before checking out.')
+        }
+
+    stages {
+
+    stage('Retrieve latest OVNGIT_REFs') {
+
+        steps{
+            sh '''#!/bin/bash -e
+            source /dev/stdin <<<"`curl -s -f http://sl55ovnapq01.visa.com/git/@pod1/api/v0.8:/ovngit-lib.sh`"
+            ovngit_listbranches > list.txt
+            export SWITCH_OVNGIT_REF="$(grep switch list.txt)"
+            echo "\033[36m SWITCH_OVNGIT_REF=$SWITCH_OVNGIT_REF\033[0m"
+            export MEDIATOR_OVNGIT_REF="$(grep mediator list.txt)"
+            echo "\033[36m MEDIATOR_OVNGIT_REF=$MEDIATOR_OVNGIT_REF\033[0m"
+            export UMF_DELIVERY_OVNGIT_REF="$(grep umf list.txt)"
+            echo "\033[36m UMF_DELIVERY_OVNGIT_REF=$UMF_DELIVERY_OVNGIT_REF\033[0m"
+            export MULTIDC_SYNC_OVNGIT_REF="$(grep multidc list.txt)"
+            echo "\033[36mMULTIDC_SYNC_OVNGIT_REF=$MULTIDC_SYNC_OVNGIT_REF\033[0m"
+            export VIP_EF_SYNC_OVNGIT_REF="$(grep vip list.txt)"
+            echo "\033[36m VIP_EF_SYNC_OVNGIT_REF=$VIP_EF_SYNC_OVNGIT_REF\033[0m"
+            export VITALSIGNS_DELIVERY_OVNGIT_REF="$(grep vitalsigns list.txt)"
+            echo "\033[36m VITALSIGNS_DELIVERY_OVNGIT_REF=$VITALSIGNS_DELIVERY_OVNGIT_REF\033[0m"
+             '''
+        }
+    }
+
+     stage('copy package information from all upstream jobs') {
+       steps {
+
+            echo "copying artifacts"
+            copyArtifacts filter: 'project_*.packages*', flatten: true, optional: true, projectName: 'OVN-OP/ovn_vitalsigns_delivery/master', selector: lastSuccessful(), target: 'testDirectory'
+            copyArtifacts filter: 'project_*.packages*', optional: true, projectName: 'OVN-OP/ovn_mediator/master', selector: lastSuccessful(), target: 'testDirectory'
+            copyArtifacts filter: 'project_*.packages*', optional: true, projectName: 'OVN-OP/ovn_umf_delivery/master', selector: lastSuccessful(), target: 'testDirectory'
+            copyArtifacts filter: 'project_*.packages*', optional: true, projectName: 'OVN-OP/ovn_switch/master', selector: lastSuccessful(), target: 'testDirectory'
+            copyArtifacts filter: 'project_*.packages*', optional: true, projectName: 'OVN-OP/ovn_multidc_sync/master', selector: lastSuccessful(), target: 'testDirectory'
+            copyArtifacts filter: 'project_*.packages*', optional: true, projectName: 'OVN-OP/ovn_vip_ef_sync/master', selector: lastSuccessful(), target: 'testDirectory'
+
+        }
+    }
+      stage('Check existence of package files'){
+        steps{
+        echo "finding testDirectory has any artifacts"
+        sh '''#!/bin/sh
+testDirectory=$1
+if test "$(ls -A "$testDirectory")"; then
+// combine                          remove trailing spaces   remove invalid ovn_rules
+cat */project_latest.packages    | sed  's/ *$//'         | sed 's+ovn_rules.*$+ovn_rules\tcp\tdeps/ovn/ovn_rules+'      |        sort -ui > frozen_$PIPELINE_BUILD_NUMBER.packages
+cat */project_latest.packages.mk | sed  's/ *$//'         | sed 's+dep_ovn_rules.*$+dep_ovn_rules = cp deps/ovn/ovn_rules NA+' | sort -ui > frozen_$PIPELINE_BUILD_NUMBER.packages.mk
+
+echo "PIPELINE_BUILD_DATE=$(date +%Y-%m-%d)" > .prop
+
+
+else
+
+    echo "\033[31m The directory $testDirectory is empty\033[0m"
+
+fi
+
+   '''
+
+        }
+    }
+   stage(' Generate freeze_deps_script.sh'){
+   steps{
+   sh '''#!/bin/sh
+testDirectory=$1
+if test "$(ls -A "$testDirectory")"; then
+
+ [[ $PIPELINE_BRANCH =~ release ]] && exit 0
+
+cat  > freeze_deps_script_$PIPELINE_BUILD_NUMBER.sh <<END
+
+#!/bin/bash
+
+set -xe
+
+TAG="ovn_nightly.$PIPELINE_BUILD_DATE.$PIPELINE_BUILD_NUMBER"
+MSG="Build Tag: ovn_nightly #$PIPELINE_BUILD_NUMBER"
+
+ovn_freeze() {
+    DIR=\\$(pwd)
+    URL=\\$1
+     REVISION=\\$2
+    REPODIR=\\$(mktemp -d)
+
+    pushd \\$REPODIR > /dev/null
+
+    # Checking out built revision
+    git init -q
+    git remote add origin \\$URL
+    git fetch origin --depth 5 -q
+    git checkout \\$REVISION -q
+
+    # Tagging it
+    git tag -a \\$TAG -m "\\$MSG"
+    git push origin \\$TAG
+
+
+    # Freezing deps commit
+    git checkout -b build/\\$TAG
+    cp \\$DIR/frozen_$PIPELINE_BUILD_NUMBER.packages    .frozen.packages
+    cp \\$DIR/frozen_$PIPELINE_BUILD_NUMBER.packages.mk .frozen.packages.mk
+    git add .frozen.packages*
+    git commit -m "Freezeing deps for \\$TAG"
+    git push --set-upstream origin build/\\$TAG
+
+    popd > /dev/null
+    rm -rf \\$REPODIR
+
+}
+
+END
+
+#                            remove all packages
+cat frozen_$PIPELINE_BUILD_NUMBER.packages | sed \'s/^[^#].*// \'  | sed \'s/^#/ovn_freeze/\' >> freeze_deps_script_$PIPELINE_BUILD_NUMBER.sh
+
+else
+
+    echo   The directory $testDirectory is empty  \' (or non-existent) \'
+
+
+fi
+
+  '''
+     }
+    }
+    stage('tag_deps_script'){
+   steps{
+   sh '''#!/bin/sh
+testDirectory=$1
+if test "$(ls -A "$testDirectory")"; then
+[[ $PIPELINE_BRANCH =~ release ]] && exit 0
+
+cat  > tag_deps_script_$PIPELINE_BUILD_NUMBER.sh <<END
+
+#!/bin/bash
+
+#set -xe
+
+TAG="ovn_nightly.$PIPELINE_BUILD_DATE.$PIPELINE_BUILD_NUMBER"
+MSG="Build Tag: ovn_nightly #$PIPELINE_BUILD_NUMBER"
+
+ovn_tag() {
+    TYPE=\$1
+    URL=\$2
+    REVISION=\$3
+
+    [[ \$TYPE == git ]] || return
+
+    DIR=\$(mktemp -d)
+    pushd \$DIR > /dev/null
+    git init -q
+    git remote add origin \$URL
+    git fetch origin --depth 5 -q
+    git checkout \$REVISION -q
+
+    EXISTING_TAG=\$(git tag --points-at \$REVISION| grep "ovn_nightly")
+    #git push --delete origin    \$TAG
+    if [[ -z \$EXISTING_TAG ]]; then
+        git tag -a \$TAG -m "\$MSG"
+        git push origin \$TAG
+    else
+        echo Already tagged as \$EXISTING_TAG, not re-tagging \$URL
+    fi
+
+
+    popd > /dev/null
+    rm -rf $DIR
+}
+
+END
+
+cat frozen_$PIPELINE_BUILD_NUMBER.packages | sed 's/^[^#][^ ^\t]*/ ovn_tag /' >> tag_deps_script_$PIPELINE_BUILD_NUMBER.sh
+
+else
+
+    echo  The directory $testDirectory is empty  \' (or non-existent) \'
+
+fi
+  '''
+
+        }
+    }
+    stage('Generate tag_release_script.sh'){
+   steps{
+    sh '''#!/bin/sh
+testDirectory=$1
+if test "$(ls -A "$testDirectory")"; then
+[[ $PIPELINE_BRANCH =~ release ]] || exit 0
+
+cat  > tag_release_script_$PIPELINE_BUILD_NUMBER.sh <<END
+
+#!/bin/bash
+
+set -xe
+
+[[ -n \$RELEASE_NUMBER ]] || exit -1
+[[ \$RELEASE_NUMBER =~ v ]] || exit -1
+
+MSG="OVN Release \$RELEASE_NUMBER"
+
+ovn_tag_release() {
+    URL=\$1
+    REVISION=\$2
+    REPODIR=\$(mktemp -d)
+    pushd \$REPODIR > /dev/null
+    git init -q
+    git remote add origin \$URL
+    git fetch origin --depth 5 -q
+    git checkout \$REVISION -q
+
+    git tag -a \$RELEASE_NUMBER -m "\$MSG"
+    git push origin \$RELEASE_NUMBER
+
+
+    popd > /dev/null
+    rm -rf \$REPODIR
+}
+
+END
+
+
+#                            remove all packages
+cat frozen_$PIPELINE_BUILD_NUMBER.packages | sed 's/^[^#].*// '  | sed 's/^#/ovn_tag_release/' >> tag_release_script_$PIPELINE_BUILD_NUMBER.sh
+else
+
+    echo  The directory $testDirectory is empty  \' (or non-existent) \'
+
+fi
+   '''
+   }
+    }
+    stage('Generate tag_ovngit_artifacts.sh'){
+        steps{
+            sh '''[[ $PIPELINE_BRANCH =~ release ]] || exit 0
+
+cat  > tag_ovngit_artifacts.sh <<END
+
+#!/bin/bash
+source /dev/stdin <<<"\\`curl -s -f http://sl55ovnapq01.visa.com/git/@pod1/api/v0.8:/ovngit-lib.sh\\`"
+
+ovngit_tag $SWITCH_OVNGIT_REF                release/ovn_switch/\\$RELEASE_VERSION
+ovngit_tag $MEDIATOR_OVNGIT_REF              release/ovn_mediator/\\$RELEASE_VERSION
+ovngit_tag $UMF_DELIVERY_OVNGIT_REF          release/ovn_umf_delivery/\\$RELEASE_VERSION
+ovngit_tag $MULTIDC_SYNC_OVNGIT_REF          release/ovn_multidc_sync/\\$RELEASE_VERSION
+ovngit_tag $VIP_EF_SYNC_OVNGIT_REF           release/ovn_vip_ef_sync/\\$RELEASE_VERSION
+ovngit_tag $VITALSIGNS_DELIVERY_OVNGIT_REF   release/ovn_vitalsigns_delivery/\\$RELEASE_VERSION
+
+
+END
+'''
+
+        }
+    }
+    stage('Archiving generated shellscripts'){
+        steps{
+            archiveArtifacts artifacts: '*.sh, frozen*packages*', caseSensitive: false, defaultExcludes: false
+
+        }
+    }
+ }
+}

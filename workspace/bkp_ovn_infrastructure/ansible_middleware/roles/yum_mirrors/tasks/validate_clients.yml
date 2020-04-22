@@ -1,0 +1,14 @@
+---
+# check the local yum repo base file
+- name: check the clients local base file
+  shell: "cat {{ yum_config_dir }}/local-base-mirror"
+  register: result_lbf
+
+- debug: var=result_lbf.stdout_lines 
+
+# check the server is pointed to which mirror
+- name: check the server is pointed to which mirror
+  shell: "cat {{ yum_config_dir }}/ovn_centos_el7.repo"
+  register: result_rps
+
+- debug: var=result_rps.stdout_lines

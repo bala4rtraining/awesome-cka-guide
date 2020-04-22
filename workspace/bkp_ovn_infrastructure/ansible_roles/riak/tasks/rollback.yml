@@ -1,0 +1,35 @@
+- name: stop riak
+  systemd:
+    name: riak
+    state: stopped
+
+- name: remove riak
+  yum: name="{{ riak_upgrade_rpm }}" state=absent
+
+
+- name: install old version of riak
+  yum: name="{{ artifactory_url }}/ovn-extra-el7/{{ riak_rpm }}" state=present
+
+- name: replace the backed up riakconf
+  shell: cp -rp /root/riak_upgrade/riak.conf_rolbkp /etc/riak/riak.conf 
+
+- name: start riak
+  service: name=riak enabled=yes state=started
+  notify: wait for kv 
+
+- name: Display Riak Version
+  command: riak version
+  register: riakversion
+
+- name: Display Riak version
+  debug:
+    msg: "Riak Version: {{ riakversion.stdout }}"
+
+- name: wait for kv
+  riak:
+    wait_for_service: kv
+
+- name: Wait for Handoffs to complete
+  shell: riak-admin transfers
+
+

@@ -1,0 +1,67 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+        booleanParam(name: 'rollback_yum_servers', defaultValue: false, description: 'if you want to rollback, select the checkbox')
+        booleanParam(name: 'rollback_yum_clients', defaultValue: false, description: 'if you want to rollback, select the checkbox')
+        booleanParam(name: 'rollback_yum_mirrors_service', defaultValue: false, description: 'if you want to rollback, select the checkbox')
+        booleanParam(name: 'restore_yum_mirrors_service_config', defaultValue: false, description: 'if you want to restore config, select the checkbox')
+        string(name: 'branch', defaultValue: '', description: 'Enter the release branch details')
+        string(name: 'extra_vars', defaultValue: '', description: 'any extra vars')
+    }
+
+    stages {
+
+        stage('Checkout ovn_infrastructure repo') {
+            steps{
+                git credentialsId: '', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${params.branch}"
+            }
+        }
+
+        stage('Rollback yum servers') {
+            when { expression { return params.rollback_yum_servers } }
+            steps {
+                ansiColor('xterm') {
+                echo "Rolling back yum servers"
+                ansiblePlaybook (colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: "ansible_ovn/rollback_yum_mirrors_servers.yml" )
+                }
+            }
+        }
+
+        stage('Rollback yum clients') {
+            when { expression { return params.rollback_yum_clients } }
+            steps {
+                ansiColor('xterm') {
+                echo "Rolling back yum clients"
+                ansiblePlaybook (colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: "ansible_ovn/rollback_yum_mirrors_clients.yml" )
+                }
+            }
+        }
+
+        stage('Rollback yum mirrors service') {
+            when { expression { return params.rollback_yum_mirrors_service } }
+            steps {
+                ansiColor('xterm') {
+                echo "Rolling back yum mirrors service"
+                ansiblePlaybook (colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: "ansible_ovn/rollback_yum_mirrors_service.yml" )
+                }
+            }
+        }
+
+        stage('Restore yum mirrors service config') {
+            when { expression { return params.restore_yum_mirrors_service_config } }
+            steps {
+                ansiColor('xterm') {
+                echo "Restoring back yum mirrors service config file"
+                ansiblePlaybook (colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: "ansible_ovn/deploy_yum_mirrors_service_config.yml" )
+                }
+            }
+        }
+    }
+}

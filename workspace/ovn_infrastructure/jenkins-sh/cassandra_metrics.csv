@@ -1,0 +1,5 @@
+Cassandra Uptime Status,number,uptime
+Write Count on Cluster,timeSeries,cassandra.write.count
+Read Count on Cluster,timeSeries,cassandra.read.count
+Write Request Total Latency,timeSeries,cassandra.write.total.latency
+Read Request Total Latency,timeSeries,cassandra.read.total.latency

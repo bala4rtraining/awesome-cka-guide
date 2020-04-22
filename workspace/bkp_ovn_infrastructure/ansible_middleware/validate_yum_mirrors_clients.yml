@@ -1,0 +1,9 @@
+---
+- include: mware_vars.yml ovn_vars_hosts="{{ target_hosts | default('all') }}"
+ 
+
+# validate the existing yum clients
+- name: validate the existing yum clients
+  hosts: "{{ target_hosts | default('all:!yum_mirror_servers') }}"
+  roles:
+    - { role: yum_mirrors, dispatch: ['validate_clients']}

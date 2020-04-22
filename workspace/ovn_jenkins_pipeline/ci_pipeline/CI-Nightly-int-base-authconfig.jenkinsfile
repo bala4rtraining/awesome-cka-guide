@@ -1,0 +1,70 @@
+@Library('ovn-shared-library') _
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+   }
+  environment {
+    CLUSTER = 'int-base'
+    DATACENTER1 = 'dc1'
+    DATACENTER2 = 'dc2'
+  }
+  stages {
+  stage('Checkout SCM'){
+            steps{
+            git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git'
+            }
+        }
+        stage('Prepare') {
+               steps {
+                   sh '''
+                       git show -s --pretty=%ce > .git/committer-email
+                       echo .git/committer-email
+                   '''
+               }
+           }
+
+// int-base will always build the Current_release_level           
+    stage('load the nightly_release_manifest') {
+        steps {
+              sh '''cp app_vars/release_manifest.yml release_manifest.yml
+              cat release_manifest.yml
+        '''
+      }
+    }
+    stage('archiving artifacts') {
+       steps{
+            archiveArtifacts 'release_manifest.yml'
+
+        }
+      }
+    }
+  post {
+      success {
+          withCredentials([sshUserPrivateKey(credentialsId: 'stash', keyFileVariable: 'SSH_KEY')]) {
+              sh '''
+      git checkout -B nightly-int-base
+      git fetch origin nightly-int-base:nightly-int-base || true
+      cp release_manifest.yml app_vars/release_manifest.yml
+      rm -rf release_manifest.yml
+      rm -rf list.txt
+      git add app_vars/release_manifest.yml
+      git commit -q -m "release_manifest.yml: Update with new nightly build" || true
+      git clean -f
+      git push -f origin nightly-int-base
+         '''
+          }
+       }
+       failure {
+                script {
+                    def committer_email = readFile('.git/committer-email').trim()
+                    mail body: "${JOB_NAME} build number ${BUILD_NUMBER} was unsuccessful. \n More info at ${BUILD_URL} \n Last committer was: ${committer_email}\n ${GIT_COMMIT} ",
+                    subject: "${JOB_NAME} job: Build failed testing wider recipient ",
+                    to: "GDL - OVN Nightly alerts <GDLOVNNightlyalerts@visa.com>, ${committer_email}"
+             }
+          }
+          }
+   }

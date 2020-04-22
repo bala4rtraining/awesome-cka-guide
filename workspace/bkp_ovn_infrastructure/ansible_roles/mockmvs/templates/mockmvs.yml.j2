@@ -1,0 +1,43 @@
+name: mockmvs
+ftpserver:
+  ListenHost: localhost
+  ListenPort: {{ mockmvs_ftp_auth_port }}
+  DataPortRange:
+    start: {{ mockmvs_ftp_pasv_min_port }}
+    end: {{ mockmvs_ftp_pasv_max_port }}
+hdfs:
+  namenodes:
+  {% for item in groups['hadoop_namenodes'] %}
+    - {{ hostvars[item].inventory_hostname }}:{{ hadoop_namenode_rpc_port }}
+  {% endfor %}
+
+  directory: "{{ mockmvs_hdfs_root_dir }}"
+  perm: "{{ mockmvs_hdfs_perm }}""
+  username: "{{ mockmvs_hdfs_username }}"
+logger:
+  level: debug
+  development: true
+  disable-caller: false
+  disable-stacktrace: false
+  encoding: json
+  encoder-config:
+    message-key: msg
+    level-key: level
+    time-key: ts
+    name-key: logger
+    caller-key: src
+    stacktrace-key: stacktrace
+    line-ending: "\n"
+    level-encoder: lowercase
+    time-encoder: iso8601
+    duration-encoder: seconds
+    caller-encoder: short
+  output-paths:
+    - stdout
+  error-output-paths:
+    - stderr
+tracing:
+  disable: false
+  type: jaeger
+  jaeger:
+    log-spans: false

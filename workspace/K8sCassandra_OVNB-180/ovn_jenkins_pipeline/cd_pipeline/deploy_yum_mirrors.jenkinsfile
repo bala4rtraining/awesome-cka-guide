@@ -1,0 +1,67 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+        booleanParam(name: 'deploy_yum_servers', defaultValue: false, description: 'if you want to deploy, select the checkbox')
+        booleanParam(name: 'deploy_yum_clients', defaultValue: false, description: 'if you want to deploy, select the checkbox')
+        booleanParam(name: 'deploy_yum_mirrors_service', defaultValue: false, description: 'if you want to deploy service, select the checkbox.')
+        booleanParam(name: 'deploy_yum_mirrors_service_config', defaultValue: false, description: 'if you want to deploy config, select the checkbox.')
+        string(name: 'branch', defaultValue: '', description: 'Enter the release branch details')
+        string(name: 'extra_vars', defaultValue: '', description: 'any extra vars')
+    }
+
+    stages {
+
+        stage('Checkout ovn_infrastructure repo') {
+            steps{
+                git credentialsId: '', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${params.branch}"
+            }
+        }
+
+        stage('Deploy yum servers') {
+            when { expression { return params.deploy_yum_servers } }
+            steps {
+                ansiColor('xterm') {
+                echo "yum servers"
+                ansiblePlaybook (colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: "ansible_ovn/deploy_yum_mirrors_servers.yml" )
+                }
+            }
+        }
+
+        stage('Deploy yum clients') {
+            when { expression { return params.deploy_yum_clients } }
+            steps {
+                ansiColor('xterm') {
+                echo "yum clients"
+                ansiblePlaybook (colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: "ansible_ovn/deploy_yum_mirrors_clients.yml" )
+                }
+            }
+        }
+
+        stage('Deploy yum mirrors service') {
+            when { expression { return params.deploy_yum_mirrors_service } }
+            steps {
+                ansiColor('xterm') {
+                echo "Deploying yum mirrors service"
+                ansiblePlaybook (colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: "ansible_ovn/deploy_yum_mirrors_service.yml" )
+                }
+            }
+        }
+
+        stage('Deploy yum mirrors service config') {
+            when { expression { return params.deploy_yum_mirrors_service_config } }
+            steps {
+                ansiColor('xterm') {
+                echo "Deploying yum mirrors service config file"
+                ansiblePlaybook (colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} ${params.extra_vars} --become", playbook: "ansible_ovn/deploy_yum_mirrors_service_config.yml" )
+                }
+            }
+        }
+    }
+}

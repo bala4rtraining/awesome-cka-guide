@@ -1,0 +1,17 @@
+## {{ ansible_managed }}
+## setup the STATSD demon aggregator on this host, which forwards metrics to the Carbon/graphite server
+[statsd_input]
+type = "StatsdInput"
+stat_accum_name = "OVNstats_accumulator"
+address = "{{ statsd_host }}:{{ heka_statsd_port }}"
+
+[OVNstats_accumulator]
+type = "StatAccumInput"
+ticker_interval = 10
+emit_in_fields = true
+global_prefix = "{{ ansible_hostname }}"
+
+[CarbonOutput]
+message_matcher = "Type == 'heka.statmetric'"
+address = "{{ carbon_host }}:{{ carbon_port }}"
+protocol = "tcp"

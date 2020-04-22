@@ -1,0 +1,16 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=kibana
+
+- name: Set Elastic Search Hostname based on eserv_type=lbonly host attribute
+  hosts: elasticsearch:kibana
+  tasks:
+    - set_fact: elasticsearch_host="{{ hostvars[item]['ansible_nodename'] }}"
+      with_items: "{{ groups['elasticsearch'] }}"
+      when: hostvars[item].eserv_type == "lbonly"
+
+# simple playbook for running the kibana role.
+- name: run the elasticsearch playbook to install or reinstall kibana
+  hosts: kibana
+  roles:
+     - kibana
+

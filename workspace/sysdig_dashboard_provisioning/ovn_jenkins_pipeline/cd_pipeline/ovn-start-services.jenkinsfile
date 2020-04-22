@@ -1,0 +1,212 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+        booleanParam(name: 'riak',                           defaultValue: false, description: '')
+        booleanParam(name: 'zookeeper',                      defaultValue: false, description: '')
+        booleanParam(name: 'kafka_mirror_maker',             defaultValue: false, description: '')
+        booleanParam(name: 'kafka',                          defaultValue: false, description: '')
+        booleanParam(name: 'nomad',                          defaultValue: false, description: '')
+        booleanParam(name: 'ovn_xdc_sync',                   defaultValue: false, description: '')
+        booleanParam(name: 'cas_tools_server',               defaultValue: false, description: '')
+        booleanParam(name: 'ovn_multidc_sync',               defaultValue: false, description: '')
+        booleanParam(name: 'ovn_vip_ef_sync',                defaultValue: false, description: '')
+        booleanParam(name: 'ovn_vitalsigns_delivery',        defaultValue: false, description: '')
+        booleanParam(name: 'elasticsearch',                  defaultValue: false, description: '')
+        booleanParam(name: 'ovn_umf_delivery_apf',           defaultValue: false, description: '')
+        booleanParam(name: 'ovn_umf_delivery_ub',            defaultValue: false, description: '')
+        booleanParam(name: 'ovn_umf_delivery_ub2',           defaultValue: false, description: '')
+        booleanParam(name: 'ovn_switch',                     defaultValue: false, description: '')
+        booleanParam(name: 'ovn_mediator',                   defaultValue: false, description: '')
+        booleanParam(name: 'haproxy',                        defaultValue: false, description: '')
+    }
+
+    stages {
+
+        stage('Checkout ovn_infrastructure repo') {
+            steps{
+                checkout poll: false, scm: [$class: 'GitSCM', branches: [[name: 'master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git']]]
+            }
+        }
+
+        stage('Start riak') {
+            when { expression { return params.riak } }
+            steps {
+                ansiColor('xterm') {
+                echo "riak"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ovn_riak_servers" -e "servicename=riak" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start zookeeper') {
+            when { expression { return params.zookeeper } }
+            steps {
+                ansiColor('xterm') {
+                echo "zookeeper"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=zookeeper" -e "servicename=zookeeper" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start kafka_mirror_maker') {
+            when { expression { return params.kafka_mirror_maker } }
+            steps {
+                ansiColor('xterm') {
+                echo "kafka_mirror_maker"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=kafka_mirror_maker" -e "servicename=kafka_mirror_maker" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start kafka') {
+            when { expression { return params.kafka} }
+            steps {
+                ansiColor('xterm') {
+                echo "kafka"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=kafka" -e "servicename=kafka" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start nomad') {
+            when { expression { return params.nomad } }
+            steps {
+                ansiColor('xterm') {
+                echo "nomad-server"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=nomad_server" -e "servicename=nomad-server" -e "newstate=started"' )
+                echo "nomad-client"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=nomad_client" -e "servicename=nomad-client" -e "newstate=started"' )
+                echo "nomad-vss-client"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ovn_vss_servers" -e "servicename=nomad-vss-client" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start ovn_xdc_sync') {
+            when { expression { return params.ovn_xdc_sync} }
+            steps {
+                ansiColor('xterm') {
+                echo "ovn_xdc_sync"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ovn_xdc_sync" -e "servicename=ovn_xdc_sync" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start cas-tools-server') {
+            when { expression { return params.cas_tools_server } }
+            steps {
+                ansiColor('xterm') {
+                echo "cas-tools-server"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=cas_tool" -e "servicename=cas-tools-server" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start ovn_multidc_sync') {
+            when { expression { return params.ovn_multidc_sync } }
+            steps {
+                ansiColor('xterm') {
+                echo "ovn_multidc_sync"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ovn_multidc_sync" -e "servicename=ovn_multidc_sync" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start ovn_vip_ef_sync') {
+            when { expression { return params.ovn_vip_ef_sync } }
+            steps {
+                ansiColor('xterm') {
+                echo "ovn_vip_ef_sync"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ftps_server" -e "servicename=ovn_vip_ef_sync" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start ovn_vitalsigns_delivery') {
+            when { expression { return params.ovn_vitalsigns_delivery } }
+            steps {
+                ansiColor('xterm') {
+                echo "ovn_vitalsigns_delivery"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ovn_vitalsigns_delivery" -e "servicename=ovn_vitalsigns_delivery" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start elasticsearch') {
+            when { expression { return params.elasticsearch } }
+            steps {
+                ansiColor('xterm') {
+                echo "elasticsearch"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=elasticsearch" -e "servicename=elasticsearch" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start ovn_umf_delivery_apf') {
+            when { expression { return params.ovn_umf_delivery_apf } }
+            steps {
+                ansiColor('xterm') {
+                echo "ovn_umf_delivery_apf"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ovn_umf_delivery" -e "servicename=ovn_umf_delivery_apf" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start ovn_umf_delivery_ub') {
+            when { expression { return params.ovn_umf_delivery_ub} }
+            steps {
+                ansiColor('xterm') {
+                echo "ovn_umf_delivery_ub"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ovn_umf_delivery" -e "servicename=ovn_umf_delivery_ub" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start ovn_umf_delivery_ub2') {
+            when { expression { return params.ovn_umf_delivery_ub2 } }
+            steps {
+                ansiColor('xterm') {
+                echo "ovn_umf_delivery_ub2"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ovn_umf_delivery" -e "servicename=ovn_umf_delivery_ub2" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start ovn_switch') {
+            when { expression { return params.ovn_switch } }
+            steps {
+                ansiColor('xterm') {
+                echo "ovn_switch"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ovn_switch_servers" -e "servicename=ovn_switch" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start ovn_mediator') {
+            when { expression { return params.ovn_mediator } }
+            steps {
+                ansiColor('xterm') {
+                echo "ovn_mediator"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=ovn_mediator_servers" -e "servicename=ovn_mediator" -e "newstate=started"' )
+                }
+            }
+        }
+
+        stage('Start haproxy') {
+            when { expression { return params.haproxy } }
+            steps {
+                ansiColor('xterm') {
+                echo "haproxy"
+                ansiblePlaybook (colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}/hosts", playbook: "ansible_ovn/startstopservice.yml", extras: '-e "group=haproxy" -e "servicename=haproxy" -e "newstate=started"' )
+                }
+            }
+        }
+    }
+}

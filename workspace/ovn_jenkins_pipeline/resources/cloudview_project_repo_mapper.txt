@@ -1,0 +1,8 @@
+ovn_msgprocessor: OVK8MP
+ovn_msgprocessor: OVK8MPP
+ovn_mptestingtool: OVK8MPTT
+ovn_timer: OVK8TIMER
+ovn_hsmwrapper: OVK8HSMWRAP
+ovn-hsm-simulator: OVK8HSMSIM
+ovn_advicestorage: OVK8ADVSTORE
+ovn_advicerecovery: OVK8ADVREC

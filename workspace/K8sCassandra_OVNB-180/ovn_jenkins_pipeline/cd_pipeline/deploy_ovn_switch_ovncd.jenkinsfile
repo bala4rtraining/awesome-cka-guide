@@ -1,0 +1,54 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  parameters {
+    choice(name: 'RIAK_TLS_ENABLED', choices: 'true\nfalse', description: '')
+    choice(name: 'KAFKA_TLS_ENABLED', choices: 'true\nfalse', description: '')
+    string(name: 'extra_vars', defaultValue: '', description: 'any extra vars')
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+      steps {
+        setClusterAndDatacenter(env);
+      }
+     } 
+    stage('checkout SCM'){
+      steps{
+        git credentialsId: 'ovncd_ssh_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    stage('deploy_ovn_switch'){
+      steps{
+        ansiColor('xterm'){
+           ansiblePlaybook playbook: 'ansible_ovn/clean_ovn_switch.yml',
+                           inventory: 'inventories/$CLUSTER/$DATACENTER',
+                           credentialsId: 'ovncd_ssh_key',
+                           colorized: true,
+                           sudoUser: null,
+                           extras: "${params.extra_vars} --become"
+
+           ansiblePlaybook playbook: 'ansible_ovn/deploy_ovn_switch.yml',
+                           inventory: 'inventories/$CLUSTER/$DATACENTER',
+                           credentialsId: 'ovncd_ssh_key',
+                           colorized: true,
+                           forks: 20,
+                           sudoUser: null,
+                           extras: "${params.extra_vars} --become -e riak_tls_enabled=$RIAK_TLS_ENABLED -e kafka_tls_enabled=$KAFKA_TLS_ENABLED "
+        }
+      }
+    }
+  }
+}

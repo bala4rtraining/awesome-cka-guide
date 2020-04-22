@@ -1,0 +1,8 @@
+---
+- name: Copy schema
+  template:
+    src: jaeger_v001.cql.j2
+    dest: /opt/app/schemas/jaeger_v001.cql
+
+- name: Import schema
+  command: cqlsh -f /opt/app/schemas/jaeger_v001.cql

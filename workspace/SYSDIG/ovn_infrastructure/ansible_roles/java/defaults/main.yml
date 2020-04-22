@@ -1,0 +1,7 @@
+---
+OpenJdk_older_version: java-1.8.0-openjdk
+OpenJdk_latest_version: java-1.8.0-openjdk
+OpenJdk_latest_version_number: 1.8.0_161
+OpenJdk_latest_name: java-1.8.0-openjdk-1.8.0.161-0.b14.el7_4.x86_64
+OracleJre_older_version: jre1.8.0_212
+OracleJre_latest_version_number: 1.8.0_221

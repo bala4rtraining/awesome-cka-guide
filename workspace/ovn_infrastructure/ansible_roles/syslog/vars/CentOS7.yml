@@ -1,0 +1,11 @@
+---
+# vars file for syslog  (only used for CentOS7)
+
+# Centos7 now uses the repo method of loading RPMS
+syslog_rpms:
+ - rsyslog-elasticsearch
+
+syslog_userepo: true
+
+imjournal_modload: true
+imklog_modload: false

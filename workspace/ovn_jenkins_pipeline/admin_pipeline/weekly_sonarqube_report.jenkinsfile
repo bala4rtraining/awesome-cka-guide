@@ -1,0 +1,45 @@
+/*
+ * File: weekly_sonarqube_report.jenkinsfile
+ * Purpose: 
+ *   Jenkins pipeline that automatically triggers the weekly sonarqube code coverage script
+*    in jenkins-sh/get_sonarqube_status.sh 
+ * Maintained by: NA - OVN Tools & Automation <NAOVNToolsAutomation@visa.com>
+ *
+*/
+pipeline {
+  agent {
+    docker {
+      image 'centos7_ovn_docker:latest'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /opt/app/ovnhub:/opt/app/ovnhub'
+    }
+  }
+  stages {
+    stage('Run script') {
+      steps {
+        ansiColor('xterm') {
+          withCredentials([sshUserPrivateKey(credentialsId: 'sl73ovnapd112_ssh_key', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USERNAME')]) {
+            sh '''
+            sh jenkins-sh/get_sonarqube_status.sh "$SSH_KEY_FILE" "$SSH_USERNAME"
+            '''
+          }
+        }
+      }
+    }
+  }
+  post {
+      always {
+          cleanWs()
+      }
+      failure {
+          script {
+            emailBody = "Weekly SonarQube code coverage report task failed, please check the console at ${BUILD_URL}"
+            subject = "[Failed] Weekly SonarQube code coverage report task failed [Failed]"
+            mail body: emailBody,
+            subject: subject,
+            from: "OVN Admin Job Jenkins <noreply@visa.com>",
+            to: "NAOVNToolsAutomation@visa.com"
+        }
+    }
+  }
+}

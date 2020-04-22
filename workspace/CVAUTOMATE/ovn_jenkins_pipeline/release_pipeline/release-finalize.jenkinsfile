@@ -1,0 +1,178 @@
+// Jenkinsfile to create a new Release Candidate for one Authorization service.
+
+def getReference(Path) {
+    try {
+        readFile(Path)
+    }
+    catch (err) {
+        print "Path missing, using empty value"
+        return ""
+    }
+}
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        booleanParam(name: 'RELEASE_OVN_MEDIATOR',            defaultValue: false, description: 'Is OVN Mediator part of this release?')
+        booleanParam(name: 'RELEASE_OVN_SWITCH',              defaultValue: false, description: 'Is OVN Switch part of this release?')
+        booleanParam(name: 'RELEASE_OVN_UMF_DELIVERY',        defaultValue: false, description: 'Is OVN UMF Delivery part of this release?')
+        booleanParam(name: 'RELEASE_OVN_VITALSIGNS_DELIVERY', defaultValue: false, description: 'Is OVN Vitalsigns Delivery part of this release?')
+        booleanParam(name: 'RELEASE_OVN_MULTIDC_SYNC',        defaultValue: false, description: 'Is OVN Multidc Sync part of this release?')
+        booleanParam(name: 'RELEASE_OVN_VIP_EF_SYNC',         defaultValue: false, description: 'Is OVN VIP EF Sync part of this release?')
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        FINAL_RELEASE_TAG = "v${params.RELEASE_VERSION}"
+        REF_DIR = "reference_files"
+    }
+
+    stages {
+
+        stage ('Finalize Mediator release') {
+            when { expression { return params.RELEASE_OVN_MEDIATOR } }
+            environment {
+                SERVICE_NAME = "ovn_mediator"
+                REPOSITORY_URL = "ssh://git@stash.trusted.visa.com:7999/op/${SERVICE_NAME}.git"
+                TMP_DIR = "${SERVICE_NAME}_repo"
+            }
+            steps {
+                build job: 'finalize-single-release', parameters: [
+                    string(name: 'SERVICE_NAME',    value: "${SERVICE_NAME}"),
+                    validatingString(name: 'RELEASE_VERSION', value: params.RELEASE_VERSION)
+                ]
+                copyArtifacts filter: "ovngit.ref", optional: true, projectName: "OVN-OP/${SERVICE_NAME}/${RELEASE_BRANCH}", selector: lastSuccessful(), target: "${REF_DIR}/${SERVICE_NAME}/"
+                script {
+                    REF_1 = getReference("${REF_DIR}/${SERVICE_NAME}/ovngit.ref")
+                }
+            }
+        }
+
+        stage ('Finalize Switch release') {
+            when { expression { return params.RELEASE_OVN_SWITCH } }
+            environment {
+                SERVICE_NAME = "ovn_switch"
+                REPOSITORY_URL = "ssh://git@stash.trusted.visa.com:7999/op/${SERVICE_NAME}.git"
+                TMP_DIR = "${SERVICE_NAME}_repo"
+            }
+            steps {
+                build job: 'finalize-single-release', parameters: [
+                    string(name: 'SERVICE_NAME',    value: "${SERVICE_NAME}"),
+                    validatingString(name: 'RELEASE_VERSION', value: params.RELEASE_VERSION)
+                ]
+                copyArtifacts filter: "ovngit.ref", optional: true, projectName: "OVN-OP/${SERVICE_NAME}/${RELEASE_BRANCH}", selector: lastSuccessful(), target: "${REF_DIR}/${SERVICE_NAME}/"
+                script {
+                    REF_2 = getReference("${REF_DIR}/${SERVICE_NAME}/ovngit.ref")
+                }
+            }
+        }
+
+        stage ('Finalize UMF Delivery release') {
+            when { expression { return params.RELEASE_OVN_UMF_DELIVERY } }
+            environment {
+                SERVICE_NAME = "ovn_umf_delivery"
+                REPOSITORY_URL = "ssh://git@stash.trusted.visa.com:7999/op/${SERVICE_NAME}.git"
+                TMP_DIR = "${SERVICE_NAME}_repo"
+            }
+            steps {
+                build job: 'finalize-single-release', parameters: [
+                    string(name: 'SERVICE_NAME',    value: "${SERVICE_NAME}"),
+                    validatingString(name: 'RELEASE_VERSION', value: params.RELEASE_VERSION)
+                ]
+                copyArtifacts filter: "ovngit.ref", optional: true, projectName: "OVN-OP/${SERVICE_NAME}/${RELEASE_BRANCH}", selector: lastSuccessful(), target: "${REF_DIR}/${SERVICE_NAME}/"
+                script {
+                    REF_3 = getReference("${REF_DIR}/${SERVICE_NAME}/ovngit.ref")
+                }
+            }
+        }
+
+        stage ('Finalize Vitalsigns Delivery release') {
+            when { expression { return params.RELEASE_OVN_VITALSIGNS_DELIVERY } }
+            environment {
+                SERVICE_NAME = "ovn_vitalsigns_delivery"
+                REPOSITORY_URL = "ssh://git@stash.trusted.visa.com:7999/op/${SERVICE_NAME}.git"
+                TMP_DIR = "${SERVICE_NAME}_repo"
+            }
+            steps {
+                build job: 'finalize-single-release', parameters: [
+                    string(name: 'SERVICE_NAME',    value: "${SERVICE_NAME}"),
+                    validatingString(name: 'RELEASE_VERSION', value: params.RELEASE_VERSION)
+                ]
+                copyArtifacts filter: "ovngit.ref", optional: true, projectName: "OVN-OP/${SERVICE_NAME}/${RELEASE_BRANCH}", selector: lastSuccessful(), target: "${REF_DIR}/${SERVICE_NAME}/"
+                script {
+                    REF_4 = getReference("${REF_DIR}/${SERVICE_NAME}/ovngit.ref")
+                }
+            }
+        }
+
+        stage ('Finalize Multidc Sync release') {
+            when { expression { return params.RELEASE_OVN_MULTIDC_SYNC } }
+            environment {
+                SERVICE_NAME = "ovn_multidc_sync"
+                REPOSITORY_URL = "ssh://git@stash.trusted.visa.com:7999/op/${SERVICE_NAME}.git"
+                TMP_DIR = "${SERVICE_NAME}_repo"
+            }
+            steps {
+                build job: 'finalize-single-release', parameters: [
+                    string(name: 'SERVICE_NAME',    value: "${SERVICE_NAME}"),
+                    validatingString(name: 'RELEASE_VERSION', value: params.RELEASE_VERSION)
+                ]
+                copyArtifacts filter: "ovngit.ref", optional: true, projectName: "OVN-OP/${SERVICE_NAME}/${RELEASE_BRANCH}", selector: lastSuccessful(), target: "${REF_DIR}/${SERVICE_NAME}/"
+                script {
+                    REF_5 = getReference("${REF_DIR}/${SERVICE_NAME}/ovngit.ref")
+                }
+            }
+        }
+
+        stage ('Finalize VIP EF Sync release') {
+            when { expression { return params.RELEASE_OVN_VIP_EF_SYNC } }
+            environment {
+                SERVICE_NAME = "ovn_vip_ef_sync"
+                REPOSITORY_URL = "ssh://git@stash.trusted.visa.com:7999/op/${SERVICE_NAME}.git"
+                TMP_DIR = "${SERVICE_NAME}_repo"
+            }
+            steps {
+                build job: 'finalize-single-release', parameters: [
+                    string(name: 'SERVICE_NAME',    value: "${SERVICE_NAME}"),
+                    validatingString(name: 'RELEASE_VERSION', value: params.RELEASE_VERSION)
+                ]
+                copyArtifacts filter: "ovngit.ref", optional: true, projectName: "OVN-OP/${SERVICE_NAME}/${RELEASE_BRANCH}", selector: lastSuccessful(), target: "${REF_DIR}/${SERVICE_NAME}/"
+                script {
+                    REF_6 = getReference("${REF_DIR}/${SERVICE_NAME}/ovngit.ref")
+                }
+            }
+        }
+
+
+        // Note that the integration of the next stage doesn't work.
+        // When added, it complains for each stage that isn't executed as the REF_*
+        // variable isn't defined. This should be fixing by initilizing all these varibles safely.
+
+        // stage ('Update Release Manifest') {
+
+        //     steps {
+        //         build job: 'release-update-manifest', parameters: [
+
+        //             string(      name: 'OVN_MEDIATOR_REF',               value: "${REF_1}"),
+        //             string(      name: 'OVN_SWITCH_REF',                 value: "${REF_2}"),
+        //             string(      name: 'OVN_UMF_DELIVERY_REF',           value: "${REF_3}"),
+        //             string(      name: 'OVN_VITALSIGNS_DELIVERY_REF',    value: "${REF_4}"),
+        //             string(      name: 'OVN_MULTIDC_SYNC_REF',           value: "${REF_5}"),
+        //             string(      name: 'OVN_VIP_EF_SYNC_REF',            value: "${REF_6}"),
+        //             string(      name: 'RELEASE_BRANCH',                 value: "${RELEASE_BRANCH}"),
+        //             string(      name: 'ENVIRONMENT',                    value: 'general')
+        //         ]
+        //     }
+        // }
+    }
+}

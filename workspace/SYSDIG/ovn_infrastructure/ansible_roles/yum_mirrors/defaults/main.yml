@@ -1,0 +1,58 @@
+---
+#directory to store the packages
+yum_mirror_dir: /opt/app/data/yum-mirror
+yum_config_dir: /etc/yum.repos.d
+
+# name of the repo
+yum_repos: ovn-deployment-el7
+yum_repos_source: artifactory.trusted.visa.com
+
+# nginx variables
+nginx_user: nginx
+nginx_group: nginx
+
+# nginx http port
+nginx_default_port: 8443
+
+# yum mirrors variables
+yum_primary_server: "{{ groups['yum_mirror_servers'][0] }}"
+yum_secondary_server: "{{ groups['yum_mirror_servers'][1] }}"
+
+yum_local_primary_server: "{{ yum_primary_server }}"
+yum_local_secondary_server: "{{ yum_secondary_server }}"
+
+# disable spacewalk repo
+disabled_yum_repos: centos7-patch-channel-oct2015
+
+artifactory_url: "https://artifactory.trusted.visa.com"
+
+# Artifactory variables used 
+artifactory_deployment_url: '{{ artifactory_url }}/ovn-deployment-el7'
+
+enable_ovn_yumrepo: '1'
+
+# yum mirrors base file
+mirrorlist_file: 'file:///etc/yum.repos.d/local-base-mirror'
+
+# service variables
+yummirrors_name: "yummirrors"
+yummirrors_version: "v1.0"
+yummirrors_platform: "linux-amd64"
+yummirrors_tarball: "{{yummirrors_name}}-{{yummirrors_version}}-{{yummirrors_platform}}.tar.gz"
+release_artifactory_url: "https://artifactory.trusted.visa.com/ovn-deployment-el7"
+yummirrors_artifact_url: "{{ release_artifactory_url }}/{{yummirrors_tarball}}"
+
+yummirrors_install_dir: "{{yum_mirror_dir}}/{{yummirrors_name}}"
+yummirrors_log_dir: "/var/log/{{yummirrors_name}}"
+
+
+yummirrors_service: "{{yummirrors_name}}.service"
+yummirrors_service_template: "{{yummirrors_name}}.service.j2"
+
+# Application Specific defaults
+yummirrors_config: "{{yummirrors_name}}.yaml"
+yummirrors_config_template: "{{yummirrors_name}}.yaml.j2"
+sync_timeout_hour: 6
+sync_start_time: 00h00m
+sync_times_in_a_day: 2
+local_repo_path: /opt/app/data/yum-mirror/ovn-deployment-el7

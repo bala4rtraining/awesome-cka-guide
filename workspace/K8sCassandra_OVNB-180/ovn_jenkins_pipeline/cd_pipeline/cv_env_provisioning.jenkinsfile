@@ -1,0 +1,32 @@
+//
+// This pipeline is for Provisioning environment Cloud View
+//
+
+pipeline {
+
+ agent any
+
+
+ stages {
+
+  stage('checkout SCM') {
+   steps {
+    git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_devcassandra.git', branch: "master"
+   }
+  }
+  
+
+  stage('ProvisioningEnv') {
+   steps {
+    sh 'cvautomate/cv_env_provisioning.sh'
+   }
+   post {
+    always {
+     cleanWs()
+    }
+   }
+  }
+
+
+ }
+}

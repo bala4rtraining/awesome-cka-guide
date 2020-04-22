@@ -1,0 +1,80 @@
+---
+# Provision tasks file for vault
+
+- name: Create Vault group
+  group: >
+    name={{ vault_group }}
+    system=yes
+    state=present
+
+- name: Create Vault user
+  user: >
+    name={{ vault_user }}
+    shell=/bin/false
+    createhome=no
+    group={{ vault_group }}
+    system=yes
+    state=present
+
+- name: Unarchive Vault release
+  unarchive: >
+    src={{ vault_url }}
+    dest={{ vault_install_dir }}
+    copy=no
+    owner={{ vault_user }}
+    group={{ vault_group }}
+
+- name: Create Vault configuration directory
+  file: >
+    path={{ vault_config_dir }}
+    owner=root
+    group=root
+    mode=0755
+    state=directory
+
+- name: Create Vault configuration file
+  template: >
+    src=vault.hcl.j2
+    dest={{ vault_config_dir }}/vault.hcl
+    owner=root
+    group={{ vault_group }}
+    mode=0640
+#  notify: restart vault
+
+- name: Create Vault TLS configuration directory
+  file: >
+    path={{ vault_backend_consul_tls_config_dir }}
+    owner=root
+    group=root
+    mode=0755
+    state=directory
+
+- name: Populate TLS certificate for consul backend
+  copy: >
+    content={{ vault_backend_consul_tls_certificate }}
+    dest={{ vault_backend_consul_tls_cert_file }}
+    owner={{ vault_user }}
+    group={{ vault_group }}
+    mode=0644
+
+- name: Populate TLS ca for consul backend
+  copy: >
+    content={{ vault_backend_consul_tls_ca_certificate }}
+    dest={{ vault_backend_consul_tls_ca_file }}
+    owner={{ vault_user }}
+    group={{ vault_group }}
+    mode=0644
+
+- name: Give vault access to mlock syscall
+  capabilities: >
+    path={{ vault_install_dir }}/vault
+    capability='cap_ipc_lock+ep'
+    state=present
+  ignore_errors: True
+
+# CentOS 7 Specific tasks file for vault
+
+- name: Include CentOS specific vars
+  include_vars: "CentOS.yml"
+
+- include: CentOS/CentOS_provision.yml

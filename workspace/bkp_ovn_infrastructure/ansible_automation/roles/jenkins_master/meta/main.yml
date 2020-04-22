@@ -1,0 +1,3 @@
+---
+dependencies:
+- { role: tools, dispatch: ['vicacert', 'oracle_jdk', 'stash_ssh_access', 'git'] }

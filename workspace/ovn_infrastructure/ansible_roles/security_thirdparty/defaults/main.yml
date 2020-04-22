@@ -1,0 +1,20 @@
+---
+
+tripwire_server_port: 9898
+tripwire_rtm_port: 1169
+tripwire_passphrase_to_use: tripw1re
+tripwire_uninstall_cmd: "/opt/security/tripwire/te/agent/bin/uninstall.sh"
+tripwire_service_name: "twdaemon"
+tripwire_install_dir: "/opt/security/tripwire/te/agent/"
+tripwire_download_dir: "/tmp/tripwire"
+tripwire_tgz_file_name: "te_agent_8.5.5_en_linux_x86_64.tgz"
+tripwire_artifact_url: "https://artifactory.trusted.visa.com/seceng/{{ tripwire_tgz_file_name }}"
+
+#---- tanium ----
+tanium_download_dir: "/tmp/tanium"
+tanium_rpm: "TaniumClient"
+tanium_command_fix_line_endings: "tr -d '\\r' < {{ tanium_download_dir }}/install.sh > {{ tanium_download_dir }}/temp.sh"
+tanium_tgz_file_name: "tanium-agent.rhel7.tgz"
+tanium_artifact_url: "https://artifactory.trusted.visa.com/seceng/{{ tanium_tgz_file_name }}"
+tanium_service_name: "taniumclient"
+systemd_service_path: "/usr/lib/systemd/system"

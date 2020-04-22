@@ -1,0 +1,11 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=orange
+
+# Use this playbook to deploy build artifacts to the set of servers.  
+- name: Deploy 
+  hosts: orange # add more hosts as we on-board more nodes
+  gather_facts: yes
+  become: yes
+  become_method: sudo
+  roles:
+    - { role: ntp, dispatch: ['deploy'] }

@@ -1,0 +1,30 @@
+---
+- set_fact:
+    td_agent_mode: "forwarder"
+
+- name: take backup of existing file under /etc/td-agent/td-agent.conf
+  copy:
+    src: "/etc/td-agent/td-agent.conf"
+    dest: "/etc/td-agent/td-agent.conf_bak"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    mode:  "0644"
+    remote_src: true
+
+- name: update td-agent config file in /etc/td-agent
+  template:
+    src: "td-agent-forwarder.conf_prod.j2"
+    dest: "/etc/td-agent/td-agent.conf"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    mode: "0644"
+
+- name: reload td-agent
+  service:
+    name: td-agent
+    state: reloaded
+
+- name: ensure td-agent is started
+  systemd:
+    name: td-agent
+    state: started

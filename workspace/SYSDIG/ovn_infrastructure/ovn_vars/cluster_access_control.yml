@@ -1,0 +1,20 @@
+---
+######
+# This is for the OVN cluster access control
+######
+vault_backend: file
+vault_backend_file_path: '/opt/app/hashicorp_vault'
+
+# when vault issues tokens this is the default expiration time
+vault_default_lease_ttl: "15m"
+
+# maximum lease time for a token
+vault_max_lease_ttl: "262800h"
+
+# vault user and group
+vault_group: was
+vault_user: was
+
+vault_version: 0.8.3
+
+spacewalk_centos7_patch_channel: "centos7-patch-channel-oct2015"

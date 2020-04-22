@@ -1,0 +1,34 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    triggers {
+        cron('H 0 * * *')
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '50'))
+    }
+    stages {
+        stage('Stop firewall (QAT)') {
+            steps{
+                build 'QAT-auth-firewall'
+            }
+        }
+        stage('Run healthcheck (QAT)') {
+            steps{
+                build 'QAT-auth-healthcheck'
+            }
+        }
+        stage('RUN Acceptance test (QAT)') {
+            steps{
+                build 'QAT-auth-test1'
+            }
+        }
+    }
+}

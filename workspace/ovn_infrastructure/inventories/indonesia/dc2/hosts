@@ -1,0 +1,536 @@
+########
+# Telin Datacenter
+########
+
+# Telin Rack 1
+[st98ovn03jk2bl]
+10.237.9.253
+[st98ovn01jk2sp]
+10.237.9.255
+[st98ovn05jk2lf]
+10.237.9.249
+[sl982ovnlbp0001]
+10.237.9.18
+[sl982ovnapp0101]
+10.237.9.34
+[sl982ovnapp0101:vars]
+prometheus_mode='active'
+[sl982ovnapp0102]
+10.237.9.35
+[sl982ovnapp0103]
+10.237.9.36
+[sl982ovnapp0103:vars]
+eserv_type='default'
+curator_cron='disabled'
+[sl982ovnapp0104]
+10.237.9.37
+[sl982ovnapp0105]
+10.237.9.38
+[sl982ovnapp0106]
+10.237.9.39
+[sl982ovnapp0107]
+10.237.9.40
+[sl982ovnapp0108]
+10.237.9.41
+[sl982ovnapp0109]
+10.237.9.42
+
+# Telin Rack 2
+[st98ovn06jk2lf]
+10.237.9.248
+[sl982ovnapp0201]
+10.237.9.66
+[sl982ovnapp0201:vars]
+prometheus_mode='standby'
+[sl982ovnapp0202]
+10.237.9.67
+[sl982ovnapp0203]
+10.237.9.68
+[sl982ovnapp0203:vars]
+eserv_type='default'
+curator_cron='enabled'
+[sl982ovnapp0204]
+10.237.9.69
+[sl982ovnapp0205]
+10.237.9.70
+[sl982ovnapp0206]
+10.237.9.71
+[sl982ovnapp0207]
+10.237.9.72
+[sl982ovnapp0208]
+10.237.9.73
+[sl982ovnapp0209]
+10.237.9.74
+
+# Telin Rack 3
+[st98ovn04jk2bl]
+10.237.9.252
+[st98ovn02jk2sp]
+10.237.9.254
+[st98ovn07jk2lf]
+10.237.9.247
+[sl982ovnlbp0002]
+10.237.9.19
+[sl982ovnapp0301]
+10.237.9.98
+[sl982ovnapp0301:vars]
+prometheus_mode='lt-active'
+
+[sl982ovnapp0107:vars]
+nomad_client_cert={{nomad_client_cert_107}} 
+nomad_private_key={{nomad_private_key_107}}
+
+[sl982ovnapp0207:vars]
+nomad_client_cert={{nomad_client_cert_207}} 
+nomad_private_key={{nomad_private_key_207}}
+
+[sl982ovnapp0307:vars]
+nomad_client_cert={{nomad_client_cert_307}} 
+nomad_private_key={{nomad_private_key_307}}
+
+[sl982ovnapp0302]
+10.237.9.99
+[sl982ovnapp0302:vars]
+prometheus_mode='lt-standby'
+[sl982ovnapp0303]
+10.237.9.100
+[sl982ovnapp0303:vars]
+eserv_type='default'
+curator_cron='disabled'
+[sl982ovnapp0304]
+10.237.9.101
+[sl982ovnapp0304:vars]
+eserv_type='lbonly'
+curator_cron='disabled'
+[dc2_elastalert:children]
+sl982ovnapp0304
+[elastalert:children]
+dc2_elastalert
+[sl982ovnapp0305]
+10.237.9.102
+[sl982ovnapp0306]
+10.237.9.103
+[sl982ovnapp0307]
+10.237.9.104
+[sl982ovnapp0308]
+10.237.9.105
+[sl982ovnapp0309]
+10.237.9.106
+
+# Telin OVN Storage Rack
+[st98ovn08jk2lf]
+10.237.9.246
+
+# Telin OVN Components
+
+# (Buiness Zone)
+[dc2_ovn_mediator_servers:children]
+sl982ovnapp0109
+sl982ovnapp0209
+sl982ovnapp0309
+
+# (Restricted Zone)
+[dc2_ovn_switch_servers:children]
+sl982ovnapp0108
+sl982ovnapp0208
+sl982ovnapp0308
+
+# (Restricted Zone)
+[dc2_kafka:children]
+sl982ovnapp0108
+sl982ovnapp0208
+sl982ovnapp0308
+sl982ovnapp0104
+sl982ovnapp0204
+
+# (Restricted Zone)
+[dc2_kafka_mirror_maker:children]
+sl982ovnapp0108
+
+# (Restricted Zone)
+[dc2_ovn_multidc_sync:children]
+sl982ovnapp0208
+
+# (Restricted Zone)
+[dc2_hadoop_namenodes:children]
+sl982ovnapp0102
+sl982ovnapp0202
+
+# (Restricted Zone)
+[dc2_hadoop_datanodes:children]
+sl982ovnapp0107
+sl982ovnapp0207
+sl982ovnapp0307
+
+# (Restricted Zone)
+[dc2_nomad_server:children]
+sl982ovnapp0107
+sl982ovnapp0207
+sl982ovnapp0307
+
+# (Restricted Zone)
+[dc2_nomad_client:children]
+sl982ovnapp0107 
+sl982ovnapp0207 
+sl982ovnapp0307
+
+# (Restricted Zone)
+[dc2_ovn_riak_servers:children]
+sl982ovnapp0105
+sl982ovnapp0106
+sl982ovnapp0205
+sl982ovnapp0206
+sl982ovnapp0306
+
+# (Restricted Zone)
+[dc2_zookeeper:children]
+sl982ovnapp0105
+sl982ovnapp0106
+sl982ovnapp0205
+sl982ovnapp0206
+sl982ovnapp0306
+
+# (Restricted Zone)
+[dc2_journalnodes:children]
+sl982ovnapp0105
+sl982ovnapp0106
+sl982ovnapp0205
+sl982ovnapp0206
+sl982ovnapp0306
+
+# (Restricted Zone)
+[dc2_kerberos_server:children]
+sl982ovnapp0204
+
+# (Restricted Zone)
+[dc2_ftps_server:children]
+sl982ovnapp0305
+
+# (Restricted Zone)
+[dc2_ovn_vitalsigns_delivery:children]
+sl982ovnapp0305
+
+# (Restricted Zone)
+[dc2_ovn_umf_delivery:children]
+sl982ovnapp0104   # (ub)
+# need to verify in lower environement for separate umf delivery (apf)
+# sl982ovnapp0204   # (apf)
+
+# (Restricted Zone)
+[dc2_ovn_umf_delivery_apf:children]
+sl982ovnapp0104
+
+# (Restricted Zone)
+[dc2_ovn_umf_delivery_ub:children]
+sl982ovnapp0104
+
+# (Restricted Zone)
+[dc2_elasticsearch:children]
+sl982ovnapp0304
+sl982ovnapp0103
+sl982ovnapp0203
+sl982ovnapp0303
+
+# (Restricted Zone)
+[dc2_kibana:children]
+sl982ovnapp0304
+
+# (Restricted Zone)
+[dc2_grafana:children]
+sl982ovnapp0103
+
+# (Restricted Zone)
+[dc2_graphite:children]
+sl982ovnapp0103
+
+# (Switch)
+[dc2_border_switches:children]
+st98ovn03jk2bl
+st98ovn04jk2bl
+
+# (Switch)
+[dc2_spine_switches:children]
+st98ovn01jk2sp
+st98ovn02jk2sp
+
+# (Switch)
+[dc2_leaf_switches:children]
+st98ovn05jk2lf
+st98ovn06jk2lf
+st98ovn07jk2lf
+st98ovn08jk2lf
+
+# (Perimeter Zone)
+[dc2_haproxy:children]
+sl982ovnlbp0001
+sl982ovnlbp0002
+
+[dc2_ovn_monitoring_exporter:children]
+sl982ovnapp0108
+
+# (Restricted Zone)
+[dc2_ovn_cas:children]
+sl982ovnapp0302
+
+# (Restricted Zone)
+[dc2_ovn_xdc_sync:children]
+sl982ovnapp0208
+
+[dc2_prometheus_server:children]
+sl982ovnapp0101
+sl982ovnapp0201
+sl982ovnapp0301
+sl982ovnapp0302
+
+[dc2_prometheus_alertmanager:children]
+sl982ovnapp0101
+sl982ovnapp0301
+
+# (Restricted Zone)
+[dc2_fluentd_aggregator:children]
+sl982ovnapp0301
+sl982ovnapp0302
+
+# all application in the Telin datacenter
+[dc2_ovn_application:children]
+dc2_ovn_mediator_servers
+dc2_ovn_switch_servers
+dc2_ovn_multidc_sync
+dc2_ovn_vitalsigns_delivery
+dc2_ovn_umf_delivery
+dc2_ovn_cas
+dc2_ovn_xdc_sync
+dc2_ovn_vss_servers
+dc2_ovn_umf_delivery_apf
+dc2_ovn_umf_delivery_ub
+
+# all infrastructure in the Telin datacenter
+[dc2_ovn_infrastructure:children]
+dc2_kafka
+dc2_kafka_mirror_maker
+dc2_hadoop_namenodes
+dc2_hadoop_datanodes
+dc2_nomad_server
+dc2_nomad_client
+dc2_ovn_riak_servers
+dc2_zookeeper
+dc2_ftps_server
+dc2_elasticsearch
+dc2_kibana
+dc2_grafana
+dc2_graphite
+dc2_haproxy
+dc2_prometheus_server
+dc2_prometheus_alertmanager
+dc2_journalnodes
+dc2_cas_tool
+dc2_nomad_ui
+dc2_fluentd_aggregator
+dc2_yum_mirror_servers
+dc2_ovn_monitoring_exporter
+dc2_kerberos_server
+
+# all switches in the telin datacenter
+# (Switch)
+[dc2_switches:children]
+dc2_border_switches
+dc2_spine_switches
+dc2_leaf_switches
+
+# all nodes in the Telin datacenter
+[dc2:children]
+dc2_ovn_application
+dc2_ovn_infrastructure
+
+# alias for dc2 (handy for ansible --limit expressions)
+[telin:children]
+dc2
+
+# reserved for Telin testing
+[dc2_test_servers:children]
+sl982ovnapp0101
+sl982ovnapp0201
+sl982ovnapp0301
+
+[dc2_yum_mirror_servers:children]
+sl982ovnapp0201
+sl982ovnapp0301
+
+# all hdfs components in DC2
+[dc2_hdfs_HA_All_nodes:children]
+dc2_zookeeper
+dc2_journalnodes
+dc2_hadoop_namenodes
+dc2_hadoop_datanodes
+
+######
+# OVN Components
+######
+
+# Business Zone
+[ovn_mediator_servers:children]
+dc2_ovn_mediator_servers
+
+# Restricted Zone
+[ovn_switch_servers:children]
+dc2_ovn_switch_servers
+
+# Restricted Zone
+[kafka:children]
+dc2_kafka
+
+# Restricted Zone
+[kafka_mirror_maker:children]
+dc2_kafka_mirror_maker
+
+# Restricted Zone
+[ovn_multidc_sync:children]
+dc2_ovn_multidc_sync
+
+# Restricted Zone
+[ovn_xdc_sync:children]
+dc2_ovn_xdc_sync
+
+# Restricted Zone
+[hadoop_namenodes:children]
+dc2_hadoop_namenodes
+
+# Restricted Zone
+[hadoop_datanodes:children]
+dc2_hadoop_datanodes
+
+# Restricted Zone
+[nomad_server:children]
+dc2_nomad_server
+
+# Restricted Zone
+[nomad_client:children]
+dc2_nomad_client
+
+# Restricted Zone
+[ovn_riak_servers:children]
+dc2_ovn_riak_servers
+
+# Restricted Zone
+[zookeeper:children]
+dc2_zookeeper
+
+# Restricted Zone
+[journalnodes:children]
+dc2_journalnodes
+
+# Restricted Zone
+[ftps_server:children]
+dc2_ftps_server
+
+# Restricted Zone
+[ovn_vitalsigns_delivery:children]
+dc2_ovn_vitalsigns_delivery
+
+# Restricted Zone
+[ovn_umf_delivery:children]
+dc2_ovn_umf_delivery
+
+# Restricted Zone
+[ovn_umf_delivery_apf:children]
+dc2_ovn_umf_delivery_apf
+
+# Restricted Zone
+[ovn_umf_delivery_ub:children]
+dc2_ovn_umf_delivery_ub
+
+# Restricted Zone
+[elasticsearch:children]
+dc2_elasticsearch
+
+# Restricted Zone
+[kibana:children]
+dc2_kibana
+
+# Restricted Zone
+[grafana:children]
+dc2_grafana
+
+# Restricted Zone
+[graphite:children]
+dc2_graphite
+
+# Switch
+[border_switches:children]
+dc2_border_switches
+
+# Switch
+[spine_switches:children]
+dc2_spine_switches
+
+# Switch
+[leaf_switches:children]
+dc2_leaf_switches
+
+# Switch
+[cumulus_switch:children]
+dc2_switches
+
+# Perimeter
+[haproxy:children]
+dc2_haproxy
+
+[ovn_monitoring_exporter:children]
+dc2_ovn_monitoring_exporter
+
+# Restricted
+[ovn_cas:children]
+dc2_ovn_cas
+
+# Restricted
+[prometheus_server:children]
+dc2_prometheus_server
+
+# Restricted
+[prometheus_alertmanager:children]
+dc2_prometheus_alertmanager
+
+#Cas_Tools servers
+[dc2_cas_tool:children]
+sl982ovnapp0103
+sl982ovnapp0304
+
+[cas_tool:children]
+dc2_cas_tool
+
+#Nomad_UI Servers
+[dc2_nomad_ui:children]
+sl982ovnapp0302
+
+[nomad_ui:children]
+dc2_nomad_ui
+
+[ovn_application:children]
+dc2_ovn_application
+
+[ovn_infrastructure:children]
+dc2_ovn_infrastructure
+
+[datacenter:children]
+dc2
+
+[hdfs_HA_All_nodes:children]
+dc2_hdfs_HA_All_nodes
+
+[test_servers:children]
+dc2_test_servers
+
+[yum_mirror_servers:children]
+dc2_yum_mirror_servers
+
+[dc2_ovn_vss_servers:children]
+sl982ovnapp0102
+
+[ovn_vss_servers:children]
+dc2_ovn_vss_servers
+
+[fluentd_aggregator:children]
+dc2_fluentd_aggregator
+
+[kerberos_server:children]
+dc2_kerberos_server

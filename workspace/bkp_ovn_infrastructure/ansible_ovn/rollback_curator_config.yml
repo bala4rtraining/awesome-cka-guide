@@ -1,0 +1,13 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+- gather_facts: yes
+  hosts: elasticsearch
+
+# playbook for deploying elasticsearch curator cron job in one of the data nodes.
+- name: update elastic curator config
+  hosts: elasticsearch
+  roles:
+    - { role: elasticsearch_curator, when: "hostvars[inventory_hostname].curator_cron =='enabled'", dispatch: ['rollbackconfig']  }
+  vars:
+    - elasticsearch_client_ssl_enabled: "false"
+    - elasticsearch_client_use_fqdn: "false"

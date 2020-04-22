@@ -1,0 +1,3 @@
+metric_name,metric_type,initial_value,duration,maximum_value(in  case of gauge)/ramp_up_value(in case of counter)
+envoy.cluster.remote_advice.health_check.healthy,gauge,10,120,20
+mediator.vip_connector.receive.from_vip.control.hb,counter,1,120,1

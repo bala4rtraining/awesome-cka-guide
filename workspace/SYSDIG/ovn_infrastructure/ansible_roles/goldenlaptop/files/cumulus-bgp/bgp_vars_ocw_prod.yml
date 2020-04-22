@@ -1,0 +1,38 @@
+#
+# Global variables
+# for Cumulus BGP configurations
+# site: OCW prod
+
+#
+# This assumes that the netmask is /24
+#
+#
+#
+
+
+
+asn_ovn_leaf1: 4217500101
+asn_ovn_leaf2: 4217500102
+asn_ovn_leaf3: 4217500103
+asn_ovn_leaf4: 4217500104
+
+asn_ovn_spines: 4217500110
+asn_ovn_borders: 4217500120
+
+
+#
+# Switch host names
+#
+
+
+
+ovn_leaf1_hostname: ovn-ocw-leaf1
+ovn_leaf2_hostname: ovn-ocw-leaf2
+ovn_leaf3_hostname: ovn-ocw-leaf3
+ovn_leaf4_hostname: ovn-ocw-leaf4
+
+ovn_spine1_hostname: ovn-ocw-spine1
+ovn_spine2_hostname: ovn-ocw-spine2
+
+ovn_border_leaf1_hostname: ovn-ocw-border-leaf1
+ovn_border_leaf2_hostname: ovn-ocw-border-leaf2

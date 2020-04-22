@@ -1,0 +1,36 @@
+##remove node - take the node out of the cluster
+---
+
+- name: Remove a node from riak cluster
+  command: riak-admin cluster leave "{{ nodename_prefix }}@{{ hostvars[item].ansible_default_ipv4.address }}"
+  delegate_to: "{{ groups['ovn_riak_servers'][0] }}"
+  with_items:
+    - "{{target_hosts.split(',')}}"
+
+- name: Uninstall riak 
+  yum: name="{{ riak_package }}" state=absent
+  when: riak_remove_data
+
+- name: remove system config properties 
+  file:
+    path: "{{ files_remove }}"
+    state: absent
+  with_items:
+    - "{{ sysctl_dir }}/{{riak_config_file}}"
+    - "{{ security_limits_dir }}/{{riak_config_file}}"
+    - "{{ riak_install_dir }}/{{riak_config_file}} "
+  loop_control:
+    loop_var: files_remove
+  when: riak_remove_data
+
+- name: wait for nodes to settle
+  pause: seconds=10
+  when: not riak_remove_data
+
+- name: plan cluster changes
+  riak: command=plan http_conn={{ riak_conf.listener_http_internal }}
+  notify:
+    - wait for ring
+    - commit cluster changes
+    - wait for handoffs
+  when: not riak_remove_data

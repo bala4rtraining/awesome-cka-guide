@@ -1,0 +1,57 @@
+---
+##############
+# THIS FILE SHOULD NOT EXIST!
+# IF YOU ARE PLACING CONFIGS HERE, THEN YOU ARE DOING SOMETHING WRONG! :)
+#
+# The only reason this file exist is we don't know how to categorize these
+# config vars.
+# 
+# Ansible config vars should be categorized properly into a separate file
+# that represent the category.
+##############
+
+# OVN Switch ID for generating unique Transaction ID
+ovn_id: 96
+
+# These datacenter id(s) must be defined in the datacenter group_vars
+#
+# local_instance - indentifies self datacenter
+# remote_instance - indentified the remote datacenter
+# vic_identity - unique 4 character string assigned to identify the datacenter for VIP message
+#    to identify the datacenter to downstream applicaitons.
+
+# alias for local_instance
+processor_identity: "{{ local_instance }}"
+
+# alias for the other datacenter
+remote_instances: "[{ {{remote_instance}}, to_instance_{{remote_instance}} }]"
+
+enable_firewall_rules: true
+pull_key: "PROD"
+
+cluster_membership_mode: "permissive"
+cluster_retry_spec: "{linear, 5000, 10}"
+
+# what are these
+start_ovn: false
+autostart_ovn: false
+environment_name: "prod"
+atr_timeout: 30000
+
+#####################
+# these are encrypted values defined in the vault
+#####################
+
+# What is this for?
+private_key: defined_in_vault
+
+# vital signed ssh private key
+vitalsigns_sftp_private_key: defined_in_vault
+
+# erlang and riak cookie
+ovn_erlang_cookie: defined_in_vault
+ovn_riak_cookie: defined_in_vault
+#AD Groups
+ovn_nginx_admin: "ovn_prod_admin"
+ovn_nginx_viewer: "ovn_prod_viewer"
+ovn_nginx_editor: "ovn_prod_editor"

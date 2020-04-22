@@ -1,0 +1,10 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: Include deploy exporter playbook
+  include: deploy_{{ exporter_name }}.yml
+  when: exporter_name != "elasticsearch_exporter"
+
+- name: Include elasticsearch with ssl playbook
+  include: deploy_elasticsearch_exporter_with_ssl.yml
+  when: exporter_name == "elasticsearch_exporter"

@@ -1,0 +1,103 @@
+#############################################
+#
+#  This is the ks file on the golden laptop
+#  that is used to install the orange server
+#
+#############################################
+
+
+#version=RHEL7
+# System authorization information
+auth --enableshadow --passalgo=sha512
+
+# Use network install
+url --url="http://{{rescue.int_10g_border_sw.subnet_int_ip}}/{{rescue_legacy_install_src_dir}}/"
+
+# Use graphical install for now
+#
+#graphical
+
+cmdline
+skipx
+
+
+# Run the Setup Agent on first boot
+firstboot --enable
+ignoredisk --only-use=sda
+
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+
+# System language
+lang en_US.UTF-8
+
+# Network information
+network  --bootproto=dhcp --device=enp0s3 --ipv6=auto --nodefroute --activate
+#network  --bootproto=static --device=enp0s8 --ipv6=auto --activate
+
+#Firewall and SELinux (TODO)
+firewall --disabled
+selinux --permissive
+
+# Root password
+rootpw --iscrypted $6$qe28GksSeQqlFdii$01VesO4gWUcGbERcCooqcrlOuQn/gVpXJ9SYYvYg.FOOxWfNdGGRiwy2t4DF5OkSydlDzsxWRLrxV4RK9VGQy/
+
+# System timezone
+timezone America/Los_Angeles --isUtc --nontp
+
+# System bootloader configuration
+bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=sda
+autopart --type=lvm
+
+# Partition clearing information
+clearpart --all --initlabel
+
+#services (TODO)
+services --enabled=dhcpd,xinetd,sshd,httpd
+
+%packages
+@core
+kexec-tools
+dhcp
+tftp-server
+tcpdump
+wget
+httpd
+bind
+bind-utils
+rsync
+haproxy
+keepalived
+%end
+
+###############################################
+#    Post install script
+###############################################
+
+
+#
+# Install OGL ssh public key for Ansible
+#
+%post --log=/root/ks-install-ogl-pub-key
+
+
+/usr/bin/mkdir -p /root/.ssh
+cd /root/.ssh/
+wget http://{{rescue.int_10g_border_sw.subnet_int_ip}}/cumulus/authorized_keys
+
+%end
+
+
+%post --log=/root/ks-post-dhcp-tftp-config.log
+
+
+
+
+%end
+
+#%addon com_redhat_kdump --enable --reserve-mb='auto'
+
+#%end
+
+reboot
+

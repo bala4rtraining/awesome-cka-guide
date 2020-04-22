@@ -1,0 +1,42 @@
+---
+#
+# Copy rescue files to be run on a host to be run locally
+#
+- name: Copy rescue files to a host to be run locally
+  hosts: rescue
+  user: root 
+  gather_facts: yes
+  vars:
+    centos_legacy_image: CentOS-7-x86_64-DVD-1503-01.iso
+  tasks:
+
+  - name: Copy files to rescue server
+    synchronize:
+      src: "{{ item }}"
+      dest: /root
+    with_items:
+      - /root/orange2
+      - /root/ansible-packages2
+      - /root/netadd-packages2
+      - /root/{{ centos_legacy_image }}
+      # This will be Visa SOE in the future
+      - /root/secureboot/centos7_1511.tar.gz
+      - /root/secureboot/efi.tar.gz
+#      - /root/secureboot/kickstart.tar.gz
+      - /root/secureboot/centos_liveos.tar.gz
+      - /root/secureboot/visa_repo.tar.gz
+      - /root/secureboot/rescue_ks_sb.j2
+      
+
+
+  - name: Setup Ansible on rescue
+    shell: yum -C -y install /root/ansible-packages2/*.rpm
+    tags:
+      - ansible
+
+  - name: Install Netadd
+    shell: yum -C -y install /root/netadd-packages2/*.rpm
+    tags:
+      - netadd
+
+

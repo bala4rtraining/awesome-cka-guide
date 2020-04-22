@@ -1,0 +1,11 @@
+---
+- include: "../ovn_vars.yml"
+
+# Use this playbook to stop vault when brought back online
+- name: Stop Hashicorp Vault
+  hosts: ovn_cluster_vault_nodes
+  gather_facts: yes
+  become: yes
+  become_method: sudo
+  roles:
+    - { role: hashicorp_vault, dispatch: ['stop'] }

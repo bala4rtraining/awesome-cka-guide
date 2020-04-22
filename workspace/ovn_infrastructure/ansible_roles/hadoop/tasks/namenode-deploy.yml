@@ -1,0 +1,83 @@
+---
+# run common tasks related to namenode
+- name: include tasks common to namenode
+  include: common-deploy.yml
+
+# install zkfc, if multiple namenodes are present
+- name: include zookeeper client configurations
+  include: zkfc-deploy.yml
+  when: groups['hadoop_namenodes']|count > 1
+
+# create namenode directory
+- name: create namenode dir
+  file:
+    path: "{{hadoop_dfs_name_dir}}"
+    state: directory
+    owner: hdfs
+    group: hdfs
+    mode: "0755"
+
+# check firsttime installation
+- name: check namenode install, if first_time
+  stat:
+    path: "/etc/rc.d/init.d/hadoop-hdfs-namenode"
+  register: namenode_firsttime
+
+# install init scripts
+- name: install service script for the namenode
+  template:
+    src: hadoop-hdfs-namenode.j2
+    dest: "/etc/rc.d/init.d/hadoop-hdfs-namenode"
+    owner: hdfs
+    group: hdfs
+    mode: "0755"
+
+# configure slaves
+- name: install hdfs slave file into namenode
+  template:
+    src: slaves.j2
+    dest: /usr/lib/hadoop/etc/hadoop/slaves
+    owner: hdfs
+    group: hdfs
+    mode: "0644"
+
+# reload systemctl daemon
+- name: reload namenode service configuration
+  shell: systemctl daemon-reload
+
+# format active namenode
+- name: format the Active namenode, if reinstall or first_time
+  command: hdfs namenode -format -nonInteractive -force
+  become: true
+  become_user: hdfs
+  when: (inventory_hostname == groups['hadoop_namenodes'][0]) and ((hadoop_reinstall == True) or (namenode_firsttime.stat.exists == False))
+
+# start active namenode
+- name: start Active namenode
+  service:
+    name: hadoop-hdfs-namenode
+    state: restarted
+    enabled: yes
+  when: (inventory_hostname == groups['hadoop_namenodes'][0]) and ((hadoop_reinstall == True) or (namenode_firsttime.stat.exists == False))
+
+# bootstrap standby namenode
+- name: bootstrap the Standby namenode, if reinstall or first_time
+  command: hdfs namenode -bootstrapStandby -force
+  become: true
+  become_user: hdfs
+  when: (inventory_hostname != groups['hadoop_namenodes'][0]) and ((hadoop_reinstall == True) or (namenode_firsttime.stat.exists == False))
+
+# start Standby namenode
+- name: start Standby namenode
+  service:
+    name: hadoop-hdfs-namenode
+    state: restarted
+    enabled: yes
+  when: (inventory_hostname != groups['hadoop_namenodes'][0]) and ((hadoop_reinstall == True) or (namenode_firsttime.stat.exists == False))
+
+# start namenode services, if not running
+- name: start namenode service
+  service:
+    name: hadoop-hdfs-namenode
+    state: started
+    enabled: yes

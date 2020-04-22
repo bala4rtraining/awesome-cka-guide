@@ -1,0 +1,5 @@
+security.protocol: ssl
+ssl.key.location: "clientcert.key"
+ssl.key.password: "Kaas!1234567"
+ssl.certificate.location: "clientcert.pem"
+ssl.ca.location: "ovnqa1keystore.cer"

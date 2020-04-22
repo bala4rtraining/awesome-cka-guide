@@ -1,0 +1,12 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+dependencies:
+- role: certificates 
+  when: nginx_enable_ssl == 'true'

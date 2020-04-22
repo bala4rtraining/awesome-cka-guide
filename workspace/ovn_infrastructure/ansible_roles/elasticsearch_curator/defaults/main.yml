@@ -1,0 +1,16 @@
+---
+# defaults file for elasticsearch
+artifactory_url: "https://artifactory.trusted.visa.com"
+elasticsearch_curator_rpm: "{{ artifactory_url }}/ovn-extra-el7/elasticsearch-curator-5.1.1-1.x86_64.rpm"
+elasticsearch_port: "9200"
+
+#Index retention period
+curator_default_retention_period: 90
+
+# If you want to set this for particualar environment, this should go in global defaults file for that environment
+# This has been set to demonstrate the usage
+curator_log_patterns: {"ovn_vss-*" : 2, "fluentd_vss-*" : 2, "mediator-syslog-*" : 90, "fluentd_mediator-*" : 60, "ovn_multidc_sync-syslog-*" : 90, "fluentd_ovn_multidc_sync-*" : 90, "ovn_securelog-*" : 90, "ovn_umf_delivery_apf-syslog-*" : 90, "fluentd_ovn_umf_delivery_apf-*" : 90, "ovn_umf_delivery_ub-syslog-*" : 90, "fluentd_ovn_umf_delivery_ub-*" : 90, "ovn_vip_ef_sync-syslog-*" : 90, "fluentd_ovn_vip_ef_sync-*" : 90, "ovn_vitalsigns-syslog-*" : 90, "fluentd_ovn_vitalsigns-*" : 90, "ovnswitch-syslog-*" : 90, "fluentd_ovnswitch-*" : 60, "syslog-*" : 90, "fluentd_xdc_sync-*" : 2, "fluentd_collectionjobs-*" : 2, "kafka-*" : 30, "fluentd_kafka-*" : 30,  "fluentd_vsftp-*" : 30, "hadoop-*" : 2, "fluentd_hadoop-*" : 2, "fluentd_nomadjobs-*" : 2, "fluentd_secure-*" : 15, "fluentdlogs-*" : 2, "riak-syslog-*" : 15, "fluentd_riak" : 15, "suricata-*" : 90, "elasticsearchlog-*" : 15, "fluentd_elasticsearchlogs-*" : 15, "fluentd_yummirrors-*" : 15}
+
+#Deletion of indicies on demand , if someone wants to use this for ceratin indicies and period
+#Another variable is used because dict merge was seen when we were passing extra variables
+curator_log_patterns_old_indicies: {}

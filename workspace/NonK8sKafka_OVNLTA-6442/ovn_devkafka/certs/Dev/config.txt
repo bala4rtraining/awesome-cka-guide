@@ -1,0 +1,5 @@
+ecurity.protocol: ssl
+ssl.key.location: "clientcert.key"
+ssl.key.password: "Ovndev@bdeeng1"
+ssl.certificate.location: "clientcert.pem"
+ssl.ca.location: "ambarikafka.cer"

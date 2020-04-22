@@ -1,0 +1,35 @@
+# tasks file for heka  (provision only)
+
+
+- name: create heka group
+  group: 
+    name: heka 
+    state: present
+
+- name: create heka user
+  user: 
+    name: heka 
+    groups: heka,adm
+    append: yes
+    system: yes 
+    home: /var/lib/heka 
+    shell: /bin/false 
+    state: present
+
+- name: create heka dirs
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+    state: "{{ item.state }}"
+  with_items: "{{ heka_config_dirs }}"
+
+- name: run OS specific tasks
+  include: "provision_{{ ansible_os_family }}.yml"
+
+- name: stop the exisiting heka service first
+  service: 
+    name: "{{ heka_service_name }}"
+    state: stopped
+

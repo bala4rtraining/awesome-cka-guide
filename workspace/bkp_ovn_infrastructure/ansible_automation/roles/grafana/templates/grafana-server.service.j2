@@ -1,0 +1,28 @@
+#######
+#!!! Please DO NOT EDIT.  This configuration is maintained by Ansible !!!
+#######
+[Unit]
+Description=Grafana instance
+Documentation=http://docs.grafana.org
+Wants=network-online.target
+After=network-online.target
+After=postgresql.service mariadb.service mysql.service
+
+[Service]
+User={{ grafana_user }}
+Group=grafana
+Type=simple
+Restart=on-failure
+WorkingDirectory=/usr/share/grafana
+ExecStart=/usr/sbin/grafana-server                                         \
+                            -homepath=/usr/share/grafana                   \
+                            -config=/etc/grafana/grafana.ini               \
+                            -pidfile=                                      \
+                            cfg:default.paths.logs={{ grafana_log_dir }}   \
+                            cfg:default.paths.data={{ grafana_data_dir }}  \
+                            cfg:default.paths.plugins={{ grafana_plugins_dir }}
+LimitNOFILE=10000
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

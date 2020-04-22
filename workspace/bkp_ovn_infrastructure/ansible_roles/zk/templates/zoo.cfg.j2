@@ -1,0 +1,39 @@
+# The number of milliseconds of each tick
+tickTime={{ zookeeper_tick_time }}
+# The number of ticks that the initial
+# synchronization phase can take
+initLimit={{ zookeeper_init_limit }}
+# The number of ticks that can pass between
+# sending a request and getting an acknowledgement
+syncLimit={{ zookeeper_sync_limit }}
+# the directory where the snapshot is stored.
+dataDir={{ zookeeper_data_dir }}
+# the port at which the clients will connect
+clientPort={{ zookeeper_port }}
+# the maximum number of client connections.
+# increase this if you need to handle more clients
+maxClientCnxns={{ zookeeper_max_client_cnxns }}
+
+{% if zookeeper_enable_client_authentication == "true" %}
+authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
+requireClientAuthScheme=sasl
+jaasLoginRenew={{ zookeeper_jaas_login_renew }}
+{% endif %}
+
+{% if zookeeper_enable_server_authentication == "true" %}
+quorum.auth.enableSasl=true
+quorum.auth.learnerRequireSasl=true
+quorum.auth.serverRequireSasl=true
+quorum.auth.learner.loginContext=QuorumLearner
+quorum.auth.server.loginContext=QuorumServer
+quorum.auth.kerberos.servicePrincipal={{ zookeeper_principal_name }}/_HOST
+quorum.cnxn.threads.size={{ zookeeper_quorum_cnxn_threads_size }}
+{% endif %}
+
+{% for server in groups['' + zookeeper_inventory_group] %}
+{% if zookeeper_enable_client_authentication == "true" or zookeeper_enable_server_authentication == "true" %}
+server.{{ loop.index }}={{ hostvars[server]['ansible_nodename'] }}:{{ zookeeper_election_a_port }}:{{ zookeeper_election_b_port }}
+{% else %}
+server.{{ loop.index }}={{ hostvars[server]['ansible_'+default_iface]['ipv4']['address'] }}:{{ zookeeper_election_a_port }}:{{ zookeeper_election_b_port }}
+{% endif %}
+{% endfor %}

@@ -1,0 +1,49 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        choice(name: 'SERVICE_NAME',
+               choices: 'ovn_mediator\novn_switch\novn_umf_delivery\novn_vitalsigns_delivery\novn_multidc_sync\novn_vip_ef_sync',
+               description: 'What service do you want to create a new Release Candidate for?')
+
+       validatingString(name: 'RELEASE_VERSION',
+                        defaultValue: '',
+                        regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$',
+                        failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+                        description: 'What is the version that this Release Candidate belongs to? Use semantic versioning, e.g: x.y.z')
+
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        TMP_DIR = "${SERVICE_NAME}_repo"
+        REPOSITORY_URL = "ssh://git@stash.trusted.visa.com:7999/op/${SERVICE_NAME}.git"
+        FINAL_RELEASE_TAG = "v${params.RELEASE_VERSION}"
+    }
+
+    stages {
+        stage ('Finalize single release') {
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "${TMP_DIR}"]],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: "${REPOSITORY_URL}"]]]
+                sh 'cd ${TMP_DIR}/ && git push --delete origin $(git describe --tags $(git rev-list --tags --max-count=1))'
+                sh "cd ${TMP_DIR}/ && git tag -a -m \"Final Release ${params.RELEASE_VERSION} for ${SERVICE_NAME}\" ${FINAL_RELEASE_TAG}"
+                sh "cd ${TMP_DIR}/ && git push origin ${FINAL_RELEASE_TAG}"
+                build job: "OVN-OP/${SERVICE_NAME}/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+    }
+}

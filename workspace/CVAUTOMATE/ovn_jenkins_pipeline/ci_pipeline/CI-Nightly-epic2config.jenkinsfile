@@ -1,0 +1,2 @@
+@Library('ovn-shared-library') _
+ciNightlyflowConfig('configManifest', 'int-epic2', 'epic-2')

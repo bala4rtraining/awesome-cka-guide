@@ -1,0 +1,12 @@
+# acls are divided in to five groups
+# 1. ovnkafkaadmin<envname>.visa.com is for kafka brokers which will have acess to all topics and the cluster resources.
+# 2. ovnkafkamirrormaker<envname>.visa.com is for kafka mirror maker which will have acess to all topics and the cluster resources.
+# 3. ovnkafkamirrormaker<otherenv>.visa.com is for kafka mirror maker which will have acess to all topics and the cluster resources.
+# 4. ovnkafkacas<env>.visa.com is for kafka cas clients which will have acess to topics ovn_xdc_state_<> and ovn_cas_state<> and the cluster.
+# 5. ovnkafkatransaction<env>.visa.com is for kafka transcation  clients which will have acess to topics ovn_tran_log_<> , ovn_station_state<> and  ovn_cdb_state<> and the cluster.
+
+kafka_acls:
+  - "--add --allow-principal User:CN=ovnkafkaadmincert.visa.com,OU=NP,O=Visa,ST=Virginia,L=Ashburn,C=US --operation All --topic \"*\" --cluster "
+  - "--add --allow-principal User:CN=ovnkafkamirrormakercert.visa.com,OU=NP,O=Visa,ST=Virginia,L=Ashburn,C=US --operation All --topic \"*\" --cluster"
+  - "--add --allow-principal User:\"CN=ovnkafkacascert.visa.com,OU=NP OVN KAFKACASCERT,O=VISA,C=US,L=Ashburn,ST=Virginia\" --operation All --topic {{xdc_state_kafka_topic}} --topic {{cas_state_kafka_topic}} --cluster"
+  - "--add --allow-principal User:CN=ovnkafkatransactioncert.visa.com,OU=NP,O=Visa,ST=Virginia,L=Ashburn,C=US --operation All --topic {{tran_log_kafka_topic}} --topic {{station_state_kafka_topic}} --topic {{cdb_state_kafka_topic}} --cluster"

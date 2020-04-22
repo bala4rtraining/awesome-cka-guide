@@ -1,0 +1,32 @@
+## {{ ansible_managed }} ##
+
+# Metrics collection sends to local StatsD
+[metricsProcessInput]
+type = "ProcessInput"
+ticker_interval = 10
+stdout = false
+stderr = true
+    [metricsProcessInput.command.0]
+     bin = "/usr/local/bin/OVN_VMmetrics.sh"
+    [metricsProcessInput.command.1]
+     bin = "/usr/local/bin/OVN_servicemon.sh"
+    [metricsProcessInput.retries]
+     max_retries = 1
+
+
+# Slower monitor - sends warnings if necessary to SYSLOG (every 5 minutes)
+[monitorProcessInput]
+type = "ProcessInput"
+ticker_interval = 300
+stdout = false
+stderr = true
+    [monitorProcessInput.command.0]
+     bin = "/usr/local/bin/OVN_monitor_fs.sh"
+    [monitorProcessInput.retries]
+     max_retries = 1
+
+# Following output lines are for Debug/Test
+#[RstEncoder]
+#[LogOutput]
+#message_matcher = "Logger == 'metricsProcessInput' || Logger == 'monitorProcessInput'"
+#encoder = "RstEncoder"

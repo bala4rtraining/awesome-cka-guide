@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# OVN SERVICE <summary>
+#
+# chkconfig:   2345 80 20
+# description: Starts and stops a single OVN SERVICE instance on this system
+#
+
+### BEGIN INIT INFO
+# Provides: SERVICE
+# Required-Start: $network $named $epmd
+# Required-Stop: $network $named $epmd
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: This service manages the OVN SERVICE
+# Description: OVN SERVICE
+### END INIT INFO
+
+#
+# Source function library.
+#
+if [ -f /etc/rc.d/init.d/functions ]; then
+    . /etc/rc.d/init.d/functions
+fi
+
+. /etc/sysconfig/{{name}}
+
+exec=$SERVICE_BIN/$SERVICE_EXE
+prog=$SERVICE_EXE
+lockfile=/var/lock/subsys/$prog
+HOME=$SERVICE_HOME
+PIPE_DIR=/tmp/erl_pipe_{{name}}
+export HOME
+export PIPE_DIR
+
+case "$1" in
+    start)
+        echo -n "Starting SERVICE "
+        daemon --user $SERVICE_USER $exec start
+        retval=$?
+        echo
+        [ $retval -eq 0 ] && touch $lockfile
+        ;;
+    stop)
+        echo -n "Shutting down SERVICE "
+        ## Stop daemon with killproc(8) and if this fails
+        ## killproc sets the return value according to LSB.
+        $exec stop
+        retval=$?
+        echo
+        [ $retval -eq 0 ] && rm -f $lockfile
+        ;;
+    restart)
+        ## Stop the service and regardless of whether it was
+        ## running or not, start it again.
+        $0 stop
+        $0 start
+        retval=$?
+        ;;
+    status)
+        # run checks to determine if the service is running or use generic status
+        $exec ping
+        retval=$?
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+exit $retval

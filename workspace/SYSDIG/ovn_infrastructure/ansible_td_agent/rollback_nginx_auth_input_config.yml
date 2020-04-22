@@ -1,0 +1,7 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: delete td-agent erlangservices configuration for erlangservices
+  hosts: kibana:grafana:prometheus_server:prometheus_alertmanager
+  roles:
+    - { role: td_agent, dispatch: ['delete-nginx-auth-config'] }

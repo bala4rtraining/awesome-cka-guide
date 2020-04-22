@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# Create Physical Volume in OVN Cluster
+create_pv() {
+    local storagedev=$1
+    local partitionnum=$2
+    pvcreate -y $storagedev$partitionnum # -y wipeout old partitions
+    pvdisplay
+}
+
+# Create Volume Group in OVN Cluster
+create_vg() {
+    local vg_name=$1
+    local pv_name=$2
+    vgcreate $vg_name $pv_name
+    vgdisplay
+}
+
+# Create Logical Volume in OVN Cluster
+create_lv() {
+    local lv_size=$1 # string in KB, MB or GB
+    local lv_name=$2
+    local vg_name=$3
+    lvcreate -L $lv_size -n $lv_name $vg_name
+    lvdisplay
+}
+
+create_dmcrypt_keyfile() {
+    local keysize=$1
+    local keycount=$2
+    local insrc=$3
+    local outtgt=$4 # file. Typically captured in /etc dir
+    dd bs=$keysize count=$keycount if=$insrc of=$outtgt iflag=fullblock
+}
+
+config_dmcrypt_disk_setup() {
+    local vg_name=$1
+    local lv_name=$2
+    local keyfiledirname=$3
+    local dm_crypt_format="luksFormat"
+    cryptsetup --batch-mode $dm_crypt_format /dev/$vg_name/$lv_name $keyfiledirname
+    cryptsetup --key-file $keyfiledirname luksOpen /dev/$vg_name/$lv_name $lv_name
+}
+
+createfs_dmcrypt_disk() {
+    local fs_type=$1
+    local lv_name=$2
+    mkfs.$fs_type /dev/mapper/$lv_name
+}
+
+mount_dmcrypt_disk() {
+    local fs_type=$1
+    local lv_name=$2
+    local mntdir=$3
+
+    mount -t $fs_type /dev/mapper/$lv_name $mntdir
+
+    # add inserts into *tab to mount and initialize during boot. Need to think through how keyfile can be fetched
+    # add inserts into crypttab
+    # add inserts int fstab
+}
+
+umount_dmcrypt_disk() {
+    local mntdir=$1
+    umount $mntdir
+}
+
+close_dmcrypt_disk() {
+    local lv_name=$1
+    cryptsetup close /dev/mapper/$lv_name
+}
+
+sfdisk {{ storagedevname }} < {{ storagebatchfile }}
+create_pv {{ storagedevname }} {{ storagepartitionnum }}
+create_vg {{ cryptvgname }} {{ storagedevname }}{{ storagepartitionnum }}
+create_lv {{ cryptstoragesize }} {{ cryptlvname }} {{ cryptvgname }}
+
+create_dmcrypt_keyfile {{ cryptkeysize }} {{ cryptkeycount }} {{ cryptkeyinput }} {{ cryptkeyfiledirname }}
+config_dmcrypt_disk_setup {{ cryptvgname }} {{ cryptlvname }} {{ cryptkeyfiledirname }}
+createfs_dmcrypt_disk {{ cryptfstype }} {{ cryptlvname }}
+mount_dmcrypt_disk {{ cryptfstype }} {{ cryptlvname }} {{ cryptmntdir }}
+
+# optional commands to umount and close dmcrypt
+#umount_dmcrypt_disk {{ cryptmntdir }}
+#close_dmcrypt_disk {{ cryptlvname }}

@@ -1,0 +1,7 @@
+---
+#####
+# MVS send's daily VSS updates
+#####
+mvs_vss_feed_servers:
+  - '192.168.196.32'
+  - '192.168.196.34'

@@ -1,0 +1,29 @@
+######
+# This script generates a flat data structure which groups (src, port) and other info by
+# target destination ip.  This generate file then can be imported
+######
+
+- name: generate (src, port) map grouped by destination ip into `{{ _vars_file }}` file
+  copy:
+    content: |
+      {{ _vars_name }}:
+      {% for rule in _rules %}
+      {% for dest in rule.dest | unique %}
+      - ip: "{{ dest }}"
+        rules:
+      {% for p in rule.ports %}
+      {% for src in rule.src | default(['']) %}
+      {% if src != dest %}
+          - src: "{{ src }}"
+            state: {{ rule.state | default('enabled')}}
+            port: "{{ p.port }}"
+            protocol: "{{ p.protocol | default('tcp') }}"
+            action: "{{ p.action | default('accept') }}"
+      {% endif %}
+      {% endfor %}
+      {% endfor %}
+      {% endfor %}
+      {% endfor %}
+    dest: "{{ _vars_file }}"
+    force: yes
+  delegate_to: 127.0.0.1

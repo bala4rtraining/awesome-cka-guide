@@ -1,0 +1,52 @@
+- name: stop riak
+  systemd:
+    name: riak
+    state: stopped
+
+- name: create backup directory for riak upgrade
+  file: >
+    path=/root/riak_upgrade
+    state=directory
+    owner=riak
+    group=riak
+
+- name: Backup riakconf
+  shell: cp -rp /etc/riak/riak.conf /root/riak_upgrade/riak.conf_rolbkp
+
+- name: Backup Riak
+  shell: tar czvf /root/riak_upgrade/riak_backup_{{ lookup('pipe', 'date +%Y-%m-%d-%H%M') }}.tar.gz  /var/lib/riak /etc/riak  /usr/lib64/riak/lib/basho-patches
+
+- name: remove basho patches contents
+  shell: rm -rf /usr/lib64/riak/lib/basho-patches/*
+
+- name: Install the latest Riak Version
+  yum:
+    name: '{{ riak_upgrade_rpm }}'
+    disable_gpg_check: True
+    state: latest
+    update_cache: yes
+
+- name: start riak
+  systemd:
+    daemon_reload: yes
+    name: riak
+    state: started
+    enabled: True 
+
+- name: Register Riak Version
+  command: riak version
+  register: riakversion
+
+- name: Display riak Riak version
+  debug:
+    msg: "Riak Version: {{ riakversion.stdout }}"
+
+- name: wait for kv
+  riak:
+    wait_for_service: kv
+
+- name: Wait for Handoffs to complete
+  shell: riak-admin transfers
+
+- name: Wait for Handoffs to complete
+  shell: riak-admin transfers

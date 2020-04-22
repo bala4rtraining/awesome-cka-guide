@@ -1,0 +1,14 @@
+{
+    "allow_user_certificates": true,
+    "allow_user_key_ids": false,
+    "allowed_users": "appsupport",
+    "allowed_critical_options": "none",
+    "allowed_extensions": "permit-pty",
+    "default_extensions": [{
+        "permit-pty": ""
+    }],
+    "key_type": "ca",
+    "default_user": "appsupport",
+    "ttl": "8h",
+    "max_ttl": "8h"
+}

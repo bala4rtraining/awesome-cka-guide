@@ -1,0 +1,66 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  environment {
+    otherEnv = "$OTHER_ENV"
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+    booleanParam(name: 'xdc_sync_enable_kerberos', defaultValue: true, description: '')
+    booleanParam(name: 'riak_enable_tls', defaultValue: true, description: '')
+    booleanParam(name: 'kafka_enable_tls', defaultValue: true, description: '')
+  }
+  stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+    stage('Checkout SCM'){
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    stage('capture vars about remote dc'){
+      when { expression { env.OTHER_ENV != null } }
+      steps{
+        sh '''rm -f /tmp/vars_about_${CLUSTER}_${otherEnv}.yml'''
+
+        ansiColor('xterm'){
+          ansiblePlaybook playbook: 'ansible_ovn/capture_vars_about_dc.yml',
+                          inventory: 'inventories/$CLUSTER/$OTHER_DC',
+                          colorized: true,
+                          forks: 5,
+                          sudoUser: null,
+                          extras: "-e cluster_name=${CLUSTER}_${OTHER_ENV}"
+        }
+      }
+    }
+    stage('deploy xdc_sync') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook playbook: 'ansible_ovn/deploy_xdc_sync.yml',
+                          inventory: 'inventories/$CLUSTER/$DATACENTER',
+                          credentialsId: 'ENV.root_key',
+                          colorized: true,
+                          extraVars: [xdc_sync_enable_kerberos: '${xdc_sync_enable_kerberos}',
+                                      xdc_sync_riak_ssl_enabled: '${riak_enable_tls}',
+                                      xdc_sync_kafka_enable_tls: '${kafka_enable_tls}'],
+                          extras: '-e @/tmp/vars_about_${CLUSTER}_${OTHER_ENV}.yml -e @config/$ENV.vars.secret.yml --vault-password-file=~/.vault-$ENV'
+        }
+      }
+    }
+  }
+}

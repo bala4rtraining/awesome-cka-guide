@@ -1,0 +1,44 @@
+---
+- name: Restart mesos-master
+  service: name=mesos-master enabled=yes state=restarted
+
+- name: Restart mesos-slave 
+  service: name=mesos-slave enabled=yes state=restarted
+
+- name: Disable master service
+  service: name=mesos-master enabled=no state=stopped
+  when: mesos_install_mode == "slave"
+
+- name: Disable slave service
+  service: name=mesos-slave enabled=no state=stopped
+  when: mesos_install_mode == "master"
+
+- name: Restart Chronos service
+  service: name=chronos state=restarted
+
+- name: Remove Default Mesos Config
+  file: state=absent path=/etc/mesos/
+
+- name: Remove Default Mesos-Master Config
+  file: state=absent path=/etc/mesos-master/
+
+- name: Remove Default Mesos-Slave Config
+  file: state=absent path=/etc/mesos-slave/
+
+- name: Create Default Mesos Config
+  file: state=directory path=/etc/mesos/
+
+- name: Create Default Mesos-Master Config
+  file: state=directory path=/etc/mesos-master/
+
+- name: Create Default Mesos-Slave Config
+  file: state=directory path=/etc/mesos-slave/
+
+- name: Remove work dir
+  file: state=absent path={{ mesos_work_dir }}
+
+- name: Remove slave meta
+  file: state=absent path={{ mesos_work_dir }}/meta/slaves/latest/slave.info
+
+- name: Create work dir
+  file: path={{ mesos_work_dir }} state=directory

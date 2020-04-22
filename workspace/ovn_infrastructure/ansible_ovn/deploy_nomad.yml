@@ -1,0 +1,21 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=nomad_server,nomad_client,ovn_vss_servers
+
+- name: start nomad servers
+  hosts: nomad_server
+  gather_facts: yes
+  roles:
+    - { role: nomad, dispatch: ['nomad_servers'] }
+
+- name: start nomad clients ( clearing and delivery )
+  hosts: nomad_client
+  gather_facts: yes
+  roles:
+    - { role: nomad, dispatch: ['nomad_clearing_clients'] }
+
+- name: start nomad clients ( vss )
+  hosts: ovn_vss_servers 
+  gather_facts: yes
+  roles:
+    - { role: nomad, dispatch: ['nomad_vss_clients'] }
+

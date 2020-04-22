@@ -1,0 +1,46 @@
+---
+# rollback user home directories permissions
+- name: check if /tmp/group-world-writable-dirs exists
+  stat:
+    path: /tmp/group-world-writable-dirs
+  register: groupworlddirs
+
+- name: read file that has group and world writable dirs list
+  shell: cat /tmp/group-world-writable-dirs 
+  when: groupworlddirs.stat.exists
+  register: groupworlddirslist
+
+- name: loop through groupworlddirslist and add group world writable permission
+  command: chmod go+w {{item}}
+  with_items: "{{ groupworlddirslist.stdout_lines }}"
+  when: groupworlddirs.stat.exists
+
+- name: check if /tmp/group-writable-dirs exists
+  stat:
+    path: /tmp/group-writable-dirs
+  register: groupdirs
+
+- name: read file that has group writable dirs list
+  shell: cat /tmp/group-writable-dirs 
+  when: groupdirs.stat.exists
+  register: groupdirslist
+
+- name: loop through groupdirslist and add group writable permission
+  command: chmod g+w {{item}}
+  with_items: "{{ groupdirslist.stdout_lines }}"
+  when: groupdirs.stat.exists
+
+- name: check if /tmp/world-writable-dirs exists
+  stat:
+    path: /tmp/world-writable-dirs
+  register: worlddirs
+
+- name: read file that has world writable dirs list
+  shell: cat /tmp/world-writable-dirs 
+  when: worlddirs.stat.exists
+  register: worlddirslist
+
+- name: loop through worlddirslist and add world writable permission
+  command: chmod o+w {{item}}
+  with_items: "{{ worlddirslist.stdout_lines }}"
+  when: worlddirs.stat.exists

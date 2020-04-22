@@ -1,0 +1,9 @@
+---
+# append the /etc/hosts entries on all hadoop nodes.
+- name: Append /etc/hosts file with hadoop components
+  lineinfile:
+    dest: /etc/hosts
+    line: "{{hostvars[item].ansible_default_ipv4.address}}  {{hostvars[item].ansible_nodename}} {{hostvars[item].ansible_hostname}}"
+    state: present
+  with_items: '{{ groups["hdfs_HA_All_nodes"] }}'
+  when: hdfs_set_etc_hosts == 'true' and hadoop_reinstall

@@ -1,0 +1,87 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+        choice(name: 'REPOSITORY_NAME',
+               choices: 'ovn_infrastructure\novn_app_infrastructure\novn_jenkins_pipeline\novn_kh_profile',
+               description: 'What repository do you want to create a new release branch for?')
+
+        choice(name: 'RELEASE_TYPE',
+                              choices: 'release\ninfra',
+                              description: 'What RELEASE_TYPE do you want to create (e.g release or infra)?')
+
+        validatingString(name: 'RELEASE_VERSION',
+                        defaultValue: '',
+                        regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$',
+                        failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+                        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        REPOSITORY_URL  = "ssh://git@stash.trusted.visa.com:7999/op/${params.REPOSITORY_NAME}.git"
+        PRE_RELEASE_TAG = "v${params.RELEASE_VERSION}-pre-alpha"
+        TMP_DIR         = "repository_dir"
+    }
+
+    stages {
+
+        stage ('Checkout repository') {
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "${TMP_DIR}"]],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: "${REPOSITORY_URL}"]]]
+            }
+        }
+
+        stage ('Tag master branch') {
+            steps {
+                sh "cd ${TMP_DIR} && git tag -a -m \"${params.REPOSITORY_NAME} ${params.RELEASE_VERSION} Pre Alpha version\" ${PRE_RELEASE_TAG}"
+                sh "cd ${TMP_DIR} && git push origin ${PRE_RELEASE_TAG}"
+            }
+        }
+
+        stage ('Create infra release branch') {
+            when { anyOf {
+                    expression { params.REPOSITORY_NAME == 'ovn_infrastructure' };
+                    expression { params.REPOSITORY_NAME == 'ovn_app_infrastructure' };
+                    expression { params.REPOSITORY_NAME == 'ovn_kh_profile' };
+                    expression { params.REPOSITORY_NAME == 'ovn_jenkins_pipeline' };
+                } }
+            steps {
+                sh "cd ${TMP_DIR} && git checkout -b ${params.RELEASE_TYPE}-${params.RELEASE_VERSION}"
+            }
+        }
+
+        stage ('Add frozen packages') {
+            when { allOf {
+                    expression { params.REPOSITORY_NAME != 'ovn_infrastructure' };
+                    expression { params.REPOSITORY_NAME != 'ovn_jenkins_pipeline' };
+                    expression { params.REPOSITORY_NAME != 'ovn_app_infrastructure' }
+                } }
+            steps {
+                build job: 'release-freeze-dependencies', parameters: [
+                    booleanParam(name: 'FREEZE_OVN_KH_PROFILE', value: true)
+                ]
+                copyArtifacts filter: '.frozen.packages*', projectName: 'release-freeze-dependencies', selector: lastSuccessful(), target: "${TMP_DIR}/"
+                sh "cd ${TMP_DIR}/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+            }
+        }
+
+        stage ('Push changes') {
+            steps {
+                sh "cd ${TMP_DIR}/ && git push origin HEAD"
+            }
+        }
+
+    }
+
+}

@@ -1,0 +1,63 @@
+- name: deploy prometheus config
+  template:
+    src: "{{ dir_val.src }}"
+    dest: "{{ dir_val.dest }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "{{ dir_val.mode }}"
+    validate: "{{ prometheus_base_dir }}/promtool check config %s"
+  with_items:
+    - "{{ prometheus_config_files }}"
+  loop_control:
+    loop_var: dir_val
+  register: prometheus_config_result
+
+- name: link prometheus config for mode active and standby
+  file:
+    src: "{{ prometheus_config_dir }}/prometheus-{{ hostvars[inventory_hostname]['prometheus_mode'] }}.yml"
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+  when: ('prometheus_mode' in hostvars[inventory_hostname])
+
+- name: link prometheus config for mode not defined
+  file:
+    src: "{{ prometheus_config_dir }}/prometheus-active.yml"
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+  when: ('prometheus_mode' not in hostvars[inventory_hostname])
+
+- name: prometheus systemd configuration
+  template:
+    src: "prometheus.service.j2"
+    dest: "/etc/systemd/system/prometheus.service"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+  register: prometheus_service_result
+
+- name: reload system service configs.
+  shell: systemctl daemon-reload
+  when: prometheus_service_result.changed == true
+
+- name: enable and start prometheus package.
+  service:
+    name: prometheus
+    state: restarted
+  when: prometheus_service_result.changed == true
+
+- name: ensure prometheus is started and enabled to start at boot.
+  service:
+    name: prometheus
+    state: started
+    enabled: yes
+
+- name: reload prometheus config
+  service:
+    name: prometheus
+    state: reloaded

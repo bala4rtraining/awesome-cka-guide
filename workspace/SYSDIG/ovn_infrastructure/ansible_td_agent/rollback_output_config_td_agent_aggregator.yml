@@ -1,0 +1,10 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=fluentd_aggregator
+
+- gather_facts:
+  hosts: fluentd_aggregator
+
+- name: rollback td-agent output config and start td_agent
+  hosts: fluentd_aggregator
+  roles:
+    - {  role: td_agent, dispatch: ['rollback-output-config-td-agent-aggregator'] }

@@ -1,0 +1,4 @@
+---
+# handlers file for bro
+- name: broctl_install
+  shell: /opt/bro/bin/broctl install

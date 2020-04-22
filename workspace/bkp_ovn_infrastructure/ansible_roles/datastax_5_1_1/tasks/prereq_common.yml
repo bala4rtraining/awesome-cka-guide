@@ -1,0 +1,30 @@
+---
+# Remove open jdk and install Jre ---
+#- name: uninstall java other than jre
+#  yum:
+#    name: java-1.8.0-openjdk
+#    state: absent
+
+- name: <1-5 COM_prereq_dstax511> install jdk
+  yum:
+    name: jdk
+    state: present
+- name: <2-5 COM_prereq_dstax511> install jre
+  yum:
+    name: jre
+    state: present
+
+- name: <3-5 COM_prereq_dstax511> install sudo
+  yum:
+    name: sudo
+    state: present
+
+- name: <4-5 COM_prereq_dstax511> install unzip
+  yum:
+    name: unzip
+    state: latest
+
+- name: <5-5 COM_prereq_dstax511> install JSON parser
+  yum:
+    name: jsp
+    state: present

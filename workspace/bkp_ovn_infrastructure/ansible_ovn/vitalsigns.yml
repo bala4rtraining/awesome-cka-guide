@@ -1,0 +1,85 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_vitalsigns_delivery
+
+- include: set_common_variables.yml target_hosts=ovn_vitalsigns_delivery
+
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+
+- name: copy sftp key
+  hosts: ovn_vitalsigns_delivery
+  tasks:
+    - group: name=ovn_vitalsigns_delivery state=present
+    - user: name=ovn_vitalsigns_delivery state=present
+    - file: path="/opt/ovn_vitalsigns_delivery" state=directory
+    - copy: content="{{vitalsigns_sftp_private_key }}" dest="/opt/ovn_vitalsigns_delivery/vital.signs.feed.sftp" owner=ovn_vitalsigns_delivery group=ovn_vitalsigns_delivery mode=0600
+  vars:
+    vitalsigns_sftp_private_key: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEpQIBAAKCAQEA8A6KjgjUk60hMvzlvcsdLkocIQ4nCQYGDku8KCs94QYc06y4
+      5ibCbCqqIpANofDd7xNjam8+zHkebRhx3AK/gOBPm5ft/+k+pi3+7UW759AxZgTo
+      OyvTooEuWUnBIkwRBRlSDnSi6lpxVFS/0O1kBHXxvYObez/yIAaUxDWCXJhT9ef1
+      Ej7sCn7X2wYdqgLdnwq/Ilu9W5D/GltlxWh+ZnjI3vQR6CPMML93mGp40ltP0APD
+      6pvpTfqto7aWTvXp1gMDfcQHU3V9gKVUxd/PMWywLegzjg2/s4tNo/WhzyVjiUDC
+      q2u+A4jOyydpSKTzwbBaRnwgQGdM89zg/+dieQIDAQABAoIBAQCpFnT9yraBNoeV
+      9JCWeQUa39Ska+WO85E8bJgh6yNw5u9TIewzIMX9jqe8JJ+Vm6WXip6SD726JO4L
+      hhZdFApz6ovoWsGnalFYmDliQ6YxiHHjHD2/wAUYB8nv1oWVdOLgJo+n4vwF+qKs
+      9e0OasfyZGlcReE0lTwk1r3e3pnuQXg/DS2NlU9uyZCNOWAsOnzZI58t+phZ0XXi
+      9cC6vz0Ggnm2OZEQ1JZPZzai0Fx0mBGKwPHZXB9c6PXES/z5eoYzOAS5c02ElXdB
+      29RnNljEve+e41cD1rKhCXNoVqJ/zMZ+H7cwSLFpb2MwqKG+AkjGSKnOEvwhOmGh
+      HYVN1igJAoGBAP3BnAouJI+IcY0htnLIr2FaSzvW2e7HWdegMWKN3okNyNCRP3+u
+      Dx4VWTP480CP+UcwS6m0ajg2nQfFu6B/kZHQdA7dgWa5vYlTRW+5sgt0T8kt1Ezu
+      fcTrx5QJF8YMeo1fYR6kNriWbl/hrAxHClU4HGsG/iOE3u7sBBmyWGELAoGBAPIt
+      7BWwPCPaTOppwNBfCDagvMKsW7H1/3/UKVlLWShYkXH7rXRYMh8SniRsN9B+hHi9
+      9m68xBJbXX/+gz5zU0PQjTE+Sj3jSxTvDqYhq3Dp1FRYeH00T3g20nDYwZqj+0UE
+      USotpoVadx7SKzb+GVV5srlF9xIVDzYjRPYiYgULAoGBAOKmE2FkZXNuQz3zZqqP
+      ZVZm99uyw2Tq2ewmQPXuEV4I2dywXy8DoK0WFF6/dUWtUtGq6Wniox0iao+OpU9t
+      oe/DaGX+op3GOOx3XAW2rrhcYwcl0AIG4n8IuXIXzQwwCSZMkspzkgy9EEjDoJA2
+      w5vqSjeuP0AqZZSxadgp25aRAoGAEfpIuT9w53RwG0Kodo9na6649HaZA/fv9IxK
+      WX+XacBRY7W8JZPafKYEKU4DQq3xpYjsf0HyCC7SHQtGsN8cwj78DDjEiB2UWER6
+      wOhk8qfZBD3hC+JTN+hR7OCaVqFvqKruX4QuBV4204nkfVuVg9vZ4ZkJA0We8HTj
+      zKW2wwsCgYEAph4VkdVFiN9atfD2zLG963t2tRWAFV054qSciLKZb8TJpb4T5p0s
+      AUQNUCeSyN70PjBwYRRbeN8w7iiJybr1O3ffsFdyNtc2/5gZy8kCh0NB+yKnrfpS
+      MIyQN/6bPWjU1euLprQAjOdUIWvfU5eSHjcpI6j7InQvT3ZqUizWj8E=
+      -----END RSA PRIVATE KEY-----
+
+- name: start ovn_vitalsigns_delivery
+  hosts: ovn_vitalsigns_delivery
+  roles:
+    - { role: ovn, ovngit_ref: "{{vitalsigns_ovngit_ref|default(omit)}}", ovn_firewalld_ports: ["10000-11998/tcp", "4369/tcp"] }
+  vars:
+    name: ovn_vitalsigns_delivery
+    node_name: ovn_vitalsigns_delivery
+    source_dir: "{{ vitalsigns_ovngit_ref|default('files/') }}"
+    source_file: ovn_vitalsigns_delivery.tar.gz
+    sftp_key: "/opt/ovn_vitalsigns_delivery/vital.signs.feed.sftp"
+    sftp_servers: '[{"10.203.221.122", 22, "ovnvs", "/vitalsigns/ovndata", 100}, {"10.203.221.123", 22, "ovnvs", "/vitalsigns/ovndata", 100}]'
+    instance: "{{local_instance|default('1')}}"
+    transaction_cutoff: 5
+    timeout_cutoff: 60000
+    topic: "{{tran_log_kafka_topic}}"
+    partitions: 3
+    cursor_bucket: "vitalsigns_cursor"
+    message_bucket: "vitalsigns_message"
+    processor: 'ovn_vitalsigns_processor'

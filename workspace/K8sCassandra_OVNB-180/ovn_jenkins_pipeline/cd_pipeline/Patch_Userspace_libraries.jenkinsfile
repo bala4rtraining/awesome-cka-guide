@@ -1,0 +1,2 @@
+@Library('ovn-shared-library') _
+cdTemplate_InvokeAnsiblePlaybook('ovn_infrastructure', '$RELEASE_BRANCH', 'ansible_ovn/update_packages.yml','-e @config/$ENV.vars.secret.yml','-e validate_packages="False"','-e patch_filename=kernel_ind_prod_6103 --limit "10.211.122.157"')

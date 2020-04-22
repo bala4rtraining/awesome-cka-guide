@@ -1,0 +1,95 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+name: "erlang-application"
+source: "{% if source_dir == 'files/' %}{{source_dir+'/'+source_file}}{% else %}{{ovngit_host+source_dir+':/'+source_file}}{% endif %}"
+source_copy: "{{ source_dir == 'files/' }}"
+data_dir: "/var/lib/{{name}}"
+log_dir: "/var/log/{{name}}"
+default_iface: "{{ ansible_default_ipv4.alias }}"
+erlang_dist_ip: "{0,0,0,0}"
+inet_dist_listen_min: "{{erl_port_min}}"
+inet_dist_listen_max: "{{erl_port_max}}"
+netiso_ip: "{0,0,0,0}"
+netiso_port: 7070
+ovn_id: 99
+forward_handler_ip: "{0,0,0,0}"
+forward_handler_port: "7079"
+netiso_ssl_options: "[]"
+node_name:  "{{  hostvars[inventory_hostname].ansible_hostname }}"
+smp: "enable"
+tran_log_on: "[false]"
+service_name: "{{name}}"
+admin_tool: "{{service_name}}_admin"
+atr_timeout: 10000
+ovn_opdb_initial_pool_size: 32
+ovn_opdb_max_pool_size: 32
+riak_port: 8087
+riak_endpoints_pooler_config: '[{name, default}, {group, riak}, {max_count, 0}, {init_count, 0}, {start_mfa, {ovn_opdb_worker, start_link, ["0.0.0.0", 8087]}}]'
+switch_endpoints_pooler_config: '[{name , to_ovn_mediator}, {group, to_ovn_mediator}, {max_count, 5}, {init_count, 0}, {start_mfa, {ovn_yoke_worker, start_link, [ovn_yoke_tcp, "0.0.0.0", 7078, to_ovn_mediator]}}]'
+mediator_endpoints_pooler_config: '[{name , to_ovn_switch}, {group, to_ovn_switch}, {max_count, 5}, {init_count, 0}, {start_mfa, {ovn_yoke_worker, start_link, [ovn_yoke_tcp, "0.0.0.0", 7077, to_ovn_switch]}}]'
+vip_endpoints_pooler_config: '[{name , to_ovn_switch}, {group, to_ovn_switch}, {max_count, 5}, {init_count, 0}, {start_mfa, {ovn_yoke_worker, start_link, [ovn_yoke_tcp, "0.0.0.0", 7077, to_ovn_switch]}}]'
+riak_endpoints: "[[{0,0,0,0}, 8087]]"
+netcontext_ip: "{0,0,0,0}"
+netcontext_port: 7071
+profile_dir: "/opt/profile"
+use_profile_in_deps: "false"
+currency_dir: "/opt/currency"
+use_currency_in_deps: "false"
+sync_growl: "none"
+to_ovn_switch_initial_pool_size: 30
+to_ovn_switch_max_pool_size: 30
+to_ovn_mediator_max_pool_size: 30
+to_ovn_mediator_yoke_return_strategy: "dont_return_member"
+to_ovn_mediator_initial_pool_size: 30
+switch_acceptor_ip_for_mediator: "{0,0,0,0}"
+switch_acceptor_port_for_mediator: 7077
+mediator_acceptor_ip_for_switch: "{0,0,0,0}"
+mediator_acceptor_port_for_switch: 7078
+mediator_acceptor_ip_for_advice: "{0,0,0,0}"
+mediator_acceptor_port_for_advice: 7076
+advice_acceptor_ip_for_mediator: "{0,0,0,0}"
+advice_acceptor_port_for_mediator: 7075
+switch_acceptor_port_for_vip: "{{ switch_acceptor_port_for_mediator }}"
+vip_connector: '[{enabled, false}]'
+mock_vip_ports: '[]'
+cluster_membership_mode: "permissive"
+cluster_retry_spec: "{linear, 5000, 10}"
+hsm_cert_dir: "/opt/{{name}}/hsm-client-cert"
+hsm_ssl_opts_saved: |
+      [{certfile,   "{{hsm_cert_dir}}/cert.pem"},
+       {cacertfile, "{{hsm_cert_dir}}/ca_chain.vica4.pem"},
+       {keyfile,    "{{hsm_cert_dir}}/pkey.pem"}]
+hsm_ssl_opts: []
+hsm_lmk_check_value: "2686040000000000"
+remote_instances: "[]"
+remote_forward_handler_endpoints: []
+feed_dir: ""
+subscription_dir: ""
+partitions_count: 3
+retry_count: 3
+kafka_port_for_switch: 9092
+disable_kafka_connection: "false"
+enable_umf_deliver_service: "true"
+erl_dist_ports: "10000-19999/tcp"
+epmd_port: "4369/tcp"
+advice_timeout_with_responses: 60000
+advice_timeout_without_responses: 2000
+advice_retry_interval: 300000
+netiso_socket_inactivity_timeout: 20000
+batch_lifetime: 60000
+max_endpoint_attempts: 2
+max_connection_attempts: infinity
+apf_max_connection_attempts: infinity
+connection_reconnect_delay: 60000
+umf_delivery_require_eod_match: "no"
+user_dir: "/opt/ovn_console"
+system_dir: "/opt/ovn_console"
+ef_process_delay: 100
+ovn_vip_ef_sync_time: '{5, 30, 0}'

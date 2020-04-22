@@ -1,0 +1,9 @@
+---
+- name: Put Configuration
+  template: src=spark-env.j2 dest={{work_dir}}/conf/spark-env.sh
+
+- name: Put Spark Mesos Dispatcher service
+  template: src=spark-service.j2 dest=/usr/lib/systemd/system/spark-dispatcher.service
+  notify:
+    - Reload daemons
+    - Restart Spark Mesos Dispathcer service

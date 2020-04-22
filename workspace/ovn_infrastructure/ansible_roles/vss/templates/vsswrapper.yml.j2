@@ -1,0 +1,46 @@
+datacenter: {{ vic_identity|trim }}
+ssh:
+  username: {{ vss_username }}
+  port: {{ vss_ssh_port }}
+  private_key_path: {{ vss_ssh_private_key }}
+  hostname: {{ vss_ftps_hostname }}
+sftp:
+  directory: {{ vss_sftp_directory }}
+  polling_interval: {{ vss_sftp_polling_interval }}
+  max_attempt: {{ vss_sftp_max_attempt }}
+  inpa_marker_file: {{ vss_inpa_marker_file }}
+hdfs:
+  namenodes:
+  {% for item in groups['hadoop_namenodes'] %}
+  - {{ item }}:{{ hadoop_namenode_rpc_port }}
+  {% endfor %}
+
+  username: {{ vss_hadoop_username }}
+  directory: {{ vss_hadoop_directory }}
+  perm: {{ vss_file_perm }}
+local:
+  input_dir: {{ vss_local_input_dir }}
+  intermediary_dir: {{ vss_local_intermediary_dir }}
+  output_dir: {{ vss_local_output_dir }}
+  perm: {{ vss_file_perm }}
+riak:
+  nodes:
+  {% for item in groups['ovn_riak_servers'] %}
+  - {{ item }}:{{protobuf_listener_port}}
+  {% endfor %}
+
+  max_connections: {{ vss_riak_max_connections }}
+  bucket_type: {{ vss_riak_bucket_type }}
+  bucket_name: {{ vss_riak_bucket_name }}
+vss:
+  root_dir: {{ vss_root_path }}
+  daily_exec_path: {{ vss_daily_exec_path }}
+  inpa_flag_path: {{ vss_inpa_flag_path }}
+logger:
+  console_backend:
+    log_level: info
+  file_backend:
+    log_level: info
+    path: {{ vsswrapper_log_path }}
+  syslog_backend:
+    log_level: info

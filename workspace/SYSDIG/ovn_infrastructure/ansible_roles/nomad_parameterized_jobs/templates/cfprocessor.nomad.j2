@@ -1,0 +1,102 @@
+/*
+
+Once deployed, this should be called through nomad job dispatch HTTP API like:
+
+curl -X POST -d
+*/
+
+job "cfprocessor_job" {
+
+datacenters = ["{{ vic_identity|trim }}"]
+
+  type = "batch"
+
+  meta {
+    HDFSPATH = ""
+    DOMESTICONLY = "false"
+    CROSSBORDERONLY = "false"
+    REQUESTEDBATCHES = ""
+  }
+
+  parameterized {
+    meta_required = [
+      "HDFSPATH",
+    ]
+    meta_optional = [
+      "DOMESTICONLY",
+      "CROSSBORDERONLY"
+      "REQUESTEDBATCHES"
+    ]
+  }
+
+  group "g1" {
+    restart {
+      // retry for about 5 mins, each every 10s if it fails.
+      attempts = 30
+      delay    = "10s"
+      mode = "fail"
+    }
+
+    task "t1" {
+      driver = "raw_exec"
+
+      config {
+        command = "{{ cfprocessor_install_dir }}/bin/cfprocessor"
+        args = ["-config=${NOMAD_TASK_DIR}/cfprocessor.yml", "-hdfspath=${NOMAD_META_HDFSPATH}", "-domestic-only=${NOMAD_META_DOMESTICONLY}", "-crossborder-only=${NOMAD_META_CROSSBORDERONLY}","-request-batches=${NOMAD_META_REQUESTEDBATCHES}"]
+      }
+
+      template {
+        data = <<EOH
+---
+name: cfprocessor
+hdfs:
+  namenodes: 
+  {% for item in groups['hadoop_namenodes'] %}
+  - {{ hostvars[item].inventory_hostname }}:{{ hadoop_namenode_rpc_port }}
+  {% endfor %}
+
+  directory: "/cfprocessor"
+  perm: 766
+  username: hdfs
+bridgeea:
+  hostname: "{{ groups["ovn_mockmvs_servers"][0] }}"
+  port: "{{ bridge_ftps_auth_port }}"
+  username: ""
+  password: ""
+  root_dir: "/"
+logger:
+  development: true
+  disable-caller: false
+  disable-stacktrace: false
+  encoding: json
+  encoder-config:
+    message-key: msg
+    level-key: level
+    time-key: ts
+    name-key: logger
+    caller-key: src
+    stacktrace-key: stacktrace
+    line-ending: "\n"
+    level-encoder: lowercase
+    time-encoder: iso8601
+    duration-encoder: seconds
+    caller-encoder: short
+  output-paths:
+    - stdout
+  error-output-paths:
+    - stderr
+tracing:
+  disable: false
+  type: jaeger
+  jaeger:
+    log-spans: false
+    EOH
+
+        destination = "local/cfprocessor.yml"
+      }
+    }
+  }
+}
+
+
+

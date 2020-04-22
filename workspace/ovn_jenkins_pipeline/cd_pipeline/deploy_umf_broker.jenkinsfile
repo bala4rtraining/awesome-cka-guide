@@ -1,0 +1,43 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+       args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '7'))
+  }
+  parameters {
+    choice(name: 'RIAK_TLS_ENABLED', choices: 'true\nfalse', description: '') 
+    choice(name: 'KAFKA_TLS_ENABLED', choices: 'true\nfalse', description: '')
+  }
+  stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+    stage('Checkout SCM'){
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    stage('deploy_umf_broker'){
+      steps{
+        ansiblePlaybook playbook: 'ansible_ovn/umf_broker.yml',
+                        inventory: 'inventories/$CLUSTER/$DATACENTER',
+                        credentialsId: 'ENV.root_key',
+                        colorized: true,
+                        forks: 5,
+                        sudoUser: null,
+                        extras: '--extra-vars "riak_tls_enabled=$RIAK_TLS_ENABLED kafka_tls_enabled=$KAFKA_TLS_ENABLED"'
+      }
+    } 
+  }
+}

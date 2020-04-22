@@ -1,0 +1,13 @@
+---
+# vars file for graphite-beacon  (only used for RedHat7)
+
+# these were downloaded at the EPEL7 level
+grbeacon_rpms:
+  - python-backports-1.0-8.el7.x86_64.rpm
+  - python-backports-ssl_match_hostname-3.4.0.2-4.el7.noarch.rpm
+  - python-setuptools-0.9.8-4.el7.noarch.rpm
+  - python-pip-7.1.0-1.el7.noarch.rpm
+
+service_template:
+ - { src: graphite-beacon.service.j2, dest: /usr/lib/systemd/system/graphite-beacon.service, mode: '0644' }
+

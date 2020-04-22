@@ -1,0 +1,35 @@
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  parameters {
+    booleanParam(name: 'nomad_enable_tls', defaultValue: true, description: '')
+    booleanParam(name: 'riak_enable_tls', defaultValue: true, description: '')
+    booleanParam(name: 'kafka_enable_tls', defaultValue: true, description: '')
+    booleanParam(name: 'enable_kerberos', defaultValue: true, description: '')
+  }
+  stages {
+    stage('Checkout ovn_app_infrastructure repo') {
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    stage('Deploy delivery poller') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook playbook: 'ansible_ovn/clearing_job_nomad.yml',
+                          inventory: 'inventories/$CLUSTER/$DATACENTER',
+                          credentialsId: 'ENV.root_key',
+                          colorized: true,
+                          forks: 5,
+                          sudoUser: null,
+                          extras: '-e @config/$ENV.vars.secret.yml --vault-password-file=~/.vault-$ENV -e "{enable_tls_nomad: $nomad_enable_tls, riak_ssl_enabled: $riak_enable_tls, kafka_enable_tls: $kafka_enable_tls, ovn_clearing_enable_kerberos: $enable_kerberos}"'
+        }
+      }
+    }
+  }
+}

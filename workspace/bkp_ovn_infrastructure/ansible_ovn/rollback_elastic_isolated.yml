@@ -1,0 +1,6 @@
+---
+# Rollback elasticsearch isolated node upgrade
+- name: Rollback elasticsearch isolated node upgrade
+  hosts: "{{ es_node }}"
+  roles:
+    - {role: elasticsearch, dispatch: ['rollback_elastic_isolated_node']}

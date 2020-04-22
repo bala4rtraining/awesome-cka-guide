@@ -1,0 +1,6 @@
+---
+
+artifactory_url: "https://artifactory.trusted.visa.com"
+
+#jre version
+jre_name: java-1.8.0-openjdk

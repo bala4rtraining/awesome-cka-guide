@@ -1,0 +1,80 @@
+@Library('ovn-shared-library') _
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/'
+    }
+  }
+
+  options {
+      buildDiscarder(logRotator(numToKeepStr: '95'))
+  }
+
+  environment {
+    CLUSTER = "int-epic14"
+    DATACENTER1 = 'dc1'
+    DATACENTER2 = 'dc2'
+  }
+
+  stages {
+    stage('Checkout SCM'){
+          steps{
+          git credentialsId: 'ENV.root_key', branch: "epic-14", url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git'
+          }
+    }
+
+    stage('zookeeper-deploy') {
+    steps{
+      parallel(
+        'zookeeper-dc1': {
+          ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", playbook: 'ansible_zookeeper/provision.yml'
+          }
+        },
+        'zookeeper-dc2': {
+          ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", playbook: 'ansible_zookeeper/provision.yml'
+          }
+        }
+      )
+    }
+  }
+
+    stage('kafka-deploy') {
+        steps{
+        parallel(
+        'kafka-dc1': {
+          ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", playbook: 'ansible_kafka/site.yml'
+                }
+            },
+        'kafka-dc2': {
+          ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", playbook: 'ansible_kafka/site.yml'
+            }
+            }
+        )
+        }
+    }
+
+    stage('Riak-deploy') {
+    steps{
+      parallel(
+        'nomad-dc1': {
+          ansiColor('xterm') {
+          ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', forks: 20, inventory: 'inventories/$CLUSTER/$DATACENTER1', playbook: 'ansible_riak/site.yml', extras: "--extra-vars ALLOW_OVNINFRA_PLAYBOOK='true' --extra-vars cluster_name=${env.CLUSTER}_${env.OTHER_DC}", sudoUser: null
+          }
+        },
+        'nomad-dc2': {
+          ansiColor('xterm') {
+          ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', forks: 20, inventory: 'inventories/$CLUSTER/$DATACENTER2', playbook: 'ansible_riak/site.yml', extras: "--extra-vars ALLOW_OVNINFRA_PLAYBOOK='true' --extra-vars cluster_name=${env.CLUSTER}_${env.OTHER_DC}", sudoUser: null
+            }
+          }
+        )
+      }
+    }
+
+  }
+}

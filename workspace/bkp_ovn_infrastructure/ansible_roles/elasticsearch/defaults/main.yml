@@ -1,0 +1,49 @@
+---
+# defaults file for elasticsearch
+default_iface: "{{ ansible_default_ipv4.alias }}"
+download_path_url: "https://artifactory.trusted.visa.com/ovn-extra-el7/"
+systemd_daemon_reload: false
+service_templates: []
+backup_elasticsearch_data: false
+elasticsearch_rpms:
+  - elasticsearch-5.6.9
+searchguard_package_name: search-guard-5
+searchguard_package_version: 5.6.9-19.1
+
+elasticsearch_config_dir: "/etc/elasticsearch"
+elasticsearch_install_dir: "/usr/share/elasticsearch"
+elasticsearch_datadir: "/opt/app/elasticsearch"
+elasticsearch_archive: "/opt/app/backup/elasticsearch-data.{{ ansible_date_time.date }}.tar.gz"
+elasticsearch_conf_archive: "/opt/app/backup/elasticsearch-conf.{{ ansible_date_time.date }}.tar.gz"
+elasticsearch_jre_oldversion: "java-1.8.0-openjdk"
+elasticsearch_port: 9200
+elasticsearch_oldversion: 5.5.1
+rolling_upgrade: false
+
+searchguard_install_dir: "/usr/share/elasticsearch"
+searchguard_download_dir: "/tmp/searchguard"
+searchguard_zip_file_name: "{{searchguard_package_name}}-{{searchguard_package_version}}.zip"
+searchguard_artifact_url: "{{ artifactory_url }}/ovn/repo/{{ searchguard_zip_file_name }}"
+
+#This is added to support IP based deployment of prometheus for CERT and PERF environment. Hostname and fqdn do not work well in CERT and PERF environment
+elasticsearch_use_fqdn: "true"
+
+artifactory_url: "https://artifactory.trusted.visa.com"
+release_artifactory_url: "https://artifactory.trusted.visa.com/ovn/repo/"
+
+searchguard_ca_cert_path: "{{ elasticsearch_config_dir }}/elasticsearch_searchguard_ca_cert.pem"
+searchguard_cert_path: "{{ elasticsearch_config_dir }}/elasticsearch_searchguard_cert.pem"
+searchguard_key_path: "{{ elasticsearch_config_dir }}/elasticsearch_searchguard_key.pem"
+elasticsearch_client_ca_cert_path: "{{ elasticsearch_config_dir }}/elasticsearch_client_ca_cert.pem"
+elasticsearch_client_cert_path: "{{ elasticsearch_config_dir }}/elasticsearch_client_cert.pem"
+elasticsearch_client_key_path: "{{ elasticsearch_config_dir }}/elasticsearch_client_key.pem"
+
+cert_user: "was"
+cert_group: "was"
+
+elasticsearch_user: "elasticsearch"
+elasticsearch_group: "elasticsearch"
+elasticsearch_log_dir: "/var/log/elasticsearch"
+elasticsearch_ssl: "false"
+
+elasticsearch_jvm_heap_usage_max_size: 70

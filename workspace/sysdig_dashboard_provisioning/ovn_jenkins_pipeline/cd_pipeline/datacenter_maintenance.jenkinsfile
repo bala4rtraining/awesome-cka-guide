@@ -1,0 +1,45 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+        string(name: 'START_TIME', defaultValue: '', description: 'Enter the Start Time of Maintenance. e.g: 2018-07-07T07:00:00Z ')
+        string(name: 'END_TIME', defaultValue: '', description: 'Enter the End Time of Maintenance. e.g: 2018-07-07T08:00:00Z ')
+        string(name: 'host_name', defaultValue: '', description: 'Enter the hostname to silence alerts at a host level, OTHERWISE LEAVE THIS FIELD EMPTY. Eg: sl73ovnapd163.visa.com or sl73ovnapd074.visa.com,sl73ovnapd076.visa.com ')
+        string(name: 'alert_name', defaultValue: '', description: 'Enter the alertname to be silenced. Do not enter hostname, OTHERWISE LEAVE THIS FIELD EMPTY. Eg: NodeHighSwapUse ')
+        string(name: 'label_name', defaultValue: '', description: 'Enter label name to be silenced and the alertname, OTHERWISE LEAVE THIS FIELD EMPTY. Eg: state')				
+        string(name: 'label_value', defaultValue: '', description: 'Enter label value to be silenced and the alertname, OTHERWISE LEAVE THIS FIELD EMPTY. Eg: failed')
+        string(name: 'RELEASE_BRANCH', defaultValue: '', description: 'Enter the release branch details')		
+  }
+  stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+	stage('Checkout SCM'){
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }	
+    stage('trigger datacenter silence') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} --extra-vars host_name=${host_name} --extra-vars alert_name=${alert_name} --extra-vars label_name=${label_name} --extra-vars label_value=${label_value} --extra-vars START_TIME=${START_TIME} --extra-vars END_TIME=${END_TIME}", playbook: 'ansible_ovn/alertmanager_mute_alerts.yml'
+        }
+      }
+    }
+  }
+}

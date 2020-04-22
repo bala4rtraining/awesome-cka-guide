@@ -1,0 +1,14 @@
+---
+# The purpose of the playbook is to deploy envoy on the services which require it.
+
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_mp
+
+- name: Gather facts for the play
+  hosts: ovn_mp
+  gather_facts: true
+
+- name: Install envoy
+  hosts: ovn_mp
+  gather_facts: true
+  roles:
+    - {role: envoy, dispatch: ['deploy'], envoy_services: "{{ ovn_services }}"}

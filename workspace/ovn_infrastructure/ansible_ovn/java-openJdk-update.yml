@@ -1,0 +1,9 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts }}"
+
+# Playbook is used to dispatch openjdk update
+- name: run the java playbook to install latest openjdk
+  hosts: "{{ target_hosts }}"
+  roles:
+     - {role: java, dispatch: ['openjdk-update']}
+     - {role: java, dispatch: ['validate-java-type']}

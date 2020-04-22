@@ -1,0 +1,29 @@
+---
+#Stop the service first
+#stop the service if it exists
+- name: get the service status
+  shell: service {{yummirrors_name}} status warn=false
+  register: _service_status
+  failed_when: _service_status.rc != 0 and ("unrecognized service" not in _service_status.stderr)
+  ignore_errors: true
+
+- name: stop the service if it exists and is running
+  service: name={{yummirrors_name}} state=stopped
+  when: _service_status.rc == 0
+
+# Copy configuration file
+- name: copy yummirrors config file
+  template:
+    src: "{{ yummirrors_config_template }}"
+    dest: "{{ yummirrors_install_dir }}/{{ yummirrors_config }}"
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_group }}"
+    mode: "0644"
+    
+# Reload systemd configuration
+- name: reload systemd configuration
+  command: systemctl daemon-reload
+
+# Start the server
+- name: start yummirrors server
+  service: name={{ yummirrors_name }} enabled=yes state=started

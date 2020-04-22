@@ -1,0 +1,21 @@
+
+- name: run the ansible setup role to gather facts about all hosts
+  hosts: all
+  gather_facts: yes
+  roles:
+    - { role: "../ansible_roles/lazy_host_grouping" }
+
+- name: only the unprovisioned hosts
+  hosts: unprovisioned
+  tasks:
+    - debug: msg="I am unprovisioned {{ inventory_hostname }}"
+
+- name: only kafka hosts
+  hosts: kafka
+  tasks:
+    - debug: msg="I am kafka {{ inventory_hostname }}"
+
+- name: only zookeeper hosts
+  hosts: zookeeper
+  tasks:
+    - debug: msg="I am zookeeper {{ inventory_hostname }}"

@@ -1,0 +1,17 @@
+---
+
+- name: Rebalance cluster
+  assign_topic_partitions:
+    brokers={{kafka_members}}
+    zookeepers={{zookeeper_members}}
+    kafka_dir={{kafka_install_dir}}
+    balance_cluster=true
+    replica_count={{replication_factor}}
+    partition_factor={{partition_factor}}
+
+- name: set the leadership preferences
+  command: "{{ kafka_install_dir }}/bin/kafka-reassign-partitions.sh --zookeeper {{ zookeeper_default_member }} --reassignment-json-file {{ kafka_install_dir }}/config/preferred_replica_configuration.json --execute"
+  register: leadership_preferences
+  failed_when: >
+    'Successfully started reassignment of partitions' not in leadership_preferences.stdout
+  run_once: true

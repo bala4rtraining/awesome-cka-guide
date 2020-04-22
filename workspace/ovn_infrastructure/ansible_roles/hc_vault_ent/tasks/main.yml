@@ -1,0 +1,7 @@
+---
+- name: Enterprise Vault role task dispatcher
+  include: "{{ task }}.yml" # assumes no nested includes from loops
+  with_items: "{{ dispatch|default([]) }}"
+  when: "dispatch != []"
+  loop_control: 
+    loop_var: task

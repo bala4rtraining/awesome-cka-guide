@@ -1,0 +1,19 @@
+#
+# Simulation variables
+#
+#  some have same values as in OCW var file
+#
+
+
+sim_oob_sw:
+  hostname:  "sim-oob-sw"
+  int_eth0:
+    subnet_int_mac: "08:00:27:00:11:11"
+    subnet_int_ip:  192.168.1.2
+
+
+sim_oob_serv:
+  hostname: "sim-oob-serv"
+  int_eth0:
+    subnet_int_mac: "08:00:27:00:11:22"
+    subnet_int_ip: 10.237.0.196

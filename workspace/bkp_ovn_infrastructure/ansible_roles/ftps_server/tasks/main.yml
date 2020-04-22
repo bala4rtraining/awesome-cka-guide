@@ -1,0 +1,65 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: install vsftpd
+  package: name=vsftpd state=present
+
+
+- name: add FTP group
+  group: name=ftp state=present
+
+- name: add FTP user
+  user: name=ftp group=ftp
+  
+- name: ftp root directory
+  file: path=/var/vsftpd state=directory owner=ftp group=ftp mode=02775
+
+- name: ftp user directories
+  file: path=/var/vsftpd/{{item.name}} state=directory owner=ftp group=ftp mode=02775
+  no_log: true
+  with_items: "{{vsftpd_users}}"
+
+- name: ftp user sub-directories
+  file: path=/var/vsftpd/{{item.name}}/{{item.sub_dir}} state=directory owner=ftp group=ftp mode=02775
+  no_log: true
+  when: item.sub_dir is defined
+  with_items: "{{vsftpd_users}}"
+
+- name: populate vsftpd login database
+  copy:
+    dest: /etc/vsftpd/logins.txt
+    mode: 0600
+    content: |
+      {% for item in vsftpd_users %}
+      {{ item.name }}
+      {{ item.password }}
+      {% endfor %}
+  notify: rebuild vsftpd database
+
+- name: vsftpd configuration
+  template: src=vsftpd.conf.j2 dest=/etc/vsftpd/vsftpd.conf
+  notify: restart vsftpd
+
+- name: virtual users PAM file
+  copy: src=vsftpd-PAM-vsftpd.virtual dest=/etc/pam.d/vsftpd.virtual owner=root group=root mode=0600
+  notify: restart vsftpd
+
+- name: touch /etc/vsftpd.chroot_list
+  shell: touch /etc/vsftpd.chroot_list creates=/etc/vsftpd.chroot_list
+
+- name: install SSL cert
+  copy: src={{ssl_cert_file}} dest=/etc/pki/tls/certs/visa.full.crt owner=root group=root mode=0644
+  notify: restart vsftpd
+
+- name: install SSL private key
+  copy: content="{{ftps_private_key }}" dest=/etc/pki/tls/private/visa.key owner=root group=root mode=0600
+  notify: restart vsftpd
+
+- name: enable vsftpd
+  service: name=vsftpd enabled=yes state=started

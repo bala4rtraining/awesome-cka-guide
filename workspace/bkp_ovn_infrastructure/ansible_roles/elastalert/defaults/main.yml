@@ -1,0 +1,23 @@
+---
+# defaults file for elastalert
+artifactory_url: "https://artifactory.trusted.visa.com"
+elastalert_rpm_download_path: "{{artifactory_url}}/ovn-extra-el7"
+elastalert_tarball_download_path: "{{artifactory_url}}/ovn/repo"
+elastalert_rules_tarball_url: "{{elastalert_tarball_download_path}}/ovn_alert/"
+elastalert_config_use_ssl: False
+elasticsearch_port: 9200
+elastalert_config_es_url_prefix: elasticsearch
+elastalert_smtp_server: "corpportal.visa.com:25"
+# this E-mail address goes into the default initial rules file (which would be updated by a deployment step later)
+elastalert_emailaddr: ovnalerts@visa.com,ryeung@visa.com
+
+elastalert_config_dir: /var/lib/elastalert
+
+# netcool related defines
+Netcool_region: CONSOLE     # string used for Netcool 'Region' e.g. CONSOLE/SUPPRESS
+OVN_AHA: Open_VisaNet-1     # Default AHA code assigned for all Netcool: 'OriginType'
+Netcool_email: EmailNetcoolQA@visa.com   # Test emailid is Netcoolemail@visa.com
+Netcool_DestinationConsole: Opensystems #Opensystems/Network -Netcool bucket name
+
+# string inserted in Freetext field of email for netcool , and into SMTP e-mail from address
+elastalert_env: "DEV"

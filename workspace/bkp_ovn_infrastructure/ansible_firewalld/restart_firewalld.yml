@@ -1,0 +1,6 @@
+---
+- name: Restart firewalld service
+  hosts: "{{ target_hosts }}"
+  roles:
+   - { role: firewall_rules, dispatch: ['restart_firewalld_service'] }
+

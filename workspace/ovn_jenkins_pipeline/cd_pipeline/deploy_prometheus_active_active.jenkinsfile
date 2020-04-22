@@ -1,0 +1,39 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+        string(defaultValue: "A,B", description: "Enter the Prometheus pair ID to deploy using comma as delimiter", name: "prometheus_pair_id")
+  }
+  stages {
+     stage('Set cluster variables') {
+         // boilerplate for stage must be the first stage
+         // in all the cd pipeline jobs.
+         // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+         steps {
+           setClusterAndDatacenter(env);
+         }
+     }
+     stage("GitSCM checkout for ovn_infrastructure"){
+       steps {
+         checkout poll: false, scm: [$class: 'GitSCM', branches: [[name: '${RELEASE_BRANCH}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git']]]
+       }
+     }
+     stage('Deploy Prometheus Active Active Topology') {
+       steps {
+         ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", playbook: 'ansible_prometheus/prometheus_with_ssl.yml', extras: "-e prometheus_pair_id=${params.prometheus_pair_id} -e @config/${env.ENV}.vars.secret.yml --vault-password-file ~/.vault-${env.ENV}"
+         }
+       }
+     }
+  }
+}

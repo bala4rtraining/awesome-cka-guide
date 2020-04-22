@@ -1,0 +1,4 @@
+- name: start kafka
+  systemd:
+    name: kafka
+    state: started

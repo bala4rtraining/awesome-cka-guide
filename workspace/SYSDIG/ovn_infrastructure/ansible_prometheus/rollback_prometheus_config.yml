@@ -1,0 +1,27 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=prometheus_server,!cumulus_switch,!ovn_manager
+
+- gather_facts:
+  hosts: prometheus_server
+
+  tasks: 
+  - name: Restore all prometheus configurations
+    command: "cp -p -rf /etc/prometheus/backup/{{ item }} /etc/prometheus/"
+    with_items:
+      - "prometheus-active.yml"
+      - "prometheus-standby.yml"
+      - "prometheus-lt-active.yml"
+      - "prometheus-lt-standby.yml"
+
+  - name: Restart prometheus service
+    systemd:
+     name: prometheus
+     state: restarted
+
+  - name: ensure prometheus is started 
+    systemd:
+      name: prometheus
+      state: started
+
+  - name: prometheus is enabled to start at boot
+    shell: systemctl enable prometheus.service

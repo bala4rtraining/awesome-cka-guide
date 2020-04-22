@@ -1,0 +1,8 @@
+---
+# Dispatch kerberos tasks
+- name: Kerberos role task dispatcher
+  include: "{{ item_task }}.yml"
+  with_items: "{{ dispatch|default([]) }}"
+  when: "dispatch != []"
+  loop_control:
+    loop_var: item_task

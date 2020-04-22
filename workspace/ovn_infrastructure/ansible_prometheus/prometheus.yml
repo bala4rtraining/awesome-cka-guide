@@ -1,0 +1,87 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- gather_facts:
+  hosts: all:!cumulus_switch:!ovn_manager
+- name: install prometheus, nginx_auth with ssl enabled
+  hosts: prometheus_server
+  roles:
+    - nginx
+    - nginx_auth
+    - { role: prometheus, dispatch: ['provision_prometheus'] }
+  vars:
+    - prometheus_ssl_enabled: "false"
+    - alertmanager_ssl_enabled: "false"
+    - nginx_exporter_ssl_enabled: "false"
+    - nginx_enable_ssl: "false"
+    - nginx_sites:
+        default:
+          - listen {{ nginx_default_port }}
+          - server_name localhost
+    - nginx_configs:
+        prometheus_upstream:
+          - upstream prometheus {
+              server localhost:{{ prometheus_port }};
+            }
+        auth_upstream:
+          - upstream authServer {
+              server {{nginx_auth_host}}:{{nginx_auth_port}};
+            }
+        websockets:
+          - map $http_upgrade $connection_upgrade {
+              default upgrade;
+              '' close;
+            }
+
+    - nginx_locations:
+      - site: default
+        locations:
+          - name: prometheus
+            location:
+              - location /{{ prometheus_context_path }}/ {
+                  auth_request /authorization-proxy/prometheus;
+                  proxy_set_header            Connection              $connection_upgrade;
+                  proxy_set_header            Upgrade                 $http_upgrade;
+                  proxy_set_header            Host                    $host;
+                  proxy_set_header            X-Real-IP               $remote_addr;
+                  proxy_set_header            X-Forwarded-For         $proxy_add_x_forwarded_for;
+                  proxy_set_header            X-Forwarded-Proto       $scheme;
+
+                  error_page 403 /forbidden;
+                  proxy_pass http://prometheus;
+                }
+              - location /{{ prometheus_app_context_path }}/ {
+                  proxy_pass http://prometheus/{{ prometheus_context_path }}/;
+                }
+          - name: authorizer
+            location:
+              - location /authorization-proxy {
+                  internal;
+                  proxy_set_header X-Original-URI $request_uri;
+                  proxy_set_header X-Original-Method $request_method;
+                  proxy_pass http://authServer;
+                }
+              - location /forbidden {
+                  proxy_pass http://authServer;
+                }
+
+- include: deploy_nginx_for_exporter.yml
+
+- include: deploy_node_exporter.yml
+
+- include: deploy_statsd_exporter.yml
+
+- include: deploy_jmx_exporter.yml
+
+- include: deploy_elasticsearch_exporter.yml
+
+- include: deploy_haproxy_exporter.yml
+
+- include: prometheus_alertmanager.yml
+
+- include: deploy_ovn_monitoring_exporter.yml
+
+#- include: deploy_pushgateway_exporter.yml
+
+#- include: deploy_process_exporter.yml
+#  Not deploying this right now,to be uncommented later for process exporter deployment

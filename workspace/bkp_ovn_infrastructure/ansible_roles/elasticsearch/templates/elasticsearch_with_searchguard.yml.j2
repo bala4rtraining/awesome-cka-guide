@@ -1,0 +1,198 @@
+## {{ ansible_managed }}
+# ======================== Elasticsearch Configuration =========================
+# ---------------------------------- Cluster -----------------------------------
+#
+# Use a descriptive name for your cluster, default : elasticsearch
+#
+#cluster.name: my-application
+#
+# ------------------------------------ Node ------------------------------------
+#
+# Use a descriptive name for the node:
+#
+#node.name: node-1
+node.name: ${HOSTNAME}
+{% if eserv_type is defined %}
+  {% if eserv_type == 'lbonly' %}
+
+# Loadbalance-Only selected
+node.master: false
+node.data: false
+node.ingest: true
+  {% else %}
+
+# Loadbalance-Only NOT selected
+node.master: true
+node.data: true
+node.ingest: true
+  {% endif %}
+{% endif %}
+#
+# Add custom attributes to the node:
+#
+#node.attr.rack: r1
+#
+# ----------------------------------- Paths ------------------------------------
+#
+# Path to directory where to store the data (separate multiple locations by comma):
+#
+path.data: {{ elasticsearch_datadir }}
+#
+# Path to log files:
+#
+#path.logs: /path/to/logs
+#
+# ----------------------------------- Memory -----------------------------------
+#
+# Lock the memory on startup:
+#
+#bootstrap.memory_lock: true
+bootstrap.memory_lock: true
+
+{% if bootstrap_check is defined %}
+bootstrap.system_call_filter: {{ bootstrap_check }}
+{% endif %}
+#
+# Make sure that the heap size is set to about half the memory available
+# on the system and that the owner of the process is allowed to use this
+# limit.
+#
+# Elasticsearch performs poorly when the system is swapping the memory.
+#
+# ---------------------------------- Network -----------------------------------
+#
+# Set the bind address to a specific IP (IPv4 or IPv6):
+#
+{% if hostvars[inventory_hostname].ansible_fqdn is defined and elasticsearch_use_fqdn == "true" %}
+network.host: {{ hostvars[inventory_hostname].ansible_fqdn }}
+{% else %}
+network.host: {{ hostvars[inventory_hostname]['ansible_nodename'] }}
+{% endif %}
+#
+# Set a custom port for HTTP(S):
+#
+http.port: 9200
+#
+# For more information, consult the network module documentation.
+#
+# --------------------------------- Discovery ----------------------------------
+#
+# Pass an initial list of hosts to perform discovery when new node is started:
+# The default list of hosts is ["127.0.0.1", "[::1]"]
+#
+discovery.zen.ping.unicast.hosts: [
+{% for node in groups['elasticsearch'] if node != inventory_hostname %}
+{% if hostvars[node].ansible_fqdn is defined and elasticsearch_use_fqdn == "true" %}
+      "{{ hostvars[node].ansible_fqdn }}",
+{% else %}
+      "{{ hostvars[node]['ansible_nodename'] }}",
+{% endif %}
+{% endfor %}
+]
+
+# Prevent the "split brain" by configuring the majority of nodes (total number of master-eligible nodes / 2 + 1):
+#
+discovery.zen.minimum_master_nodes: 2
+#
+# For more information, consult the zen discovery module documentation.
+#
+# ---------------------------------- Gateway -----------------------------------
+#
+# Block initial recovery after a full cluster restart until N nodes are started:
+#
+#gateway.recover_after_nodes: 3
+#
+# For more information, consult the gateway module documentation.
+#
+# ---------------------------------- Various -----------------------------------
+#
+# Require explicit names when deleting indices:
+#
+#action.destructive_requires_name: true
+
+
+# ----------------------------------- Search Guard -----------------------------------
+######## Start Search Guard Configuration ########
+# Enable or disable node-to-node ssl encryption (default: true)
+searchguard.ssl.transport.enabled: true
+searchguard.ssl.transport.pemkey_filepath: {{ searchguard_key_path }}
+searchguard.ssl.transport.pemcert_filepath: {{ searchguard_cert_path }}
+searchguard.ssl.transport.pemtrustedcas_filepath: {{ searchguard_ca_cert_path }}
+
+searchguard.ssl.transport.enforce_hostname_verification: true
+
+# Enabled SSL cipher suites for transport protocol (only Java format is supported)
+searchguard.ssl.transport.enabled_ciphers:
+ - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+ - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+ - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+ - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+ - "TLS_ECDHE_ECDSA_CHACHA20_POLY1305_SHA256"
+ - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
+ - "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+ - "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+ - "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA256"
+ - "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA256"
+ - "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+ - "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+ - "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256"
+ - "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+ - "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256"
+ - "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384"
+ - "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256"
+ - "TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384"
+ - "TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256"
+ - "TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384"
+ - "TLS_RSA_WITH_AES_128_GCM_SHA256"
+ - "TLS_RSA_WITH_AES_256_GCM_SHA256"
+ - "TLS_RSA_WITH_AES_128_CBC_SHA256"
+ - "TLS_RSA_WITH_AES_256_CBC_SHA384"
+searchguard.ssl.transport.enabled_protocols:
+ - "TLSv1.2"
+searchguard.authcz.admin_dn:
+ - {{ searchguard_authcz_admin_dn_config }}
+searchguard.nodes_dn:
+ - {{ elasticsearch_nodes_dn_config }}
+
+
+#Configuring SSL for client communication over https
+
+searchguard.ssl.http.enabled: true
+
+searchguard.ssl.http.pemkey_filepath: {{ elasticsearch_client_key_path }}
+searchguard.ssl.http.pemcert_filepath: {{ elasticsearch_client_cert_path }}
+searchguard.ssl.http.pemtrustedcas_filepath: {{ elasticsearch_client_ca_cert_path }}
+
+# To enforce authentication use REQUIRE, to completely disable client certificates use NONE
+searchguard.ssl.http.clientauth_mode: REQUIRE
+
+searchguard.ssl.http.enabled_ciphers:
+ - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+ - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+ - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+ - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+ - "TLS_ECDHE_ECDSA_CHACHA20_POLY1305_SHA256"
+ - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
+ - "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+ - "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+ - "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA256"
+ - "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA256"
+ - "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+ - "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+ - "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256"
+ - "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+ - "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256"
+ - "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384"
+ - "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256"
+ - "TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384"
+ - "TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256"
+ - "TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384"
+ - "TLS_RSA_WITH_AES_128_GCM_SHA256"
+ - "TLS_RSA_WITH_AES_256_GCM_SHA256"
+ - "TLS_RSA_WITH_AES_128_CBC_SHA256"
+ - "TLS_RSA_WITH_AES_256_CBC_SHA384"
+searchguard.ssl.http.enabled_protocols:
+ - "TLSv1.2"
+
+######## End Search Guard Configuration ########
+

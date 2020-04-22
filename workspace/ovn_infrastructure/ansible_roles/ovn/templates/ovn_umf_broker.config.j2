@@ -1,0 +1,36 @@
+[
+  {kernel,[
+    {inet_dist_use_interface, {{erlang_dist_ip}}},
+    {inet_dist_listen_min, {{inet_dist_listen_min}}},
+    {inet_dist_listen_max, {{inet_dist_listen_max}}}
+  ]},
+
+  {ovn_umf_broker, [
+    {listener_ip,   {0,0,0,0}},
+    {listener_port, {{listener_port}}},
+    {audit_dir,   "{{audit_dir}}"}
+  ]},
+
+  {ovn_acceptor, [
+      {services, [
+          {subscriber_api, [
+              {service_ip, {0,0,0,0}},
+              {service_port, {{subscriber_port}}},
+              {protocol, ovn_umf_subscriber_listener}
+          ]}
+      ]}
+  ]},
+
+  {vmstats, [
+    {base_key, "ovn_umf_broker"}
+  ]},
+
+  {lager, [
+    {colored, true},
+    {crash_log, "{{log_dir}}/{{node_name}}.crash.log"},
+    {handlers, [
+      {lager_syslog_backend, ["{{node_name}}", local1, info]},
+      {lager_file_backend, [{file, "{{log_dir}}/{{node_name}}.ovnub.log"}, {level, info}, {size, 104857600}, {count, 5}]}
+      ]}
+    ]}
+].

@@ -1,0 +1,85 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_riak_servers[0]
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+
+# Required for the ovn_opdb application to be able to use Riak.
+- name: configure buckets and properties for opdb application
+  hosts: ovn_riak_servers[0]
+  tasks:
+    - name: creating riak memory backend bucket-type for the vmg_routing bucket
+      shell: '/usr/sbin/riak-admin bucket-type create vmg_routing ''{"props":{"backend":"memory_vmg_routing"}}'''
+      register: result
+      changed_when: "result.rc == 0 and 'already_active' not in result.stdout"  
+      failed_when: "result.rc != 0 and 'already_active' not in result.stdout"
+      
+    - name: activating riak vmg_routing bucket-type
+      shell: /usr/sbin/riak-admin bucket-type activate vmg_routing
+      register: result
+      changed_when: "'vmg_routing has been activated' not in result.stdout"
+      
+    - name: creating riak memory backend bucket-type for the clc_lock bucket
+      shell: '/usr/sbin/riak-admin bucket-type create clc_lock ''{"props":{"backend":"memory_clc_lock","n_val":5,"pr":"quorum","pw":"quorum"}}'''
+      register: result
+      changed_when: "result.rc == 0 and 'already_active' not in result.stdout"  
+      failed_when: "result.rc != 0 and 'already_active' not in result.stdout"
+      
+    - name: activating riak clc_lock bucket-type
+      shell: /usr/sbin/riak-admin bucket-type activate clc_lock
+      register: result
+      changed_when: "'clc_lock has been activated' not in result.stdout"
+
+    - name: creating riak memory backend bucket-type for the clc_data bucket
+      shell: '/usr/sbin/riak-admin bucket-type create clc_data ''{"props":{"backend":"memory_clc_data","allow_mult":"false"}}'''
+      register: result
+      changed_when: "result.rc == 0 and 'already_active' not in result.stdout"  
+      failed_when: "result.rc != 0 and 'already_active' not in result.stdout"
+      
+    - name: activating riak clc_data bucket-type
+      shell: /usr/sbin/riak-admin bucket-type activate clc_data
+      register: result
+      changed_when: "'clc_data has been activated' not in result.stdout"
+
+    - name: configure tlc bucket with leveldb backend
+      shell: '/usr/sbin/riak-admin bucket-type create tlc ''{"props":{"backend":"leveldb_multi"}}'''
+      register: result
+      changed_when: "result.rc == 0 and 'already_active' not in result.stdout"  
+      failed_when: "result.rc != 0 and 'already_active' not in result.stdout"
+
+    - name: activating riak tlc bucket-type
+      register: result
+      shell: /usr/sbin/riak-admin bucket-type activate tlc
+      changed_when: "'tlc has been activated' not in result.stdout"
+
+    - name: creating riak bucket-type datatype for cardholder acitvity
+      shell: '/usr/sbin/riak-admin bucket-type create map ''{"props":{"datatype":"map"}}'''
+      register: result
+      changed_when: "result.rc == 0 and 'already_active' not in result.stdout"
+      failed_when: "result.rc != 0 and 'already_active' not in result.stdout"
+
+    - name: activating riak carholder activity bucket-type
+      shell: /usr/sbin/riak-admin bucket-type activate map
+      register: result
+      changed_when: "'set has been activated' not in result.stdout"

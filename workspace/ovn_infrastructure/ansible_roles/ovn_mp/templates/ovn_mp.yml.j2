@@ -1,0 +1,45 @@
+datacenter: "DCI"
+hostname: "localhost"
+admin:
+  listen-address: 127.0.0.1:8080
+ovn_mp:
+  listen-address: 127.0.0.1:{{ service_listener_port }}
+logger:
+  level: info
+  development: true
+  disable-caller: false
+  disable-stacktrace: false
+  encoding: json
+  encoder-config:
+    message-key: msg
+    level-key: level
+    time-key: ts
+    name-key: logger
+    caller-key: src
+    stacktrace-key: stacktrace
+    line-ending: "\n"
+    level-encoder: lowercase
+    time-encoder: iso8601
+    duration-encoder: seconds
+    caller-encoder: short
+  output-paths:
+    - stdout
+  error-output-paths:
+    - stderr
+kafka:
+  brokers:
+    - "{{ groups['kafka'][0] }}:{{ kafka_port }}"
+  topic: "transaction_workspace"
+riak:
+  nodes:
+    - "{{ groups['ovn_riak_servers'][0] }}:{{ riak_port }}"
+profile:
+  path: "{{ profile_id }}"
+hsm:
+  simulated: true
+  ip: "10.207.43.92"
+  port: 1500
+metrics:
+  reporter: prometheus
+override:
+  pull_key: "TEST"

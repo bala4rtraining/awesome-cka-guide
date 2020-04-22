@@ -1,0 +1,7 @@
+---
+# tasks file for Appliance Storage
+
+- name: Appliance Storage role task dispatcher
+  include: "{{ item }}.yml" # assumes no nested includes from loops
+  with_items: "{{ dispatch|default([]) }}"
+  when: "dispatch != []"

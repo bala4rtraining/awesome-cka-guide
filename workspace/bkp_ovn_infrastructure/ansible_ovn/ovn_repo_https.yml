@@ -1,0 +1,23 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts | default('all,!cumulus_switch') }}"
+
+- name: update the configurations
+  hosts: "{{ target_hosts | default('all,!cumulus_switch') }}"
+  tasks:
+    - name: "prevalidate the ovn_centos_el7 repo"
+      command: /bin/cat /etc/yum.repos.d/ovn_centos_el7.repo
+      register: precheck
+
+    - debug: msg="{{ precheck.stdout_lines }}"
+
+    - name: "http to https"
+      replace:
+         path: /etc/yum.repos.d/ovn_centos_el7.repo
+         regexp: 'http://'
+         replace: 'https://'
+
+    - name: "post validate the ovn_centos_el7 repo"
+      command: /bin/cat /etc/yum.repos.d/ovn_centos_el7.repo
+      register: postcheck
+
+    - debug: msg="{{ postcheck.stdout_lines }}"

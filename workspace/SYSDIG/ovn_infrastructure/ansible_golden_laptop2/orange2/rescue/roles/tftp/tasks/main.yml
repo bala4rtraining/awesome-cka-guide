@@ -1,0 +1,11 @@
+---
+# tasks file for configuring TFTP server on orange2/rescue
+
+- name: configure TFTP server
+  replace: dest=/etc/xinetd.d/tftp regexp="disable.*=.*yes" replace="disable = no"
+  notify: Restart TFTP server
+
+
+- name: Restart TFTP server just in case
+  shell: systemctl restart xinetd
+  

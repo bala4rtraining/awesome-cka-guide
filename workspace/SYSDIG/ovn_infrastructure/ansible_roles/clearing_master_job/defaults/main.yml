@@ -1,0 +1,82 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+#Defaults to start clearing master job 
+clearing_master_cron_string: "0 0 0 1/1 * ? *"
+nomad_version: "0.6.0"
+nomad_client_path:  "/opt/nomad_{{nomad_version}}/client/nomad"
+nomad_cert_path:  "/opt/nomad_{{nomad_version}}/cert"
+cas_tools_username: root
+cas_tools_install_dir: "/opt/app/jobs"
+ovn_clearing_user: "was"
+ovn_cas_tools_version: "0.1.0"
+ovn_cas_tools_tarball: "ovn_cas_tools"
+local_ovn_cas_tools_path: "{{cas_tools_install_dir}}/ovn_cas_tools"
+release_artifactory_url: "https://artifactory.trusted.visa.com:8080/ovn-snapshots/com/visa/ovn"
+platform: "linux-amd64"
+tar_file_name: "{{ovn_cas_tools_tarball}}-v{{ovn_cas_tools_version}}-{{platform}}.tar.gz"
+ovn_cas_tools_artifact_url: "{{ release_artifactory_url }}/{{tar_file_name}}"
+nomad_ip: "{{ groups['nomad_server'][0] }}"
+nomad_url: "http:{{nomad_ip}}:{{nomad_port}}/v1/jobs"
+nomad_input_json: "{{cas_tools_install_dir}}/ovn_cas_tools/nomad.json"
+nomad_input_hcl: "{{cas_tools_install_dir}}//ovn_cas_tools/nomad.hcl"
+nomad_server_http_port: 4646
+clearing_master_job_cmd: "{{cas_tools_install_dir}}/ovn_cas_tools/cas-tools-cli"
+clearing_master_job_yml: "{{cas_tools_install_dir}}/ovn_cas_tools/cas-tools.yaml"
+cas_http_port: "8080"
+clearing_profile: "/opt/profile/clearing.profile"
+riak_port: "8087"
+collection_job_script_version: "ovn_clearing_jobs-0.1-SNAPSHOT"
+
+collection_job_version: "0.1-SNAPSHOT"
+collection_job_script_path: "ovn_clearing_jobs-{{collection_job_version}}"
+
+
+topic: "xdc_sync"
+
+####following are required for certitifcate installation
+pki_ca_trust_source_anchors: /etc/pki/ca-trust/source/anchors
+java_keystore_file_password: changeit
+
+# stash keystore certificates to install in java keystore
+
+java_cacert_certificates:
+  - { certificate_file: 'bundler.crt',alias: 'bundler'}
+
+java_keystore_certificates:
+  - { certificate_file: 'client.crt', alias: 'clientcert'}
+  
+java_keystore_privatekeys:
+  - { private_key: 'private.key'}
+
+jre_installation_directory: "/usr/java/{{ jre_version }}/bin"
+java_keystore_file_path: /usr/java/{{ jre_version }}/lib/security/javakeystore
+java_alternatives_path: "/etc/alternatives"
+java_main_path: "/usr/bin"
+
+collection_job_version: "0.1-SNAPSHOT"
+collection_job_script_path: "ovn_clearing_jobs-{{collection_job_version}}"
+
+# Logger
+cas_tool_name: "cas-tool"
+cas_tool_file_logger_level: "info"
+cas_tool_file_logger_path: "{{ ovn_root_logdir }}"
+cas_tool_file_logger_prefix: "{{ cas_tool_name }}"
+
+cas_tool_sys_logger_level: "info"
+cas_tool_sys_logger_prefix: "{{ cas_tool_name }}"
+
+cas_tool_console_logger_level: "info"
+
+#--------TLS-------
+
+enable_tls_nomad: false
+
+#-----TLS-------
+

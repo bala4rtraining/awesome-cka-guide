@@ -1,0 +1,72 @@
+---
+- name: create Prometheus group for ovn_monitoring_exporter
+  group: name={{ prometheus_group }}  state=present
+
+- name: create Prometheus user for ovn_monitoring_exporter
+  user:
+    name: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    createhome: no
+    comment: "Prometheus User"
+    state: present
+
+- name: create ovn_monitoring_exporter install directory {{ exporter_install_dir }}
+  file:
+    dest: "{{ dir_val }}"
+    state: directory
+    recurse: yes
+    mode: "0750"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  with_items:
+    - "{{ exporter_install_dir }}"
+  loop_control:
+    loop_var: dir_val
+
+- name: check if {{ ovn_monitoring_exporter_archive_base }} is already provisioned
+  stat:
+    path: "{{ exporter_install_dir }}/{{ ovn_monitoring_exporter_archive_base }}"
+  register: ovn_monitoring_exporter_provision_status
+
+- name: deploy ovn_monitoring_exporter package
+  unarchive:
+    src: "{{ ovn_monitoring_exporter_archive }}"
+    dest: "{{ exporter_install_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    copy: no
+  when: ovn_monitoring_exporter_provision_status.stat.exists == false
+
+- name: link to ovn_monitoring_exporter directory {{ ovn_monitoring_exporter_base_dir }}
+  file:
+    src: "{{ ovn_monitoring_exporter_archive_base }}"
+    dest: "{{ ovn_monitoring_exporter_base_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+
+- name: deploy ovn_monitoring_exporter service
+  template:
+    src: "ovn_monitoring_exporter.service.j2"
+    dest: "/etc/systemd/system/ovn_monitoring_exporter.service"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+  register: ovn_monitoring_exporter_service_result
+
+- name: reload system service configs.
+  shell: systemctl daemon-reload
+  when: ovn_monitoring_exporter_service_result.changed == true
+
+- name: enable and start ovn_monitoring_exporter package.
+  service:
+    name: ovn_monitoring_exporter
+    state: restarted
+  when: ovn_monitoring_exporter_service_result.changed == true
+
+- name: ensure ovn_monitoring_exporter is started and enabled to start at boot.
+  service:
+    name: ovn_monitoring_exporter
+    state: started
+    enabled: yes

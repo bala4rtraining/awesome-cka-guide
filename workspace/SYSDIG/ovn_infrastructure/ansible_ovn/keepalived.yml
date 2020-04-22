@@ -1,0 +1,8 @@
+---
+
+- include: ../ovn_vars.yml ovn_vars_hosts=haproxy
+
+- name: Setup keepalived
+  hosts: haproxy
+  roles:
+    - keepalived

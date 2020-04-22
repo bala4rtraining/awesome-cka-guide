@@ -1,0 +1,39 @@
+---
+ovn_advice:
+  listen-address: :{{ovn_advice_port}}
+logger:
+  level: info
+  development: false
+  disable-caller: true
+  disable-stacktrace: true
+  encoding: fluent
+  encoder-config:
+    message-key: msg
+    level-key: level
+    time-key: ts
+    name-key: logger
+    caller-key: src
+    stacktrace-key: stacktrace
+    line-ending: "\n"
+    level-encoder: lowercase
+    time-encoder: iso8601
+    duration-encoder: seconds
+    caller-encoder: short
+  output-paths:
+    - fluent
+  error-output-paths:
+    - stderr
+  fluent-config:
+    network: unix
+    address: /var/run/td-agent/td-agent.sock
+    buffer-size: 1024
+    worker-count: 4
+    timeout: 1s
+    write-timeout: 2s
+    fallback-config:
+      output: /var/log/ovn_advice/fallback.log
+      max-size: 1000
+      max-age: 30
+      max-backups: 3
+      local-time: false
+      compress: true

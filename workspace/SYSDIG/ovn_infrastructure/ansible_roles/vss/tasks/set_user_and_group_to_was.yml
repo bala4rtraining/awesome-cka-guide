@@ -1,0 +1,16 @@
+---
+- name: change group and user of vss root folder to was
+  file:
+    path: "{{ vss_root_path }}"
+    mode: 0750
+    group: "{{ vss_username }}"
+    owner: "{{ vss_username }}"
+    recurse: yes
+
+- name: change group and user of vsswrapper root folder to was
+  file:
+    path: "{{ vsswrapper_root_path }}"
+    mode: 0750
+    group: "{{ vss_username }}"
+    owner: "{{ vss_username }}"
+    recurse: yes

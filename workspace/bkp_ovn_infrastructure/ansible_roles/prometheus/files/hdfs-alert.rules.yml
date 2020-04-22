@@ -1,0 +1,112 @@
+groups:
+- name: hdfs-alert.rules
+  rules:
+  - alert: HadoopDataNodeHighHeapUse
+    expr: 100 * (hadoop_datanode_memheapusedm{job="hdfs_metrics"} / hadoop_datanode_memheapmaxm{job="hdfs_metrics"})
+      > 60
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      Description: Heap usage on Hadoop Data Node ({{ $labels.hostname }}) exceeds
+        threshold limit (currently {{ $value|humanize }}% in use)
+      Summary: High Heap Use on Hadoop Data Node ({{ $labels.hostname }})
+  - alert: HadoopDataNodeHighHeapUse
+    expr: 100 * (hadoop_datanode_memheapusedm{job="hdfs_metrics"} / hadoop_datanode_memheapmaxm{job="hdfs_metrics"})
+      > 80
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      Description: Heap usage on Hadoop Data Node ({{ $labels.hostname }}) exceeds
+        threshold limit (currently {{ $value|humanize }}% in use)
+      Summary: High Heap Use on Hadoop Data Node ({{ $labels.hostname }})
+  - alert: HadoopNameNodeHighHeapUse
+    expr: 100 * (hadoop_namenode_memheapusedm{job="hdfs_metrics"} / hadoop_namenode_memheapmaxm{job="hdfs_metrics"})
+      > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      Description: Heap usage on Hadoop Name Node ({{ $labels.hostname }}) exceeds
+        threshold limit (currently {{ $value|humanize }}% in use)
+      Summary: High Heap Use on Hadoop Name Node ({{ $labels.hostname }})
+  - alert: HadoopNameNodeHighHeapUse
+    expr: 100 * (hadoop_namenode_memheapusedm{job="hdfs_metrics"} / hadoop_namenode_memheapmaxm{job="hdfs_metrics"})
+      > 90
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      Description: Heap usage on Hadoop Name Node ({{ $labels.hostname }}) exceeds
+        threshold limit (currently {{ $value|humanize }}% in use)
+      Summary: High Heap Use on Hadoop Name Node ({{ $labels.hostname }})
+  - alert: HadoopDataNodeStale
+    expr: hadoop_namenode_numstaledatanodes{job="hdfs_metrics"} > 0
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      Description: Stale data nodes exceeds threshold ({{$value | humanize}}) in Hadoop
+        Cluster
+      Summary: Stale data node in Hadoop Cluster
+  - alert: HadoopDataNodeStale
+    expr: hadoop_namenode_numstaledatanodes{job="hdfs_metrics"} > 1
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      Description: Stale data nodes exceeds threshold ({{$value | humanize}}) in Hadoop
+        Cluster
+      Summary: Stale data node in Hadoop Cluster
+  - alert: HadoopHighDiskUse
+    expr: (hadoop_namenode_capacityusedgb{job="hdfs_metrics"} / hadoop_namenode_capacitytotalgb{job="hdfs_metrics"}
+      * 100) > 60
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      Description: Disk usage in Hadoop Cluster exceeds threshold limit, currently
+        {{ $value|humanize }}% in use.
+      Summary: High Disk Usage on Hadoop Cluster
+  - alert: HadoopHighDiskUse
+    expr: (hadoop_namenode_capacityusedgb{job="hdfs_metrics"} / hadoop_namenode_capacitytotalgb{job="hdfs_metrics"}
+      * 100) > 80
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      Description: Disk usage in Hadoop Cluster exceeds threshold limit, currently
+        {{ $value|humanize }}% in use.
+      Summary: High Disk Usage on Hadoop Cluster
+  - alert: HadoopNameNodeUnderReplicatedBlocks
+    expr: hadoop_namenode_underreplicatedblocks{job="hdfs_metrics",name="FSNamesystem"}
+      > 0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      Description: Hadoop name node under replicated blocks exceeds threshold ({{$value
+        | humanize}}) on host {{ $labels.hostname }}
+      Summary: Hadoop name node under replicated blocks found
+  - alert: HadoopNameNodeCorruptBlocks
+    expr: hadoop_namenode_corruptblocks{job="hdfs_metrics",name="FSNamesystem"} >
+      0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      Description: Hadoop name node corrupt blocks exceeds threshold ({{$value | humanize}})
+        on host {{ $labels.hostname }}
+      Summary: Hadoop name node corrupt blocks found
+  - alert: HadoopNameNodeDown
+    expr: count(hadoop_namenode_millissincelastloadededits{job="hdfs_metrics",name="FSNamesystem"}
+      == 0) > 1 or count(hadoop_namenode_millissincelastloadededits{job="hdfs_metrics",name="FSNamesystem"}
+      > 0) > 1 or count(hadoop_namenode_millissincelastloadededits{job="hdfs_metrics",name="FSNamesystem"})
+      == 1
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      Description: No active name node found in Hadoop Cluster
+      Summary: No active name node found in Hadoop Cluster

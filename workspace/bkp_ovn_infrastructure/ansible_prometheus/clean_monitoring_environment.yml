@@ -1,0 +1,10 @@
+# NEVER RUN IT ON HIGHER AND PROD ENVIRONMENTS
+---
+- include: "../ovn_vars.yml"
+
+- name: clean the environment
+  hosts: all:!cumulus_switch:!ovn_manager
+  vars:
+    enable_cleaning_prometheus_env: '("test" in environment_name or "dev" in environment_name  )'
+  roles:
+    - { role: prometheus, dispatch: ['clean_monitoring_environment'], when: enable_cleaning_prometheus_env }

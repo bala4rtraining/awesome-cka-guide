@@ -1,0 +1,56 @@
+#
+# This file holds the site-specific
+# parameters for OVN Orange server, e.g. IP
+#
+# The IP needs to be in sync to the site specific
+# variable file in cumulus-bgp/bpg-vars.yml
+#
+
+
+
+
+#
+# DNS domain names
+#
+dns_domain_rack1_fwd: rack1.ovn
+dns_domain_rack2_fwd: rack2.ovn
+dns_domain_rack3_fwd: rack3.ovn
+
+#
+# DHCP compute nodes MAC and hostname assignment
+# (excluding orange servers)
+#
+
+#
+# nodes are indexed by orange server hostnames
+#
+nodes:
+  
+  ovn-orange-1:
+     # server MAC addresses in this rack
+     # OCE prod DL360 and a singe VM:
+     #
+     subnet_servers: ["14:02:ec:79:cd:a0;ovn-node-oce-1-1",
+                      "14:02:ec:7a:bb:48;ovn-node-oce-1-2",
+                      "14:02:ec:79:ce:e8;ovn-node-oce-1-3",
+                      "00:d0:fa:04:d2:0c;ovn-oceprod-hsm-1",
+                      "08:00:27:33:11:11;ovn-node-sw-1-1"]
+                      
+  ovn-orange-2:
+     # server MAC addresses in this rack
+     # OCE prod DL360:
+     subnet_servers: ["14:02:ec:79:cb:58;ovn-node-oce-2-1",
+                      "14:02:ec:7a:b2:d4;ovn-node-oce-2-2",
+                      "14:02:ec:7a:ac:04;ovn-node-oce-2-3",
+                      "00:D0:FA:04:D1:EC;ovn-oceprod-hsm-2",
+                      "08:00:27:33:22:11;ovn-node-sw-2-1"]
+
+  ovn-orange-3:
+     # server MAC addresses in this rack
+     # OCE prod DL360:
+     subnet_servers: ["14:02:ec:7a:af:fc;ovn-node-oce-3-1",
+                      "14:02:ec:7a:b0:2c;ovn-node-oce-3-2",
+                      "14:02:ec:7a:ac:10;ovn-node-oce-3-3",
+                      "00:D0:FA:04:D1:B0;ovn-oceprod-hsm-3",
+                      "08:00:27:33:33:11;ovn-node-sw-3-1"]
+

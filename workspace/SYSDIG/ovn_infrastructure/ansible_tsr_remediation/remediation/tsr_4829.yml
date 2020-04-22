@@ -1,0 +1,12 @@
+---
+- name: stop service xinetd  
+  command: service xinetd stop 
+
+- name: remove the telnet package 
+  yum:
+    name: telnet 
+    state: absent
+
+- name: start service xinetd  
+  command: service xinetd start 
+

@@ -1,0 +1,37 @@
+---
+# OVN CORE COMPONENTS FOR MICRO-SERVICE
+# -------------------------------------
+# The purpose of the playbook is to install core components required for a service.
+# The core components include
+# 1. Envoy ( for service mesh)
+# 2. Node Exporter to monitor envoy service
+# 3. Statsd Exporter to monitor envoy metrics
+# 4. Fluentd (for logs forwarding)
+# Note: This is still WIP, this needs to be modified once mediator and other services are complete.
+# currently using a ovn_mp client to test this mesh.
+
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_mp,ovn_mediator_servers,ovn_advice_servers
+
+- name: Install envoy
+  hosts: ovn_mp, ovn_mediator_servers, ovn_advice_servers
+  gather_facts: true
+  roles:
+    - {role: envoy, dispatch: ['deploy'], envoy_services: "{{ ovn_services }}"}
+
+- name: Install node exporter
+  hosts: ovn_mp, ovn_mediator_servers, ovn_advice_servers
+  gather_facts: true
+  roles:
+    - {role: prometheus, dispatch: ['node_exporter']}
+
+- name: Install statsd exporter
+  hosts: ovn_mp, ovn_mediator_servers, ovn_advice_servers
+  gather_facts: true
+  roles:
+    - {role: prometheus, dispatch: ['statsd_exporter']}
+
+- name: Install fluentd
+  hosts: ovn_mp, ovn_mediator_servers, ovn_advice_servers
+  gather_facts: true
+  roles:
+    - {role: td_agent, dispatch: ['deploy-as-log-forwarder']}

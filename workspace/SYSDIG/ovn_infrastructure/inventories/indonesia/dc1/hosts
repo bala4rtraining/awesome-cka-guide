@@ -1,0 +1,537 @@
+#########
+# DCI datacenter
+#########
+
+# DCI Rack 1
+[st98ovn03jk1bl]
+10.237.1.253
+[st98ovn01jk1sp]
+10.237.1.255
+[st98ovn05jk1lf]
+10.237.1.249
+[sl981ovnlbp0001]
+10.237.1.18
+[sl981ovnapp0101]
+10.237.1.34
+[sl981ovnapp0101:vars]
+prometheus_mode='active'
+[sl981ovnapp0102]
+10.237.1.35
+[sl981ovnapp0103]
+10.237.1.36
+[sl981ovnapp0103:vars]
+eserv_type='default'
+curator_cron='enabled'
+[sl981ovnapp0104]
+10.237.1.37
+[sl981ovnapp0105]
+10.237.1.38
+[sl981ovnapp0106]
+10.237.1.39
+[sl981ovnapp0107]
+10.237.1.40
+[sl981ovnapp0108]
+10.237.1.41
+[sl981ovnapp0109]
+10.237.1.42
+
+# DCI Rack 2
+[st98ovn06jk1lf]
+10.237.1.248
+[sl981ovnapp0201]
+10.237.1.66
+[sl981ovnapp0201:vars]
+prometheus_mode='standby'
+
+[sl981ovnapp0107:vars]
+nomad_client_cert={{nomad_client_cert_107}} 
+nomad_private_key={{nomad_private_key_107}}
+
+[sl981ovnapp0207:vars]
+nomad_client_cert={{nomad_client_cert_207}} 
+nomad_private_key={{nomad_private_key_207}}
+
+[sl981ovnapp0307:vars]
+nomad_client_cert={{nomad_client_cert_307}} 
+nomad_private_key={{nomad_private_key_307}}
+
+[sl981ovnapp0202]
+10.237.1.67
+[sl981ovnapp0203]
+10.237.1.68
+[sl981ovnapp0203:vars]
+eserv_type='default'
+curator_cron='disabled'
+[sl981ovnapp0204]
+10.237.1.69
+[sl981ovnapp0205]
+10.237.1.70
+[sl981ovnapp0206]
+10.237.1.71
+[sl981ovnapp0207]
+10.237.1.72
+[sl981ovnapp0208]
+10.237.1.73
+[sl981ovnapp0209]
+10.237.1.74
+
+# DCI Rack 3
+[st98ovn04jk1bl]
+10.237.1.252
+[st98ovn02jk1sp]
+10.237.1.254
+[st98ovn07jk1lf]
+10.237.1.247
+[sl981ovnlbp0002]
+10.237.1.19
+[sl981ovnapp0301]
+10.237.1.98
+[sl981ovnapp0301:vars]
+prometheus_mode='lt-active'
+[sl981ovnapp0302]
+10.237.1.99
+[sl981ovnapp0302:vars]
+prometheus_mode='lt-standby'
+[sl981ovnapp0303]
+10.237.1.100
+[sl981ovnapp0303:vars]
+eserv_type='default'
+curator_cron='disabled'
+[sl981ovnapp0304]
+10.237.1.101
+[sl981ovnapp0304:vars]
+eserv_type='lbonly'
+curator_cron='disabled'
+[dc1_elastalert:children]
+sl981ovnapp0304
+[elastalert:children]
+dc1_elastalert
+[sl981ovnapp0305]
+10.237.1.102
+[sl981ovnapp0306]
+10.237.1.103
+[sl981ovnapp0307]
+10.237.1.104
+[sl981ovnapp0308]
+10.237.1.105
+[sl981ovnapp0309]
+10.237.1.106
+
+# DCI OVN Storage Rack
+[st98ovn08jk1lf]
+10.237.1.246
+
+# DCI OVN Components
+
+# (Business Zone)
+[dc1_ovn_mediator_servers:children]
+sl981ovnapp0109
+sl981ovnapp0209
+sl981ovnapp0309
+
+# (Restricted Zone)
+[dc1_ovn_switch_servers:children]
+sl981ovnapp0108
+sl981ovnapp0208
+sl981ovnapp0308
+
+# (Restricted Zone)
+[dc1_kafka:children]
+sl981ovnapp0104
+sl981ovnapp0108
+sl981ovnapp0204
+sl981ovnapp0208
+sl981ovnapp0308
+
+# (Restricted Zone)
+[dc1_kafka_mirror_maker:children]
+sl981ovnapp0108
+
+# (Restricted Zone)
+[dc1_ovn_multidc_sync:children]
+sl981ovnapp0208
+
+# (Restricted Zone)
+[dc1_hadoop_namenodes:children]
+sl981ovnapp0102
+sl981ovnapp0202
+
+# (Restricted Zone)
+[dc1_hadoop_datanodes:children]
+sl981ovnapp0107
+sl981ovnapp0207
+sl981ovnapp0307
+
+# (Restricted Zone)
+[dc1_nomad_server:children]
+sl981ovnapp0107
+sl981ovnapp0207
+sl981ovnapp0307
+
+# (Restricted Zone)
+[dc1_nomad_client:children]
+sl981ovnapp0107 
+sl981ovnapp0207 
+sl981ovnapp0307
+
+# (Restricted Zone)
+[dc1_ovn_riak_servers:children]
+sl981ovnapp0105
+sl981ovnapp0106
+sl981ovnapp0205
+sl981ovnapp0206
+sl981ovnapp0306
+
+# (Restricted Zone)
+[dc1_zookeeper:children]
+sl981ovnapp0105
+sl981ovnapp0106
+sl981ovnapp0205
+sl981ovnapp0206
+sl981ovnapp0306
+
+# (Restricted Zone)
+[dc1_journalnodes:children]
+sl981ovnapp0105
+sl981ovnapp0106
+sl981ovnapp0205
+sl981ovnapp0206
+sl981ovnapp0306
+
+# (Restricted Zone)
+[dc1_kerberos_server:children]
+sl981ovnapp0204
+
+# (Restricted Zone)
+[dc1_ftps_server:children]
+sl981ovnapp0305
+
+# (Restricted Zone)
+[dc1_ovn_vitalsigns_delivery:children]
+sl981ovnapp0305
+
+# (Restricted Zone)
+[dc1_ovn_umf_delivery:children]
+sl981ovnapp0104   # (ub)
+# need to verify in lower environement for separate umf delivery (apf)
+# sl981ovnapp0204   # (apf)
+
+# (Restricted Zone)
+[dc1_ovn_umf_delivery_apf:children]
+sl981ovnapp0104
+
+# (Restricted Zone)
+[dc1_ovn_umf_delivery_ub:children]
+sl981ovnapp0104
+
+# (Restricted Zone)
+[dc1_elasticsearch:children]
+sl981ovnapp0304
+sl981ovnapp0103
+sl981ovnapp0203
+sl981ovnapp0303
+
+# (Restricted Zone)
+[dc1_kibana:children]
+sl981ovnapp0304
+
+# (Restricted Zone)
+[dc1_grafana:children]
+sl981ovnapp0103
+
+# (Restricted Zone)
+[dc1_graphite:children]
+sl981ovnapp0103
+
+# (Switch)
+[dc1_border_switches:children]
+st98ovn03jk1bl
+st98ovn04jk1bl
+
+# (Switch)
+[dc1_spine_switches:children]
+st98ovn01jk1sp
+st98ovn02jk1sp
+
+# (Switch)
+[dc1_leaf_switches:children]
+st98ovn05jk1lf
+st98ovn06jk1lf
+st98ovn07jk1lf
+st98ovn08jk1lf
+
+# (Perimeter Zone)
+[dc1_haproxy:children]
+sl981ovnlbp0001
+sl981ovnlbp0002
+
+[dc1_ovn_monitoring_exporter:children]
+sl981ovnapp0108
+
+# (Restricted Zone)
+[dc1_ovn_cas:children]
+sl981ovnapp0302
+
+# (Restricted Zone)
+[dc1_ovn_xdc_sync:children]
+sl981ovnapp0208
+
+[dc1_prometheus_server:children]
+sl981ovnapp0101
+sl981ovnapp0201
+sl981ovnapp0301
+sl981ovnapp0302
+
+[dc1_prometheus_alertmanager:children]
+sl981ovnapp0101
+sl981ovnapp0301
+
+# (Restricted Zone)
+[dc1_fluentd_aggregator:children]
+sl981ovnapp0301
+sl981ovnapp0302
+ 
+# all application in the DCI datacenter
+[dc1_ovn_application:children]
+dc1_ovn_mediator_servers
+dc1_ovn_switch_servers
+dc1_ovn_multidc_sync
+dc1_ovn_vitalsigns_delivery
+dc1_ovn_umf_delivery
+dc1_ovn_cas
+dc1_ovn_xdc_sync
+dc1_ovn_vss_servers
+dc1_ovn_umf_delivery_apf
+dc1_ovn_umf_delivery_ub
+
+# all infrastructure in the DCI datacenter
+[dc1_ovn_infrastructure:children]
+dc1_kafka
+dc1_kafka_mirror_maker
+dc1_hadoop_namenodes
+dc1_hadoop_datanodes
+dc1_nomad_server
+dc1_nomad_client
+dc1_ovn_riak_servers
+dc1_zookeeper
+dc1_ftps_server
+dc1_elasticsearch
+dc1_kibana
+dc1_grafana
+dc1_graphite
+dc1_haproxy
+dc1_prometheus_server
+dc1_prometheus_alertmanager
+dc1_journalnodes
+dc1_cas_tool
+dc1_nomad_ui
+dc1_fluentd_aggregator
+dc1_yum_mirror_servers
+dc1_ovn_monitoring_exporter
+dc1_kerberos_server
+
+# all switches in the DCI datacenter
+# (Switch)
+[dc1_switches:children]
+dc1_border_switches
+dc1_spine_switches
+dc1_leaf_switches
+
+# all nodes in the DCI datacenter
+[dc1:children]
+dc1_ovn_application
+dc1_ovn_infrastructure
+
+# alias for dc1 datacenter (handy for ansible --limit expressions)
+[dci:children]
+dc1
+
+# reserved for DCI testing
+[dc1_test_servers:children]
+sl981ovnapp0101
+sl981ovnapp0201
+sl981ovnapp0301
+
+[dc1_yum_mirror_servers:children]
+sl981ovnapp0201
+sl981ovnapp0301
+
+# all hdfs components in DC1
+[dc1_hdfs_HA_All_nodes:children]
+dc1_zookeeper
+dc1_journalnodes
+dc1_hadoop_namenodes
+dc1_hadoop_datanodes
+
+######
+# OVN Components
+######
+
+# Business Zone
+[ovn_mediator_servers:children]
+dc1_ovn_mediator_servers
+
+#
+# Restricted Zone
+[ovn_switch_servers:children]
+dc1_ovn_switch_servers
+
+# Restricted Zone
+[kafka:children]
+dc1_kafka
+
+# Restricted Zone
+[kafka_mirror_maker:children]
+dc1_kafka_mirror_maker
+
+# Restricted Zone
+[ovn_multidc_sync:children]
+dc1_ovn_multidc_sync
+
+# Restricted Zone
+[ovn_xdc_sync:children]
+dc1_ovn_xdc_sync
+
+# Restricted Zone
+[hadoop_namenodes:children]
+dc1_hadoop_namenodes
+
+# Restricted Zone
+[hadoop_datanodes:children]
+dc1_hadoop_datanodes
+
+# Restricted Zone
+[nomad_server:children]
+dc1_nomad_server
+
+# Restricted Zone
+[nomad_client:children]
+dc1_nomad_client
+
+# Restricted Zone
+[ovn_riak_servers:children]
+dc1_ovn_riak_servers
+
+# Restricted Zone
+[zookeeper:children]
+dc1_zookeeper
+
+# Restricted Zone
+[journalnodes:children]
+dc1_journalnodes
+
+# Restricted Zone
+[ftps_server:children]
+dc1_ftps_server
+
+# Restricted Zone
+[ovn_vitalsigns_delivery:children]
+dc1_ovn_vitalsigns_delivery
+
+# Restricted Zone
+[ovn_umf_delivery:children]
+dc1_ovn_umf_delivery
+
+# Restricted Zone
+[ovn_umf_delivery_apf:children]
+dc1_ovn_umf_delivery_apf
+
+# Restricted Zone
+[ovn_umf_delivery_ub:children]
+dc1_ovn_umf_delivery_ub
+
+# Restricted Zone
+[elasticsearch:children]
+dc1_elasticsearch
+
+# Restricted Zone
+[kibana:children]
+dc1_kibana
+
+# Restricted Zone
+[grafana:children]
+dc1_grafana
+
+# Restricted Zone
+[graphite:children]
+dc1_graphite
+
+# Switch
+[border_switches:children]
+dc1_border_switches
+
+# Switch
+[spine_switches:children]
+dc1_spine_switches
+
+# Switch
+[leaf_switches:children]
+dc1_leaf_switches
+
+# Switch
+[cumulus_switch:children]
+dc1_switches
+
+# Perimeter Zone
+[haproxy:children]
+dc1_haproxy
+
+[ovn_monitoring_exporter:children]
+dc1_ovn_monitoring_exporter
+
+# Restricted Zone
+[ovn_cas:children]
+dc1_ovn_cas
+
+# Restricted
+[prometheus_server:children]
+dc1_prometheus_server
+
+# Restricted
+[prometheus_alertmanager:children]
+dc1_prometheus_alertmanager
+
+#Cas_Tools servers
+[dc1_cas_tool:children]
+sl981ovnapp0103
+sl981ovnapp0304
+
+[cas_tool:children]
+dc1_cas_tool
+
+#Nomad_UI Servers
+[dc1_nomad_ui:children]
+sl981ovnapp0302
+
+[nomad_ui:children]
+dc1_nomad_ui
+
+[ovn_application:children]
+dc1_ovn_application
+
+[ovn_infrastructure:children]
+dc1_ovn_infrastructure
+
+[datacenter:children]
+dc1
+
+[hdfs_HA_All_nodes:children]
+dc1_hdfs_HA_All_nodes
+
+[test_servers:children]
+dc1_test_servers
+
+[dc1_ovn_vss_servers:children]
+sl981ovnapp0102
+
+[ovn_vss_servers:children]
+dc1_ovn_vss_servers
+
+[fluentd_aggregator:children]
+dc1_fluentd_aggregator
+
+[yum_mirror_servers:children]
+dc1_yum_mirror_servers
+
+[kerberos_server:children]
+dc1_kerberos_server

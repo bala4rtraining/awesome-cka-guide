@@ -1,0 +1,12 @@
+---
+- name: assures /etc/rsyslog.d exists
+  file: path=/etc/rsyslog.d owner=root group=root mode=0755 state=directory
+
+- name: install configuration files for syslog
+  template:
+    src: 'syslog.conf.j2'
+    dest: /etc/rsyslog.d/syslog.conf
+    mode: 0644
+
+- name: restart the rsyslog daemon in all cases
+  service: name=rsyslog state=restarted

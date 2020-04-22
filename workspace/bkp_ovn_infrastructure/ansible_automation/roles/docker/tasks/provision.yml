@@ -1,0 +1,65 @@
+---
+- name: create docker directory
+  file:
+    path: '{{ docker_dir.home }}'
+    owner: 'root'
+    group: 'root'
+    mode: '{{ docker_dir.mode }}'
+    state: directory
+  with_items:
+    - { home: '{{ docker_home }}', mode: 'u=rwx,g=x,o=x' }
+    - { home: '/etc/docker', mode: 'u=rwx,g=rx' }
+    - { home: '/etc/docker/certs.d', mode: 'u=rwx,g=rx' }
+    - { home: '/etc/docker/certs.d/ovn-docker.artifactory.trusted.visa.com', mode: 'u=rwx,g=rx' }
+  loop_control:
+    loop_var: docker_dir
+
+- name: install ovndocker private docker registry cert
+  copy:
+    src: 'ca.crt'
+    dest: '/etc/docker/certs.d/ovn-docker.artifactory.trusted.visa.com/ca.crt'
+    owner: 'root'
+    group: 'root'
+    mode: 0640
+
+- name: install docker rpm
+  yum:
+    name: '{{ docker_ce_rpm }}'
+    disablerepo: '{{ spacewalk_yum_repo }}'
+    disable_gpg_check: True
+    state: present
+  ignore_errors: true
+
+- name: Add docker systemd service file.
+  template:
+    src: 'docker.service.j2'
+    dest: /etc/systemd/system/docker.service
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+  register: docker_service_result
+
+- name: install docker daemon.json file
+  template:
+    src: 'daemon.json.j2'
+    dest: '/etc/docker/daemon.json'
+    owner: 'root'
+    group: 'root'
+    mode: 0640
+  register: docker_daemon_result
+
+- name: restart docker service on service file change.
+  systemd:
+    name: docker
+    daemon_reload: yes
+    state: restarted
+  when: >
+    docker_service_result.changed == true or
+    docker_daemon_result.changed == true
+
+- name: Enable and start docker service.
+  systemd:
+    name: docker
+    enabled: yes
+    state: started

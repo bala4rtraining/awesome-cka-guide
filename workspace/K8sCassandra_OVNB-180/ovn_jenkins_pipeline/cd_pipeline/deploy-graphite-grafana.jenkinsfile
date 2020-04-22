@@ -1,0 +1,43 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+    stage('checkout SCM'){
+      steps{
+        checkout changelog: false, poll: false, scm: [$class: 'GitSCM', doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git']]]
+       }
+     }
+    stage('invoke capture_vars_about_dc') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "-e cluster_name=${CLUSTER}_${OTHER_ENV}", playbook: 'ansible_ovn/set_cluster_facts_infra.yml'
+        }
+      }
+    }
+    stage('deploy graphite grafana') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "-e @config/${env.ENV}.vars.secret.yml -e @/tmp/vars_about_${CLUSTER}_${OTHER_ENV}.yml -e --vault-password-file=~/.vault-$ENV", playbook: 'ansible_ovn/graphite_grafana.yml'
+        }
+      }
+    }
+  }
+}

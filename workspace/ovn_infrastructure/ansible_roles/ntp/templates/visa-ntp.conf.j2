@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+
+broadcastclient
+{% for server in ntp_config_server %}
+server {{ server }}
+restrict {{ server }} nomodify noquery
+{% endfor %}
+restrict default ignore
+restrict 127.0.0.1
+driftfile {{ ntp_config_driftfile }}
+{% if ntp_log_file %}
+logfile {{ ntp_log_file }}
+{% endif %}

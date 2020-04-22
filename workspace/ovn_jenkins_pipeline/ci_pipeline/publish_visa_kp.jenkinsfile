@@ -1,0 +1,60 @@
+/* 
+File: publish_visa_kp.jenkinsfile
+Author: gabaguil
+Purpose: this jenkinsfile is used to automate the publishing of visa kp modules to 
+the ovn-go-local directory in artifactory.
+*/
+pipeline { 
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    environment {
+        ARTIFACTORY_CREDS=credentials('svcnpovndev_id')
+        ARTIFACTORY_URL="https://artifactory.trusted.visa.com"
+        GO_LOCAL_REPO="ovn-go-local"
+        GO_KP_DIRECTORY="visakp-go/"
+    }
+    stages {
+        stage('Clone visakp repo') { 
+            steps { 
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, 
+                userRemoteConfigs: [[credentialsId: 'stash', url: 'ssh://git@stash.trusted.visa.com:7999/secb92a/visakp.git']]])
+            }
+        }
+        stage('Patch go.mod') {
+            steps {
+                // patch go.mod to publish under visa.com
+                sh '''
+                cd $GO_KP_DIRECTORY
+                sed -i -e 's,stash.trusted.visa.com/secb92a,visa.com,g' go.mod 
+                '''
+            }
+        }
+        stage('Publish tags to artifactory') {
+            steps {
+                sh '''
+                jfrog rt config --url=$ARTIFACTORY_URL --user=$ARTIFACTORY_CREDS_USR --password=$ARTIFACTORY_CREDS_PSW --interactive=false
+                cd $GO_KP_DIRECTORY
+                echo $(git tag | grep go) > tags.conf
+                for tag in `cat tags.conf`; do
+                    echo "$tag"
+                    git checkout "$tag"
+                    version=${tag#"$GO_KP_DIRECTORY"}
+                    jfrog rt go-publish ${GO_LOCAL_REPO} "$version"
+                done
+                '''
+            }
+        }
+    }
+    post {
+      // clean workspace post-build to prevent conflicts in later builds
+      always {
+          cleanWs()
+      }
+
+  }
+}

@@ -1,0 +1,13 @@
+---
+vss_output_context_path: "vss-output-cert"
+vss_mvs_hostname: "MVS7.INTL.VISA.NET"
+vss_sftp_directory: "/var/vsftpd/mvs7vss"
+
+vss_public: |
+ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0yte0vmZiT7ZTiRfA1KsSYW25MttkpsM2G74pqB9h0csN+gMGKcdT9PAojZK5pXtUE+vl26XKAHwJ3cfhB86QlyQ2GbUQVtrj9V9HvnVKY28ttffizgHGxA/1XZgQ1RvqHkKgOcpfWkU9vskYdbozVRD3az4mkvSr7SREU1crkVVbTuzBB4crKSM/Rsv1dxYdDca8GwzE3NICzdsfXq9mswdNlEb5Zy7eMe03Cap/YzWaf7tbk+dvmlyW7WvJWYhZlrAxccVMoV1xnEADaqoWy04n2E9EDf/2FjaVpkVuO32kk+xdB5Zervb3tu+S5XbqT8uiDLXvAfuUbjngENol cert
+
+vss_mirror_server: "127.0.0.1"
+vss_mirror_public: |
+ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0yte0vmZiT7ZTiRfA1KsSYW25MttkpsM2G74pqB9h0csN+gMGKcdT9PAojZK5pXtUE+vl26XKAHwJ3cfhB86QlyQ2GbUQVtrj9V9HvnVKY28ttffizgHGxA/1XZgQ1RvqHkKgOcpfWkU9vskYdbozVRD3az4mkvSr7SREU1crkVVbTuzBB4crKSM/Rsv1dxYdDca8GwzE3NICzdsfXq9mswdNlEb5Zy7eMe03Cap/YzWaf7tbk+dvmlyW7WvJWYhZlrAxccVMoV1xnEADaqoWy04n2E9EDf/2FjaVpkVuO32kk+xdB5Zervb3tu+S5XbqT8uiDLXvAfuUbjngENol cert
+
+vss_ftps_username: "mvs7vss"

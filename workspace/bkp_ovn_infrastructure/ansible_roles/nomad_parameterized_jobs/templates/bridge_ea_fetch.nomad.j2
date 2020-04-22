@@ -1,0 +1,88 @@
+#jinja2:lstrip_blocks: True
+/*
+
+Once deployed, this should be called through nomad job dispatch HTTP API like:
+
+curl -X POST -d
+*/
+
+job "bridgeeafetch_job" {
+
+  datacenters = ["{{ vic_identity|trim }}"]
+
+  type = "batch"
+
+  parameterized {
+    meta_required = [
+      "HDFSPATH",
+    ]
+  }
+
+  group "g1" {
+    task "t1" {
+      driver = "raw_exec"
+
+      config {
+        command = "{{ bridge_ea_fetch_install_dir }}/bridgeeafetch"
+        args = ["-config=${NOMAD_TASK_DIR}/bridgeeafetch.yml", "-hdfspath=${NOMAD_META_HDFSPATH}"]
+      }
+
+      template {
+        data = <<EOH
+---
+name: bridgeeafetch
+lru_size: 3000
+hdfs:
+  namenodes:
+  {% for item in groups['hadoop_namenodes'] %}
+    - "{{ item }}:{{ hadoop_namenode_rpc_port }}"
+  {% endfor %}
+  username: {{ bridge_ea_fetch_hadoop_username }}
+  directory: {{ bridge_ea_fetch_hadoop_directory }}
+  perm: {{ bridge_ea_fetch_file_perm }}
+cassandra:
+  cluster_hosts: "{{ bridge_ea_fetch_cassandra_nodes }}"
+  keyspace: "{{ bridge_ea_fetch_cassandra_keyspace }}"
+  consistency: "{{ bridge_ea_fetch_cassandra_consistency }}"
+kafka:
+  brokers:  
+     "{{ bridge_ea_fetch_brokers }}"
+  topic: "{{ bridge_ea_fetch_topics }}"
+  produce_offset_report: {{  bridge_ea_fetch_offset_report }}
+  request_required_acks: {{  bridge_ea_fetch_request_required_acks }}
+  queue_buffering_max_ms: {{  bridge_ea_fetch_queue_buffering_max_ms }}
+  api_version_request: {{  bridge_ea_fetch_api_version_request }}
+logger:
+  level: debug
+  development: true
+  disable-caller: false
+  disable-stacktrace: false
+  encoding: json
+  encoder-config:
+    message-key: msg
+    level-key: level
+    time-key: ts
+    name-key: logger
+    caller-key: src
+    stacktrace-key: stacktrace
+    line-ending: "\n"
+    level-encoder: lowercase
+    time-encoder: iso8601
+    duration-encoder: seconds
+    caller-encoder: short
+  output-paths:
+    - stdout
+  error-output-paths:
+    - stderr
+tracing:
+  disable: false
+  type: jaeger
+  jaeger:
+    log-spans: false
+    EOH
+
+        destination = "local/bridgeeafetch.yml"
+      }
+    }
+  }
+}

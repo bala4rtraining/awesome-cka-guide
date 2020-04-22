@@ -1,0 +1,119 @@
+// Principal Jenkinsfile to drive Authorization releases.
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        booleanParam(name: 'OVN_INFRASTRUCTURE_REQUIRED',      defaultValue: false, description: 'Is OVN Infrastructure required? Check only if you know what you are doing')
+        booleanParam(name: 'OVN_APP_INFRASTRUCTURE_REQUIRED',  defaultValue: false, description: 'Is OVN App Infrastructure required? Check only if you know what you are doing')
+        booleanParam(name: 'OVN_JENKINS_PIPELINE_REQUIRED',    defaultValue: false, description: 'Is ovn_Jenkins_Pipeline required? Check only if you know what you are doing')
+
+        booleanParam(name: 'RELEASE_OVN_MEDIATOR',            defaultValue: false, description: 'Is OVN Mediator part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_SWITCH',              defaultValue: false, description: 'Is OVN Switch part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_UMF_DELIVERY',        defaultValue: false, description: 'Is OVN UMF Delivery part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_VITALSIGNS_DELIVERY', defaultValue: false, description: 'Is OVN Vitalsigns Delivery part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_MULTIDC_SYNC',        defaultValue: false, description: 'Is OVN Multidc Sync part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_VIP_EF_SYNC',         defaultValue: false, description: 'Is OVN VIP EF Sync part of the upcoming release?')
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        RELEASE_TAG = "v${params.RELEASE_VERSION}-rc1"
+    }
+
+    stages {
+
+        stage ('Check prerequisites') {
+
+            steps {
+                sh "echo To be defined, check status of master branches"
+                sh "echo Check that infrastructure is not created yet"
+            }
+
+        }
+
+        stage ('Create infrastructure branches') {
+
+            steps {
+                sh "echo This should create the branches depending on the values for the variables above"
+                sh "echo If both boxes are checked, use RELEASE_BRANCH to create branch names"
+            }
+
+        }
+
+        stage ('Tagging master branches') {
+
+            steps {
+                build job: 'release-tag-master-branches', parameters: [
+                    booleanParam(name: 'RELEASE_OVN_MEDIATOR',            value: params.RELEASE_OVN_MEDIATOR),
+                    booleanParam(name: 'RELEASE_OVN_SWITCH',              value: params.RELEASE_OVN_SWITCH),
+                    booleanParam(name: 'RELEASE_OVN_UMF_DELIVERY',        value: params.RELEASE_OVN_UMF_DELIVERY),
+                    booleanParam(name: 'RELEASE_OVN_VITALSIGNS_DELIVERY', value: params.RELEASE_OVN_VITALSIGNS_DELIVERY),
+                    booleanParam(name: 'RELEASE_OVN_MULTIDC_SYNC',        value: params.RELEASE_OVN_MULTIDC_SYNC),
+                    booleanParam(name: 'RELEASE_OVN_VIP_EF_SYNC',         value: params.RELEASE_OVN_VIP_EF_SYNC),
+                    validatingString(name: 'RELEASE_VERSION',             value: String.valueOf(RELEASE_VERSION))
+                ]
+            }
+        }
+
+        stage ('Freeze dependencies') {
+
+            steps {
+                build job: 'release-freeze-dependencies', parameters: [
+                    booleanParam(name: 'RELEASE_OVN_MEDIATOR',            value: params.RELEASE_OVN_MEDIATOR),
+                    booleanParam(name: 'RELEASE_OVN_SWITCH',              value: params.RELEASE_OVN_SWITCH),
+                    booleanParam(name: 'RELEASE_OVN_UMF_DELIVERY',        value: params.RELEASE_OVN_UMF_DELIVERY),
+                    booleanParam(name: 'RELEASE_OVN_VITALSIGNS_DELIVERY', value: params.RELEASE_OVN_VITALSIGNS_DELIVERY),
+                    booleanParam(name: 'RELEASE_OVN_MULTIDC_SYNC',        value: params.RELEASE_OVN_MULTIDC_SYNC),
+                    booleanParam(name: 'RELEASE_OVN_VIP_EF_SYNC',         value: params.RELEASE_OVN_VIP_EF_SYNC)
+                ]
+            }
+        }
+
+        stage ('Create release branches') {
+
+            steps {
+                build job: 'release-create-branches', parameters: [
+                    booleanParam(name: 'RELEASE_OVN_MEDIATOR',            value: params.RELEASE_OVN_MEDIATOR),
+                    booleanParam(name: 'RELEASE_OVN_SWITCH',              value: params.RELEASE_OVN_SWITCH),
+                    booleanParam(name: 'RELEASE_OVN_UMF_DELIVERY',        value: params.RELEASE_OVN_UMF_DELIVERY),
+                    booleanParam(name: 'RELEASE_OVN_VITALSIGNS_DELIVERY', value: params.RELEASE_OVN_VITALSIGNS_DELIVERY),
+                    booleanParam(name: 'RELEASE_OVN_MULTIDC_SYNC',        value: params.RELEASE_OVN_MULTIDC_SYNC),
+                    booleanParam(name: 'RELEASE_OVN_VIP_EF_SYNC',         value: params.RELEASE_OVN_VIP_EF_SYNC),
+                    booleanParam(name: 'OVN_INFRASTRUCTURE_REQUIRED',     value: params.OVN_INFRASTRUCTURE_REQUIRED),
+                    booleanParam(name: 'OVN_APP_INFRASTRUCTURE_REQUIRED', value: params.OVN_APP_INFRASTRUCTURE_REQUIRED),
+                    booleanParam(name: 'OVN_JENKINS_PIPELINE_REQUIRED',   value: params.OVN_JENKINS_PIPELINE_REQUIRED),
+
+                    validatingString(name: 'RELEASE_VERSION',             value: String.valueOf(RELEASE_VERSION))
+                ]
+            }
+        }
+
+        stage ('Trigger release builds') {
+
+            steps {
+                build job: 'release-trigger-build', parameters: [
+                    booleanParam(name: 'RELEASE_OVN_MEDIATOR',            value: params.RELEASE_OVN_MEDIATOR),
+                    booleanParam(name: 'RELEASE_OVN_SWITCH',              value: params.RELEASE_OVN_SWITCH),
+                    booleanParam(name: 'RELEASE_OVN_UMF_DELIVERY',        value: params.RELEASE_OVN_UMF_DELIVERY),
+                    booleanParam(name: 'RELEASE_OVN_VITALSIGNS_DELIVERY', value: params.RELEASE_OVN_VITALSIGNS_DELIVERY),
+                    booleanParam(name: 'RELEASE_OVN_MULTIDC_SYNC',        value: params.RELEASE_OVN_MULTIDC_SYNC),
+                    booleanParam(name: 'RELEASE_OVN_VIP_EF_SYNC',         value: params.RELEASE_OVN_VIP_EF_SYNC),
+                    validatingString(name: 'RELEASE_VERSION',             value: String.valueOf(RELEASE_VERSION))
+                ]
+            }
+
+        }
+
+    }
+
+}

@@ -1,0 +1,92 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    parameters {
+
+        string(      name: 'BINARY_OVN_MEDIATOR_BRANCH',               defaultValue: '', description: 'Branch of the binary for ovn_mediator   E.g build/ovn_switch/2017/04-14/893-r-930')
+        string(      name: 'BINARY_OVN_SWITCH_BRANCH',                 defaultValue: '', description: 'Branch of the binary for ovn_switch   E.g build/ovn_mediator/2017/04-14/906-r-930')
+        string(      name: 'BINARY_OVN_UMF_DELIVERY_BRANCH',           defaultValue: '', description: 'Branch of the binary for ovn_umf_delivery   E.g build/ovn_umf_delivery/2017/04-14/797-r-930')
+        string(      name: 'BINARY_OVN_VITALSIGNS_DELIVERY_BRANCH',    defaultValue: '', description: 'Branch of the binary for ovn_vitalsigns_delivery   E.g build/ovn_vitalsigns_delivery/2017/04-14/519-r-930')
+        string(      name: 'BINARY_OVN_MULTIDC_SYNC_BRANCH',           defaultValue: '', description: 'Branch of the binary for ovn_multidc_sync   E.g build/ovn_multidc_sync/2017/04-14/538-r-930')
+        string(      name: 'BINARY_OVN_VIP_EF_SYNC_REF_BRANCH',        defaultValue: '', description: 'Branch of the binary for ovn_vip_ef_sync   E.g build/ovn_vip_ef_sync/2017/04-14/468-r-930')
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the release version in the tag?\n E.g  0.0.0')
+    }
+
+  stages {
+    stage ('Download the library function to tag') {
+      steps{
+        sh """
+          curl -s -f http://sl55ovnapq01.visa.com/git/@pod1/api/v0.9:/ovngit-lib.sh > ovngit-lib.sh
+          chmod +x ovngit-lib.sh
+        """
+      }
+    }
+   stage ('Tagging ovn_mediator binary') {
+     when{ expression {return params.BINARY_OVN_MEDIATOR_BRANCH} }
+     steps{
+       sh """
+        . ./ovngit-lib.sh ovngit_tag
+        ovngit_tag ${params.BINARY_OVN_MEDIATOR_BRANCH} release/ovn_mediator/v${params.RELEASE_VERSION}
+      """
+     }
+   }
+
+   stage ('Tagging ovn_switch binary') {
+     when{ expression {return params.BINARY_OVN_SWITCH_BRANCH} }
+     steps{
+      sh """
+        . ./ovngit-lib.sh ovngit_tag
+        ovngit_tag ${params.BINARY_OVN_SWITCH_BRANCH} release/ovn_switch/v${params.RELEASE_VERSION}
+      """
+     }
+   }
+
+   stage ('Tagging ovn_umf_delivery binary') {
+     when{ expression {return params.BINARY_OVN_UMF_DELIVERY_BRANCH} }
+     steps{
+      sh """
+        . ./ovngit-lib.sh ovngit_tag
+        ovngit_tag ${params.BINARY_OVN_UMF_DELIVERY_BRANCH} release/ovn_umf_delivery/v${params.RELEASE_VERSION}
+      """
+     }
+   }
+
+   stage ('Tagging ovn_vitalsigns_delivery binary') {
+     when{ expression {return params.BINARY_OVN_VITALSIGNS_DELIVERY_BRANCH} }
+     steps{
+      sh """
+        . ./ovngit-lib.sh ovngit_tag
+        ovngit_tag ${params.BINARY_OVN_VITALSIGNS_DELIVERY_BRANCH} release/ovn_vitalsigns_delivery/v${params.RELEASE_VERSION}
+      """
+     }
+   }
+
+   stage ('Tagging ovn_multidc_sync binary') {
+     when{ expression {return params.BINARY_OVN_MULTIDC_SYNC_BRANCH} }
+     steps{
+      sh """
+        . ./ovngit-lib.sh ovngit_tag
+        ovngit_tag ${params.BINARY_OVN_MULTIDC_SYNC_BRANCH} release/ovn_multidc_sync/v${params.RELEASE_VERSION}
+      """
+     }
+   }
+
+   stage ('Tagging ovn_vip_ef_sync binary') {
+     when{ expression {return params.BINARY_OVN_VIP_EF_SYNC_REF_BRANCH} }
+     steps{
+      sh """
+        . ./ovngit-lib.sh ovngit_tag
+        ovngit_tag ${params.BINARY_OVN_VIP_EF_SYNC_REF_BRANCH} release/ovn_vip_ef_sync/v${params.RELEASE_VERSION}
+      """
+     }
+   }
+ }
+}

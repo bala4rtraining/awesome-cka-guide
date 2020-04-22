@@ -1,0 +1,72 @@
+---
+ovn_data_dir: "/var/lib"
+ovn_riak_data_dir: "{{ovn_data_dir}}/riak"
+ovn_riak_log_dir: '/var/log/riak'
+erl_port_min: 10000
+erl_port_max: 10199
+http_listener_port: 8098
+protobuf_listener_port: "{{ riak_port | default('8087')}}"
+hand_off_port: "{{ riak_handoff_port | default('8099')}}"
+epmd_listener_port: 4369
+default_iface: "{{ ansible_default_ipv4.alias }}"
+riak_local_ip: "{{ ansible_default_ipv4.address }}"
+riak_net_speed: 1Gb
+nodename_prefix: "riak"
+riak_rpm: "riak-2.2.3-1.el7.centos.x86_64"
+java_version: 8
+
+# Every item in riak_conf should only be namespaced with _'s, not .'s
+# to avoid problems with variable reassignment on ambiguous keys.
+#
+# Like `log.syslog: on` and log.syslog.facility: 'daemon' would cause the
+# the former value `on` to be replaced with a dict with the key `facility`
+# thus causing problems with the config template.
+#
+# Changing them to `log_syslog: on` and `log_syslog_facility: 'daemon'`
+# avoids this conflict and makes the variable key and value distinct.
+#
+# This issue is just a result of differences in YAML and INI formats.
+riak_conf:
+  nodename: "{{ nodename_prefix }}@{{ riak_local_ip }}"
+  ring_size: '{{ riak_conf_ring_size | default(256) }}'
+  #
+  # The riak cookie will be read from encrypted file at the time of playbook
+  # execution. To be backward compatible for DEV env, the original cleartext
+  # default is maintained.
+  #
+  distributed_cookie: "{{ovn_riak_cookie|default('openvisanet')}}"
+  listener_http_internal: "0.0.0.0:{{ http_listener_port }}"
+  listener_protobuf_internal: "0.0.0.0:{{ protobuf_listener_port }}"
+  protobuf_backlog: '128'
+  platform_data_dir: "{{ ovn_riak_data_dir }}"
+  platform_log_dir: "{{ ovn_riak_log_dir }}"
+  platform_bin_dir: '/usr/sbin'
+  platform_etc_dir: '/etc/riak'
+  platform_lib_dir: '/usr/lib/riak/lib'
+  log_syslog: 'on'
+  log_syslog_facility: 'local1'
+  log_syslog_ident: 'riak'
+  anti_entropy: '{{ riak_conf_anti_entropy | default("active") }}'
+  anti_entropy_data_dir: '{{ ovn_riak_data_dir }}/anti_entropy'
+  storage_backend: 'multi'
+  multi_backend_default: 'leveldb_multi'
+  multi_backend_leveldb_multi_storage_backend: 'leveldb'
+  multi_backend_leveldb_multi_leveldb_data_root: '{{ ovn_riak_data_dir }}/leveldb'
+  multi_backend_leveldb_multi_leveldb_maximum_memory_percent: '70'
+  multi_backend_memory_vmg_routing_storage_backend: 'memory'
+  multi_backend_memory_vmg_routing_memory_backend_max_memory_per_vnode: '64MB' # ~ 3 GB per node
+  multi_backend_memory_vmg_routing_memory_backend_ttl: '2m'
+  multi_backend_memory_clc_lock_storage_backend: 'memory'
+  multi_backend_memory_clc_lock_memory_backend_max_memory_per_vnode: '32MB' # ~ 1.5 GB per node
+  multi_backend_memory_clc_lock_memory_backend_ttl: '3m'
+  multi_backend_memory_clc_data_storage_backend: 'memory'
+  multi_backend_memory_clc_data_memory_backend_max_memory_per_vnode: '32MB' # ~ 1.5 GB per node
+  multi_backend_memory_clc_data_memory_backend_ttl: '3m'
+  bitcask_data_root: '{{ ovn_riak_data_dir }}/bitcask'
+  leveldb_data_root: '{{ ovn_riak_data_dir }}/leveldb'
+  erlang_crash_dump: '{{ ovn_riak_data_dir }}/erl_crash.dump'
+  erlang_distribution_port_range_minimum: "{{erl_port_min}}"
+  erlang_distribution_port_range_maximum: "{{erl_port_max}}"
+
+##Raik Upgrade version
+riak_upgrade_rpm: "riak-2.2.3-1.el7.centos.x86_64"

@@ -1,0 +1,11 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+
+# playbook for deploying the suricata certificates on elasticsearch cluster
+- name: Remove suricata certificates from elasticsearch cluster and suricata nginx conf
+  hosts: elasticsearch[0]
+  gather_facts: yes
+  roles:
+     - {role: elasticsearch, dispatch: ['remove_suricata_certificates_nginx_conf']}
+  vars:
+    - elasticsearch_suricata_cert_dir: "/etc/elasticsearch/suricata_certificates"

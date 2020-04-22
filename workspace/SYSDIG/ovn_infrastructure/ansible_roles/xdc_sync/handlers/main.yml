@@ -1,0 +1,20 @@
+# xdc_sync handlers
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+# reload service
+- name: reload xdc_sync-service
+  command: systemctl daemon-reload
+
+# restart service
+- name: restart xdc_sync-service
+  service:
+    name: ovn_xdc_sync
+    state: restarted
+    enabled: yes

@@ -1,0 +1,28 @@
+#
+# Common definitions for HAproxy nodes
+# networking variables
+#
+
+# For DL360 1st 10G port
+# subnet_int_name: "eno49"
+
+# For KVM
+subnet_int_name: "eth2"
+
+
+#
+# Interface configure file dir
+#
+haproxy_interface_config_dir: "/etc/sysconfig/network-scripts/ifcfg-{{subnet_int_name}}"
+
+servers:
+  
+  ovn-mgmt-ha1:
+    subnet_int_ip: "{{ip_subnet}}.18"
+    subnet_mask_len: 29
+    subnet_router: "{{ip_subnet}}.17"
+  
+  ovn-mgmt-ha2:
+    subnet_int_ip: "{{ip_subnet}}.19"
+    subnet_mask_len: 29
+    subnet_router: "{{ip_subnet}}.17"

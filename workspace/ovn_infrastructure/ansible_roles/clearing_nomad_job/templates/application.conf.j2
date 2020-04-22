@@ -1,0 +1,88 @@
+{
+  scala.future.timeout = {{scala_future_timeout}}
+  job.retry.count = {{job_retry_count}}
+  clearing_profile = "{{clearing_profile}}"
+  maxFileSizeLimit = "{{ max_file_size }}"
+  
+  apftp{
+    file.mode = "{{aftp_file_mode}}"
+    file.pullkey1 = "{{aftp_pullkey1}}"
+    client.class = "{{aftp_client_class}}"
+    selection.query = "{{aftp_selection_query}}"
+    client_ea.port = {{client_ea_cas_port}}
+  }
+
+  riak {
+    cluster-nodes =
+      [
+          {% for itm in groups.ovn_riak_servers %}
+              "{{itm}}:{{riak_port}}" {% if loop.index != loop.length %},{% endif %}
+
+          {% endfor %}
+      ]
+ 
+    bucket.type = "{{riak_bucket_type}}"
+    jobhistory.bucket.name = "{{job_history_bucket_name}}"
+    file_metadata.bucket.name = "{{riak_filebucket_name}}"
+    exception.bucket.name = "{{riak_exceptionbucket_name}}"
+    min.connections = {{riak_min_connections}}
+    max.connections = {{riak_max_connections}}
+  }
+  hdfs {
+    core-site = "{{hdfs_core_site}}"
+    hdfs-site = "{{hdfs_hdfs_site}}"
+    folder-path = "{{hdfs_folder_path}}"
+    name-nodes =
+      [
+          {% for item in groups['hadoop_namenodes'] %}
+                "{{ hostvars[item].ansible_nodename }}:{{ hadoop_namenode_rpc_port }}"
+          {% endfor %}
+      ]
+  }
+
+  {% if ovn_clearing_enable_kerberos %}
+
+  kerberos {
+    principal = "{{ ovn_clearing_kerberos_principal }}"
+    keytab = "{{ ovn_clearing_kerberos_keytab_path }}"
+  }
+
+  {% endif %}
+
+  kafka {
+    bootstrap.servers =
+      [
+        {% for itm in groups.kafka %}
+            "{{itm}}:{{ kafka_port}}" {% if loop.index != loop.length %},{% endif %}
+
+        {% endfor %}
+      ]
+    topic = "{{kafka_topic}}"
+    partitions = {{kafka_partitions}}
+  }
+
+  ssl {
+    trustStorePath = "{{ssl_trustStorePath}}"
+    keyStorePath = "{{ssl_keyStorePath}}"
+    keyStorePwd = "{{ssl_keyStorePwd }}"
+    trustStorePwd = "{{ssl_trustStorePwd}}"
+    keyStoreType = "{{ssl_keyStoreType}}"
+    trustStoreType = "{{ssl_trustStoreType}}"
+  }
+
+  bridge_ea {
+    ip =  "{{bridge_ea}}"
+    port = "{{bridge_ftps_auth_port}}"
+    connection.timeout = "{{bridge_ea_connection_timeout}}"
+    ftp.user= "{{bridge_ftp_user}}"
+    ftp.password = "{{bridge_ftp_password}}"
+  }
+
+  encryption {
+    isEnabled = "{{encryption_enabled}}"
+  }
+  encrypted_dek = "{{encrypted_dek_path}}"
+  salt = "{{crypto_salt}}"
+  iv_aes256 = "{{crypto_iv}}""
+  use_hsm = "no"
+}

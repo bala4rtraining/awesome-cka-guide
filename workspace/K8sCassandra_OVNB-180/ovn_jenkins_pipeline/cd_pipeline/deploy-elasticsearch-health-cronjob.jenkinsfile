@@ -1,0 +1,49 @@
+
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+       args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/'
+    }
+  }
+  options {
+     buildDiscarder(logRotator(numToKeepStr: '7'))
+  }
+
+parameters {
+      string(defaultValue: "", description: 'any extra vars', name: 'extravars')
+      string(defaultValue: "infra-0.7.0", description: 'branch name for ovn_infrastructure', name: 'branch')
+  }
+
+   stages {
+        
+        stage('set cluster variables') {
+            // boilerplate for stage must be the first stage
+            // in all the cd pipeline jobs.
+            steps {
+              setClusterAndDatacenter(env);
+            }
+        }
+         
+        stage('Checkout ovn_infrastructure repo') {
+            steps{
+              git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${branch}"
+            }
+        }
+         
+        stage('deployment of elasticsearch healthcheck cron job ') {
+            steps {
+                ansiColor('xterm') {
+                  ansiblePlaybook colorized: true, 
+                  credentialsId: 'ENV.root_key', 
+                  inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", 
+                  playbook: 'ansible_ovn/elasticsearch_healthcheck.yml', 
+                  extras: "$extravars"
+                }
+             }
+        }
+    }
+ }

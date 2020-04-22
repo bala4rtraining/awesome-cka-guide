@@ -1,0 +1,5 @@
+---
+- name: Starting cassandra service
+  systemd:
+    name: datastax
+    state: started

@@ -1,0 +1,13 @@
+---
+# handlers file for leafs
+
+- name: Restart networking
+  command: ifreload -a 
+
+- name: Check Quagga
+  shell: bash -c '[[ -z $(vtysh -f /etc/quagga/Quagga.conf --dryrun) ]]'
+
+- name: Restart Quagga
+  service: name=quagga state=restarted
+
+  

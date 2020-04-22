@@ -1,0 +1,21 @@
+[Unit]
+Description=ui for nomad server
+
+[Service]
+Type=simple
+User=root
+Group=root
+Restart=always
+RestartSec=3
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+ExecStart={{ nomad_ui_install_dir }}/hashi-ui-linux-amd64 \
+    --nomad-enable \
+    --nomad-address {% if nomad_enable_tls %} {{ nomad_ui_nomad_address_https }}  --nomad-ca-cert "{{ nomad_ui_cert_location }}/{{ nomad_ui_nomad_ca_cert_name }}"  --nomad-client-cert "{{ nomad_ui_cert_location }}/{{ nomad_ui_nomad_cert_name }}"  --nomad-client-key "{{ nomad_ui_key_location }}/{{ nomad_ui_nomad_key_name }}" {% else %}  {{ nomad_ui_nomad_address }} {% endif %}\
+    --listen-address {{ nomad_ui_host }}:{{ nomad_ui_port }} {% if nomad_ui_enable_proxy == 'yes' %} \
+    --proxy-address {{ nomad_ui_proxy_address }}
+    {% endif %}
+
+[Install]
+WantedBy=multi-user.target

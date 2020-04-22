@@ -1,0 +1,12 @@
+#
+# Host inventory file
+# for 2spine-3leaf network
+#
+[ovn-spines]
+ovn-spine1
+ovn-spine2
+
+[ovn-leafs]
+ovn-leaf1
+ovn-leaf2
+ovn-leaf3

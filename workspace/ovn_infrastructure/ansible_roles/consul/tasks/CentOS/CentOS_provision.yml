@@ -1,0 +1,14 @@
+---
+# tasks file for consul (CentOS 7 specific)
+
+- name: Create Consul systemd configuration
+  template: >
+    src=consul.service.j2
+    dest={{ consul_systemd_dir }}/{{ consul_service_name }}.service
+    owner={{ consul_user }}
+    group={{ consul_group }}
+    mode=0644
+#    notify:
+#      - reload systemd
+#      - restart consul
+#      - check consul status

@@ -1,0 +1,9 @@
+---
+# defaults file for dhcpd
+
+#
+# These parameters are still under test
+#
+default_lease_time: "3600"
+max_lease_time: "3600"
+log_facility: "local7"

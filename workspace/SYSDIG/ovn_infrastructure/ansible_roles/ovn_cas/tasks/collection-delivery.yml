@@ -1,0 +1,59 @@
+---
+- name: create group for ovn
+  group: name={{ ovn_cas_group }} state=present
+
+- name: create user for ovn
+  user: >
+    name={{ ovn_cas_user }}
+    groups={{ ovn_cas_group }}
+    state=present
+
+- name: create directory
+  file: >
+    path={{ovn_cas_install_prefix}}
+    state=directory
+    owner={{ ovn_cas_user }}
+    group={{ ovn_cas_group }}
+
+- name: deploy artifact
+  unarchive: >
+    src={{artifact_url}}
+    dest={{ovn_cas_install_prefix}}
+    copy=no
+    owner={{ ovn_cas_user }}
+    group={{ ovn_cas_group }}
+
+- name: Create configuration directory
+  file: >
+    path={{ ovn_cas_collection_delivery_install_dir }}/config
+    state=directory
+    owner={{ ovn_cas_user }}
+    group={{ ovn_cas_group }}
+
+- name: Setup configuration file
+  template: >
+    src=ovn_cas_collection_delivery_conf.j2
+    dest={{ ovn_cas_collection_delivery_install_dir }}/config/application.conf
+    owner={{ ovn_cas_user }}
+    group={{ ovn_cas_group }}
+
+- name: Setup logback configuration for jobs
+  template: >
+    src=ovn_cas_collection_delivery_logback.xml.j2
+    dest={{ ovn_cas_collection_delivery_install_dir }}/config/logback.xml
+    owner={{ ovn_cas_user }}
+    group={{ ovn_cas_group }}
+
+- name: Setup HDFS core-site file
+  template: >
+    src="../../hadoop/templates/core-site.xml.j2"
+    dest={{ ovn_cas_collection_delivery_install_dir }}/config/core-site.xml
+    owner={{ ovn_cas_user }}
+    group={{ ovn_cas_group }}
+
+- name: Setup HDFS hdfs-site file
+  template: >
+    src="../../hadoop/templates/hdfs-site.xml.j2"
+    dest={{ ovn_cas_collection_delivery_install_dir }}/config/hdfs-site.xml
+    owner={{ ovn_cas_user }}
+    group={{ ovn_cas_group }}

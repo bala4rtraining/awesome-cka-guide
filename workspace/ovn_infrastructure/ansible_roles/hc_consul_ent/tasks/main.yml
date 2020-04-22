@@ -1,0 +1,10 @@
+---
+#
+# Main playbook for hc_consul_ent role
+#
+- name: Consul role task dispatcher - run various playbooks 
+  include: "{{ task }}.yml" 
+  with_items: "{{ dispatch|default([]) }}"
+  when: "dispatch != []"
+  loop_control: 
+    loop_var: task

@@ -1,0 +1,16 @@
+---
+# jenkins home directory where workspace, jobs folders are exploaded
+jenkins_home: /opt/app/jenkins
+
+# the jenkins process and home directory owner
+jenkins_user: was
+
+# jenkins listen port
+jenkins_port: 9089
+
+# jenkins context path in the url
+# e.g. https://host:port/<jenkins_context_path>/...
+jenkins_context_path: jenkins
+
+jenkins_version: '2.89.2'
+jenkins_war: 'https://artifactory.trusted.visa.com/ovn/repo/jenkins-{{ jenkins_version }}.war'

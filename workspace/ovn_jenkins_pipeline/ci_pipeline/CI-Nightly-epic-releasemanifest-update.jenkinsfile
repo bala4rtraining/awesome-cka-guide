@@ -1,0 +1,107 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        string(name: 'OVN_SWITCH_TARBALL',              defaultValue: '', description: 'Update OVN switch tarball name?')
+        string(name: 'OVN_MEDIATOR_TARBALL',            defaultValue: '', description: 'Update OVN mediator tarball name?')
+        string(name: 'OVN_VITALSIGNS_DELIVERY_TARBALL', defaultValue: '', description: 'Update OVN vitalsigns_delivery tarball name?')
+        string(name: 'OVN_UMF_DELIVERY_TARBALL',        defaultValue: '', description: 'Update OVN umf_delivery tarball name?')
+        string(name: 'OVN_MULTIDC_SYNC_TARBALL',        defaultValue: '', description: 'Update OVN multidc_sync tarball name?')
+        string(name: 'OVN_VIP_EF_SYNC_TARBALL',         defaultValue: '', description: 'Update OVN vip_ef_sync tarball name?')
+
+        string(name: 'OVN_CAS_TOOLS_TARBALL',           defaultValue: '', description: 'Update OVN cas_tools tarball name?')
+        string(name: 'OVN_CLEARING_JOBS_TARBALL',       defaultValue: '', description: 'Update OVN clearing jobs tarball name?')
+        string(name: 'OVN_CLEARING_XDC_SYNC_TARBALL',   defaultValue: '', description: 'Update OVN clearing_xdc_sync tarball name?')
+        string(name: 'OVN_NGINX_AUTH_TARBALL',          defaultValue: '', description: 'Update OVN nginx_auth tarball name?')
+
+        validatingString(name: 'EPIC_NUMBER', defaultValue: '', regex: '^[0-9]*$', failedValidationMessage: 'Please ,kindly follow this format 12,13,23',
+        description: 'What is the epic number where this manifest should be updated?')
+
+        choice(name: 'ENVIRONMENT',
+               choices: 'general\ndev\nintegration\nhdfs-test\ntest\nqat',
+               description: 'Is this meant to overwrite an environment specific release manifest file? If so, do specify which')
+    }
+
+    stages {
+
+    stage('Prepare shellscript'){
+        steps{
+            sh '''
+               rm -f ./release_update_manifest.sh
+               cp -f jenkins-sh/release_update_manifest.sh ./
+               cp -f jenkins-sh/release_update_manifest.sh ./um.sh'''
+        }
+
+    }
+    stage('checkout SCM'){
+      steps{
+         git branch: 'epic-${EPIC_NUMBER}', credentialsId: 'stash', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git'
+      }
+    }
+
+
+        stage ('Update general release_manifest') {
+       when {
+              expression { params.ENVIRONMENT == "general" }
+       }
+
+
+            steps {
+               sh '''
+
+                  sh ./um.sh app_vars/release_manifest.yml
+                  '''
+                  archiveArtifacts 'app_vars/release_manifest.yml'
+
+            }
+
+        }
+        stage ('Environment specific release_manifest') {
+
+                when {
+                expression { ENVIRONMENT ==~ /(dev|hdfs-test|qat|integration)/ }
+               }
+
+
+      steps {
+                sh '''
+                  sh ./um.sh app_vars/$ENVIRONMENT/release_manifest.yml
+
+                  '''
+                  archiveArtifacts 'app_vars/$ENVIRONMENT/release_manifest.yml'
+         }
+      }
+   }
+
+
+post {
+      success {
+          withCredentials([sshUserPrivateKey(credentialsId: 'stash', keyFileVariable: 'SSH_KEY')]) {
+           sh '''
+           rE1='(^[0-9]*$)'
+           rE2='(^^[0-9]{1,3}[:.,-]?$)'
+           if [[ ${EPIC_NUMBER} =~ $rE1 ]] || [[ ${EPIC_NUMBER} =~ $rE2 ]]; then
+              git checkout -B epic-${EPIC_NUMBER}
+              git fetch origin epic-${EPIC_NUMBER}:epic-${EPIC_NUMBER} || true
+              git add .
+              git commit -q -m "release_manifest.yml: Update with new parameters" || true
+              git push -f origin epic-${EPIC_NUMBER}
+           else
+             echo "Invalid version number, No branch created"
+             exit 1
+                 fi
+             '''
+          }
+      }
+    }
+
+}

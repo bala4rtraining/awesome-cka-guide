@@ -1,0 +1,18 @@
+---
+# This playbook will disable  ssl in the kafka cluster.
+
+- include: ../ovn_vars.yml ovn_vars_hosts=kafka
+
+- name: gather zk facts about hosts outside of this play
+  hosts: zookeeper
+  gather_facts: true
+
+- name: disable ssl in the kafka cluster 
+  hosts: kafka
+  gather_facts: true
+  roles:
+    - { role: kafka, dispatch: ['deploy-kafka-ssl']}
+  vars:
+    number_brokers: "{{ groups['kafka'] | length }}"
+    broker_configuration_lead: "{{groups['kafka'][0]}}"
+    enable_kafka_ssl: false

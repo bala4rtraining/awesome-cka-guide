@@ -1,0 +1,3 @@
+---
+- include: deploy-kafka.yml
+- include: deploy-kafka-mirror-maker.yml

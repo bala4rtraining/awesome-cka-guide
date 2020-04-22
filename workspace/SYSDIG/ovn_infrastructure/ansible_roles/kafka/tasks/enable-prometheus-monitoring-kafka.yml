@@ -1,0 +1,29 @@
+---
+- name: create group for prometheus
+  group: name={{ prometheus_group }} state=present
+  when: monitor_kafka_using_prometheus == "true"
+
+- name: add kafka user to prometheus group
+  user: >
+    name={{ kafka_username }}
+    groups={{ prometheus_group }}
+    state=present
+  when: monitor_kafka_using_prometheus == "true"
+
+- name: kafka systemd configuration
+  template: >
+    src=kafka.service.j2
+    dest=/etc/systemd/system/kafka.service
+    owner={{ kafka_username }}
+    group={{ kafka_group }}
+    mode=0644
+  when: rhel_centos_7
+
+- name: reload kafka service configuration
+  command: systemctl daemon-reload
+
+- name: restart kafka
+  service:
+    name: kafka
+    state: restarted
+    enabled: yes

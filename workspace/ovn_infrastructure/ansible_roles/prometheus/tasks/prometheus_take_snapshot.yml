@@ -1,0 +1,10 @@
+---
+- name: Check prometheus is started and enabled
+  service:
+    name: prometheus
+    state: started
+    enabled: yes
+
+- name: Take Snapshot from Source Prometheus
+  command: curl -XPOST 'http://127.0.0.1:{{ prometheus_port }}/{{ prometheus_context_path }}/api/v2/admin/tsdb/snapshot'
+  register: snapshot_id

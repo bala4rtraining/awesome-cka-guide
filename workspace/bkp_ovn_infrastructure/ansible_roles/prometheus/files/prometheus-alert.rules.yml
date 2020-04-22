@@ -1,0 +1,30 @@
+groups:
+- name: prometheus-alert.rules
+  rules:
+  - alert: PrometheusServerDown
+    expr: up{job=~"prometheus-.*"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      Description: Prometheus server on node {{ $labels.hostname }} is down for more
+        than 1 minute
+      Summary: Prometheus server is down
+  - alert: PrometheusInconsistenciesFound
+    expr: prometheus_local_storage_inconsistencies_total{job=~"prometheus-.*"} > 0
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      Description: Prometheus server on node {{ $labels.hostname }} has inconsistencies
+        while storing metrics.
+      Summary: Prometheus server storage has inconsistencies
+  - alert: PrometheusInRushedMode
+    expr: prometheus_local_storage_rushed_mode{job=~"prometheus-.*"} == 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      Description: Prometheus server on node {{ $labels.hostname }} is in rushed mode
+        for more than 5 minute
+      Summary: Prometheus server is in rushed mode

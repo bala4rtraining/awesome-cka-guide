@@ -1,0 +1,12 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch
+
+- name: update ntp servers
+  hosts: all:!cumulus_switch
+  gather_facts: yes
+  become: yes
+  become_method: sudo
+  roles:
+    - ntp
+  vars:
+    dispatch: 'ntpservers'

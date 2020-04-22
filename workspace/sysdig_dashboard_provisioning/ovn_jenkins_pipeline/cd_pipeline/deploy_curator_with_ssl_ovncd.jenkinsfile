@@ -1,0 +1,41 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+        string(defaultValue: "", description: "Artifactory URL", name: "artifactory_url")
+		string(name: 'RELEASE_BRANCH', defaultValue: '', description: 'Enter the release branch details')
+        string(name: 'extra_vars', defaultValue: '', description: 'any extra vars')		
+  }  
+  stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+	stage('Checkout SCM'){
+      steps{
+        git credentialsId: 'ovncd_ssh_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    stage('Update Curator Config') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} --extra-vars artifactory_url=$artifactory_url --extra-vars elasticsearch_client_ssl_enabled='true' --extra-vars elasticsearch_client_use_fqdn='true' ${params.extra_vars} --become", playbook: 'ansible_ovn/deploy_elasticsearch_curator_with_ssl.yml'
+        }
+      }
+    }
+  }
+}

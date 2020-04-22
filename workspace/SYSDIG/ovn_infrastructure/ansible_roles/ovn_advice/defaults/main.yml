@@ -1,0 +1,9 @@
+---
+ovn_advice_name: "ovn_advice"
+
+ovn_advice_config_dir: "/opt/app/{{ovn_advice_name}}/config"
+ovn_advice_log_dir: "/var/log/{{ovn_advice_name}}"
+
+ovn_advice_port: "3456"
+
+ovn_advice_host_group: "ovn_advice_servers"

@@ -1,0 +1,7 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_mockmvs_servers
+
+- name: Provision mock MVS
+  hosts: ovn_mockmvs_servers
+  roles:
+     - { role: mockmvs, dispatch: ['deploy'] }

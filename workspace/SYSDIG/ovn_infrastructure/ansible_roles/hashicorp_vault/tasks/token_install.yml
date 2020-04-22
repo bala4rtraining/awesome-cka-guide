@@ -1,0 +1,24 @@
+---
+# Tasks file for installing vault tokens
+# Need to copy to call compute nodes
+
+- name: Copy vault token to $HOME/.vault-token
+  copy:
+    src: /tmp/{{ vault_token_file }}
+    dest: "{{ ansible_env.HOME }}/{{ vault_token_file }}"
+    owner: vault
+    group: vault
+    mode: 0640
+
+- name: Set facts for vault tokens
+  set_fact:
+    vault_tokens:
+      root: "{{ lookup('file', '/tmp/' + vault_token_file) }}"
+
+- name: Persist facts for public keying material
+  copy: >
+    content='{{ vault_tokens | to_nice_json }}'
+    dest=/etc/ansible/facts.d/vault_tokens.fact
+    owner=root
+    group=root
+    mode=0640

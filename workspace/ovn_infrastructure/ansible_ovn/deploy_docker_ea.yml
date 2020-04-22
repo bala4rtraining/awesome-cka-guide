@@ -1,0 +1,24 @@
+---
+
+# File: deploy_docker_ea.yaml
+# This playbooks deploys docker-ce on the ea_hosts and bridge_ea_hosts list set by Jenkins job
+# It pulls the bridge ea and collection ea docker images from artifactory location and deploys them respective hosts.
+# it also deploys the certificates  on each docker images and starts the docker image
+# 
+# Jenkins job:
+#    - ovn_docker_ea_deploy
+#
+- include: ../ovn_vars.yml
+
+- gather_facts:
+  hosts: all:!cumulus_switch:!ovn_manager
+
+- name: install docker-ce
+  hosts: ea_docker_hosts
+  roles:
+     - { role: docker-ea, dispatch: ['provision'] }
+
+- name: provision latest docker-ea from docker repository
+  hosts: ea_docker_hosts
+  roles:
+     - { role: docker-ea, dispatch: ['load_run_ea'] }

@@ -1,0 +1,11 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+# Enable auditd logging to syslog on Centos7 servers
+- name: Enable audisp syslogd, restart auditd service
+  hosts: all:!cumulus_switch:!ovn_manager
+  tasks:
+    - copy:
+        src:  audisp_plugin_syslog.conf
+        dest: /etc/audisp/plugins.d/syslog.conf
+    - command: service auditd restart

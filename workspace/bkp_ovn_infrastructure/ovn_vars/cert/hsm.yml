@@ -1,0 +1,14 @@
+---
+hsm_servers:
+- '10.13.201.99'
+
+hsm_lmk_check_value: "2961130000000000"
+simulate_hsm_responses: "false"
+hsm_pools: |
+      [[{name, hsm1},
+        {group, hsm},
+        {init_count, 3},
+        {max_count, 6},
+        {member_start_timeout, {15, sec}},
+        {start_mfa, {ovn_switch_hsm, start_link, ["0001", "{{hsm_servers[0]}}", 1500, 10000]}}]]
+        

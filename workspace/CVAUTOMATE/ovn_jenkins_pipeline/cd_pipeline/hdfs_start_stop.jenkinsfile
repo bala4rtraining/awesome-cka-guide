@@ -1,0 +1,53 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+        choice(name:'STATE', choices: 'start\nstop', description: 'start or stop hdfs')
+  }
+
+  stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+    stage('checkout SCM'){
+      steps{
+        checkout changelog: false, poll: false, scm: [$class: 'GitSCM', doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git']]]               
+       }
+     }
+  stage('starting hdfs'){
+      when {
+        expression { params.STATE == "start" }
+      }
+      steps{
+        ansiColor('xterm'){
+          ansiblePlaybook credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras:'-e "service=${STATE}"', colorized: true, playbook: 'ansible_ovn/start_hadoop_cluster.yml', sudoUser: null
+          }
+      }
+    }
+  stage('stopping hdfs'){
+      when {
+        expression { params.STATE == "stop" }
+      }
+      steps{
+        ansiColor('xterm'){
+          ansiblePlaybook credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras:'-e "service=${STATE}"', colorized: true, playbook: 'ansible_ovn/stop_hadoop_cluster.yml', sudoUser: null
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,151 @@
+#!/bin/bash
+# Archived INPA input file:
+DATEDINPA="INDOINPA_`date +%Y%m%d_%H%M%S`.tarz"
+
+# Archived converted INPA file:
+DATEDOUT="INPAv6Out_`date +%Y%m%d_%H%M%S`.tarz"
+
+# Logging File
+DATEFILE="/opt/app/vss/vssexe/inpaRunLog_`date +%Y%m%d_%H%M%S`.txt"
+DATEERRORLOG="/opt/app/vss/vssexe/inpaRunCheckLog_`date +%Y%m%d`.txt"
+#echo "inpaInit.sh output log: $DATEFILE" &>> $DATEFILE
+
+TIME="`date +%H%M`"
+
+cd {{ vss_root_path }}/vssexe
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{{ vss_root_path }}/objects
+
+# Once INPA exists, invoke converter.
+# If converter is successful, continue.
+# Output INPA file will be in same directory as converter.
+echo "INPA file present. Running convertinpa.exe..." &>> $DATEFILE
+./convertinpa.exe ../input/INDOINPA 0
+if [ "$?" = "0" ]; then
+    echo "convertinpa.exe SUCCESS." &>> $DATEFILE
+else
+        echo "convertinpa.exe FAIL!" &>> $DATEFILE
+        exit 1
+fi
+
+# Move to files directory
+echo "Moving renamed INPAOut.txt (INPAOriginal.txt) to files directory..." &>> $DATEFILE
+mv INPAOut.txt ../files/INPAOriginal.txt
+if [ "$?" = "0" ]; then
+    echo "INPAOriginal.txt move SUCCESS." &>> $DATEFILE
+else
+        echo "INPAOriginal.txt move FAIL!" &>> $DATEFILE
+        exit 1
+fi
+
+# End of inpaInit.sh
+echo "inpaInit.sh END." &>> $DATEFILE
+
+DATEFILE="/opt/app/vss/vssexe/inpaInitLog_`date +%Y%m%d_%H%M%S`.txt"
+DATEFILECHECK="/opt/app/vss/vssexe/inpaInitCheckLog_`date +%Y%m%d`.txt"
+
+cd {{ vss_root_path  }}/vssexe
+
+# Rest of Cycles:
+# If entire chain is successful, create archive files while removing flag and old input file.
+# Regardless of outcome, inpaReady.txt and startCycleSuccess.txt MUST be removed to prevent rerunning of cycles.
+echo "Running ReportCycle.sh..." &>> $DATEFILE
+if ./ReportCycle.sh; then
+    if [ "$?" = "0" ]; then
+		echo "ReportCycle.sh SUCCESS." &>> $DATEFILE
+		# echo "Running compareOutput.sh..." &>> $DATEFILE
+		echo "Skipping comparison"
+		# ./compareOutput.sh $COMPHOST &>> $DATEFILE
+		if [ "$?" = "0" ]; then
+			echo "compareOutput.sh SUCCESS." &>> $DATEFILE
+			echo "Running DistributionCycle.sh..." &>> $DATEFILE
+			./DistributionCycle.sh;
+			if [ "$?" = "0" ]; then
+				echo "DistributionCycle.sh SUCCESS." &>> $DATEFILE
+				echo "Running EndCycle.sh..." &>> $DATEFILE
+				./EndCycle.sh
+				if [ "$?" = "0" ]; then
+					echo "EndCycle.sh SUCCESS." &>> $DATEFILE
+					echo "Checking date with monthlyYearly.sh..." &>> $DATEFILE
+					# monthlyYearly returns 0 if monthly only.
+					#						1 if monthly and yearly.
+					#						2 if neither.
+					#						3 for erroneous date.
+					./monthlyYearly.sh
+					if [ "$?" = "0" ]; then
+						./MonthlyCycle.sh
+						if [ "$?" = "0" ]; then
+							echo "MonthlyCycle.sh SUCCESS." &>> $DATEFILE
+							echo "YearlyCycle.sh SKIPPING." &>> $DATEFILE
+						else
+							echo "MonthlyCycle.sh FAIL!" &>> $DATEFILE
+						fi
+					else
+						./monthlyYearly.sh
+						if [ "$?" = "1" ]; then
+							./MonthlyCycle.sh
+							if [ "$?" = "0" ]; then
+								echo "MonthlyCycle.sh SUCCESS." &>> $DATEFILE
+								./YearlyCycle.sh
+								if [ "$?" = "0" ]; then
+									echo "YearlyCycle.sh SUCCESS." &>> $DATEFILE
+								else
+									echo "YearlyCycle.sh FAIL!" &>> $DATEFILE
+								fi
+							else
+								echo "MonthlyCycle.sh FAIL!" &>> $DATEFILE
+							fi
+						else
+							./monthlyYearly.sh
+							if [ "$?" = "3" ]; then
+								echo "FAIL: monthlyYearly.sh DATE ERROR!" &>> $DATEFILE
+							else
+								echo "MonthlyCycle.sh SKIPPING." &>> $DATEFILE
+								echo "YearlyCycle.sh SKIPPING." &>> $DATEFILE
+							fi
+						fi
+					fi
+					# end of monthlyYearly section
+					echo "Archiving..." &>> $DATEFILE
+					tar cfzv `pwd`/../archive/input/$DATEDINPA `pwd`/../input/INDOINPA
+					tar cfzv `pwd`/../archive/input/$DATEDOUT `pwd`/../files/INPAOriginal.txt
+					echo "Removing input file..." &>> $DATEFILE
+					rm `pwd`/../input/INDOINPA
+					echo "Running ftpsput.sh..." &>> $DATEFILE
+					./ftpsput.sh
+					if [ "$?" = "0" ]; then
+						echo "ftpsput.sh SUCCESS." &>> $DATEFILE
+					else
+						echo "ftpsput.sh FAIL!" &>> $DATEFILE
+						exit 1
+					fi
+				else
+					echo "EndCycle.sh FAIL!" &>> $DATEFILE
+					exit 1
+				fi
+			else
+				echo "DistributionCycle.sh FAIL!" &>> $DATEFILE
+				exit 1
+			fi
+		else
+			echo "compareOutput.sh FAIL!" &>> $DATEFILE
+			exit 1
+		fi
+	else
+	    echo "ReportCycle.sh FAIL!" &>> $DATEFILE
+	    exit 1
+	fi
+else
+	echo "ReportCycle.sh FAIL!" &>> $DATEFILE
+	exit 1
+fi
+
+echo "Removing startCycleSuccess.txt..." &>> $DATEFILE
+rm /opt/app/vss/vssexe/startCycleSuccess.txt
+if [ "$?" = "0" ]; then
+    echo "startCycleSuccess.txt removal SUCCESS." &>> $DATEFILE
+else
+	echo "startCycleSuccess.txt removal FAIL!" &>> $DATEFILE
+	exit 0
+fi
+
+echo "inpaRun.sh END." &>> $DATEFILE

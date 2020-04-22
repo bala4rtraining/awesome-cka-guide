@@ -1,0 +1,22 @@
+---
+cassandra:
+  connections-per-host: 2
+  keyspace: "{{ jaeger_cassandra_keyspace }}"
+  max-retry-attempts: 3
+  password: "{{ jaeger_cassandra_password }}"
+  port: {{ jaeger_cassandra_port }}
+  proto-version: 4
+  servers: "{{ groups['cassandra_servers'] | join(',') }}"
+  socket-keep-alive: 0
+  timeout: 0
+  username: "{{ jaeger_cassandra_username }}"
+dependency-storage:
+  data-frequency: 24h0m0s
+log-level: "info"
+query:
+  health-check-http-port: 16687
+  port: 16686
+  prefix: "api"
+  static-files: "/opt/app/jaeger-ui/"
+span-storage:
+  type: "cassandra"

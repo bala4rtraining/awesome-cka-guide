@@ -1,0 +1,44 @@
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  parameters {
+    string(name: 'HOST', defaultValue: '', description: 'Host where the command needs to be executed. For multiple hosts please use space to separate (Ex: sl73xxxx sl73yyyy)')
+    string(name: 'COMMAND', defaultValue: '', description: 'Enter command to run')
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  stages {
+    stage('execute command on remote host(s)'){
+      steps{
+        // Without '|| true' this script will return the response code from running the command in the last host in the list.
+        // For example, systemctl status <service> would return a non-zero rc if the service is not active, causing the jenkins job to fail.
+        //
+        // Now the behavior is -
+        // If ssh fails to reach a server in the provided list, the jenkins job will fail.
+        // As long as the command is able to be called on all remote hosts, the jenkins job will succeed.
+        // This does not guarantee the command had the expected result.
+        sh '''CLEAN_HOST="$(echo -e "${HOST}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+              for host in $CLEAN_HOST; do ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -q root@$host "${COMMAND} || true"; done
+
+              rc=$?
+              set +x
+              echo "\n\n\n#################################################################"
+              if [ $rc -eq 0 ]; then
+                echo "  Command executed on host(s) - $CLEAN_HOST"
+                echo "  Please manually verify output of commands printed above."
+              else
+                echo "  Failed to reach one or more hosts!"
+              fi
+              echo "#################################################################\n\n\n"
+              exit $rc
+              '''
+      }
+    }
+  }
+}

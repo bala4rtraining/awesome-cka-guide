@@ -1,0 +1,11 @@
+---
+- name: setup connection test
+  hosts: ftps_server
+  roles:
+    - { role: vss, dispatch: ['setup_connection_test'] }
+
+
+- name: connection test
+  hosts: ovn_vss_servers
+  roles:
+    - { role: vss, dispatch: ['connection_test'] }

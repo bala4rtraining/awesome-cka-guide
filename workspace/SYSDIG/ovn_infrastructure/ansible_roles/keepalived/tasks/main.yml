@@ -1,0 +1,50 @@
+---
+# tasks file for keepalived
+
+# install keepalived
+- name: install keepalived
+  yum:
+    name: keepalived
+    state: present
+
+# Update /etc/sysctl.conf to enable ip forwarding
+- name: Update {{sysctl_file}}
+  blockinfile:
+     dest: "{{sysctl_file}}"
+     block: |
+       net.ipv4.ip_nonlocal_bind=1
+
+- name: Reload kernel parameters using sysctl
+  command: sudo sysctl -p -e
+
+# Add firewall rules to allow VRRP communication using the multicast IP address 224.0.0.18 and the VRRP protocol (112) 
+# on each network interface that Keepalived will control
+- name: Add firewall rules 
+  command: >
+    firewall-cmd --direct --permanent --add-rule ipv4 filter INPUT 0 --in-interface {{ haproxy_interface }}
+    --destination 224.0.0.18 --protocol vrrp -j ACCEPT
+
+- name: Reload firewall rules
+  command: firewall-cmd --reload
+
+# check SElinux status
+- name: register the status of SElinux
+  command: getenforce
+  register: selinux_status
+
+# SElinux in permissive mode 
+- name: Set SElinux in permissive mode
+  command: setenforce 0
+  when: "'Disabled' not in selinux_status.stdout"
+
+# Auto restart keepalived on reboot
+- name: Restart keepalived on server reboot
+  command: systemctl enable keepalived.service
+
+# Configure keepalived for HAproxy
+- name: Configure keepalived for HAproxy
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    mode: 0644
+  notify: Restart keepalived

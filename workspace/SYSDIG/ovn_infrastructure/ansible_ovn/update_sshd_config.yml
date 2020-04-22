@@ -1,0 +1,25 @@
+---
+# This playbook is usefull to make changes in  /etc/ssh/sshd_config file
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts | default('all,!cumulus_switch') }}"
+
+- name: "Update the /etc/ssh/sshd_config"
+  hosts: "{{ target_hosts | default('all,!cumulus_switch') }}"
+  tasks:
+    - name: "Modify the sshd_config"
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        line: 'Ciphers aes128-ctr,aes192-ctr,aes256-ctr'
+        state: present
+        insertafter: EOF
+      register: _sshd_config
+
+    - name: "reload the sshd config"
+      systemd:
+        name: sshd
+        state: reloaded
+      when: _sshd_config.changed
+
+    - name: "Validate the cipher changes"
+      shell: "sshd -T | grep ciphers"
+      register: cipher_result
+    - debug: msg="{{ cipher_result.stdout }}"

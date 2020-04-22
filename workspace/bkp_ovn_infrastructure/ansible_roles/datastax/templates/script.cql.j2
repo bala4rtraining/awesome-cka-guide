@@ -1,0 +1,5 @@
+ALTER USER cassandra WITH PASSWORD 'cas_ocean0!' NOSUPERUSER;
+CREATE USER IF NOT EXISTS {{ovn_datastax['cql'] ['app_user'] }} WITH PASSWORD {{ovn_datastax['cql'] ['app_password']}}  NOSUPERUSER;
+Create KEYSPACE IF NOT EXISTS {{ovn_datastax['cql']['keyspace_name']}} WITH replication = {'class': 'NetworkTopologyStrategy',  '{{ovn_datastax['cql'] ['dc']}}: '3'}  AND durable_writes = true;
+GRANT ALL ON KEYSPACE {{ovn_datastax['cql']['keyspace_name']}} TO {{ovn_datastax['cql']['app_user']}};
+REVOKE AUTHORIZE ON KEYSPACE {{ovn_datastax['cql']['keyspace_name']}} from {{ovn_datastax['cql']['app_password']}};

@@ -1,0 +1,8 @@
+---
+
+- name: start/stop firewalld service for everything in inventory list
+  hosts: all
+  roles:
+   - { role: firewall_rules, dispatch: ['firewalld_service'] }
+  vars:
+    firewalld_state: 'restarted'

@@ -1,0 +1,7 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: update rsyslog config
+  hosts: all:!cumulus_switch:!ovn_manager
+  roles:
+   - {role: syslog, dispatch: ['update_config']}

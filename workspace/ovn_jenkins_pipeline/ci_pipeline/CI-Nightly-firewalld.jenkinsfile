@@ -1,0 +1,56 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '15'))
+    }
+    environment {
+        CLUSTER = 'integration'
+        DATACENTER1 = 'dc1'
+        DATACENTER2 = 'dc2'
+    }
+    stages {
+    stage('Checkout SCM'){
+            steps{
+            git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git'
+            }
+        }
+        stage('stop firewalld') {
+            steps{
+                script {
+                    ansiColor('xterm') {
+                        ansiblePlaybook(
+                                playbook: 'ansible_firewalld/firewalld_service.yml',
+                                inventory: "inventories/integration/dc1",
+                                credentialsId: 'ENV.root_key',
+                                colorized: true,
+                                extraVars: [
+                                        firewalld_state: "stopped"
+                                ]
+                        )
+                    }
+                }
+                script {
+                    ansiColor('xterm') {
+                        ansiblePlaybook(
+                                playbook: 'ansible_firewalld/firewalld_service.yml',
+                                inventory: "inventories/integration/dc2",
+                                credentialsId: 'ENV.root_key',
+                                colorized: true,
+                                extraVars: [
+                                        firewalld_state: "stopped"
+                                ]
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

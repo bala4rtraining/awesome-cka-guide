@@ -1,0 +1,21 @@
+[Unit]
+Description=Zookeeper Service
+After=network.target
+
+[Service]
+Type=simple
+User={{username}}
+Group={{username}}
+Restart=always
+RestartSec=3
+TimeoutStopSec=120
+ExecStart=/bin/java -Dzookeeper.root.logger="INFO,ROLLINGFILE,CONSOLE,SERVER" \
+  -cp "{{zookeeper_install_dir}}/build/classes:{{zookeeper_install_dir}}/build/lib/*.jar:{{zookeeper_install_dir}}/lib/slf4j-log4j12-1.6.1.jar:{{zookeeper_install_dir}}/lib/slf4j-api-1.6.1.jar:{{zookeeper_install_dir}}/lib/netty-3.7.0.Final.jar:{{zookeeper_install_dir}}/lib/log4j-1.2.16.jar:{{zookeeper_install_dir}}/lib/jline-0.9.94.jar:{{zookeeper_install_dir}}/zookeeper-3.4.8.jar:{{zookeeper_install_dir}}/src/java/lib/*.jar:{{zookeeper_install_dir}}/conf:" \
+{% if monitor_zookeeper_using_prometheus == "true" %}
+  -javaagent:{{jmx_exporter_base_dir}}/{{jmx_exporter_jar}}={{ zookeeper_jmxexporter_port }}:{{ jmx_exporter_config_dir}}/zookeeper_jmx_exporter_config.yml \
+{% endif %}
+  org.apache.zookeeper.server.quorum.QuorumPeerMain \
+  "{{zookeeper_install_dir}}/conf/zoo.cfg"
+
+[Install]
+WantedBy=multi-user.target

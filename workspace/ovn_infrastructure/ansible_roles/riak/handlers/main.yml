@@ -1,0 +1,25 @@
+---
+# handlers file for davidx.riak-simple
+- name: update sysctl
+  command: /sbin/sysctl -e -p /etc/sysctl.d/riak.conf
+
+- name: restart riak
+  service: name=riak state=restarted
+
+# All these `http_conn` options are required as an artifact of the `riak` module
+# implementation.  There's an unecessary tight coupling in the `riak` module between
+# the command execution timeouts and the availability of Riak's HTTP interface.
+# Even though the commands themselves don't require the HTTP interface for anything.
+#
+# It would be nice to fix the `riak` module so it doesn't have this problem anymore.
+- name: wait for kv
+  riak: wait_for_service=kv http_conn={{ riak_conf.listener_http_internal }}
+
+- name: commit cluster changes
+  riak: command=commit http_conn={{ riak_conf.listener_http_internal }}
+
+- name: wait for handoffs
+  riak: wait_for_handoffs=1200 http_conn={{ riak_conf.listener_http_internal }}
+
+- name: wait for ring
+  riak: wait_for_ring=600 http_conn={{ riak_conf.listener_http_internal }}

@@ -1,0 +1,10 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=orange
+
+# Use this playbook to bootstrap tests to run from plays in the tests directory.
+- hosts: orange
+  gather_facts: yes
+  become: yes
+  become_method: sudo
+  roles:
+  - { role: ntp, dispatch: ['test'] }

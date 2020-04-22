@@ -1,0 +1,36 @@
+## {{ ansible_managed }}
+[MemStats]
+type = "FilePollingInput"
+ticker_interval = 10
+file_path = "/proc/meminfo"
+decoder = "MemStatsDecoder"
+
+[MemStatsDecoder]
+type = "SandboxDecoder"
+filename = "lua_decoders/linux_memstats.lua"
+
+[MemoryStatsFilter]
+type = "SandboxFilter"
+filename = "lua_filters/memstats.lua"
+ticker_interval = 60 
+preserve_data = {{ heka_data_retention_policy }}
+message_matcher = "Type == 'stats.memstats'"
+
+[MemStatsCarbonLineEncoder]
+type = "SandboxEncoder"
+filename = "lua_encoders/schema_carbon_line.lua"
+   [MemStatsCarbonLineEncoder.config]
+   name_prefix = "{{ ansible_hostname }}.mem"
+
+[MemStatsCarbonOutput]
+type = "TcpOutput"
+encoder = "MemStatsCarbonLineEncoder"
+message_matcher = "Type == 'stats.memstats'"
+address = "{{ carbon_host }}:{{ carbon_port }}"
+
+        [MemStatsCarbonOutput.buffering]
+        max_buffer_size = {{ heka_total_buffer_size  }}         #Maximum amount of disk space (in bytes) that the entire queue buffer can consume.
+        full_action = {{ heka_action_on_max_buffer }}           #Action on full buffer
+        max_file_size = {{ heka_buffer_file_size  }}            #Size of each file in the queue buffer
+        cursor_update_count = {{ heka_cursor_update_count  }}   #Number of updateCursor calls must be made before the cursor location is flushed to disk.
+

@@ -1,0 +1,44 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  parameters {
+        choice(name: 'elasticsearch_oldversion', choices: '5.5.1\n5.6.9\n5.6.10', description: 'Select the ElasticSearch Version to uninstall') 
+        choice(name: 'elasticsearch_rpms', choices: 'elasticsearch-5.6.9\nelasticsearch-5.6.10', description: 'Select the ElasticSearch Version to deploy')
+        choice(name: 'searchguard_package_version', choices: '5.6.9-19.1\n5.6.10-19.2', description: 'Select the same version of Search Guard corresponding to ElasticSearch to deploy')
+        string(name: 'RELEASE_BRANCH', defaultValue: '', description: 'Enter the release branch details')
+        string(name: 'extra_vars', defaultValue: '', description: 'extra variables')
+		choice(name: 'elasticsearch_ssl', choices: 'true\nfalse', description: 'Set this to true')
+  }
+  stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+	stage('Checkout SCM'){
+      steps{
+        git credentialsId: 'ovncd_ssh_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }	
+    stage('trigger rolling upgrade of ES and SG') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} --extra-vars elasticsearch_ssl=${elasticsearch_ssl} --extra-vars elasticsearch_oldversion=${elasticsearch_oldversion} --extra-vars elasticsearch_rpms=${elasticsearch_rpms} --extra-vars searchguard_package_version=${searchguard_package_version} ${params.extra_vars} --become", playbook: 'ansible_ovn/rolling_upgrade_fallback_elasticsearch_searchguard.yml'
+        }
+      }
+    }
+  }
+}

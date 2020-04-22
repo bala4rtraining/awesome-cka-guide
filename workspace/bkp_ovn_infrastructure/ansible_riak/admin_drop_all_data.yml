@@ -1,0 +1,7 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_riak_servers
+
+- name: drop all cluster data
+  hosts: ovn_riak_servers
+  roles:
+    - { role: riak, dispatch: ['drop_all_data'] }

@@ -1,0 +1,39 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_multidc_sync
+
+- include: set_common_variables.yml target_hosts=ovn_multidc_sync
+
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+
+- name: start ovn_multidc_sync
+  hosts: ovn_multidc_sync
+  roles:
+    - { role: ovn, ovngit_ref: "{{multidc_sync_ovngit_ref|default(omit)}}", ovn_firewalld_ports: ["10000-11998/tcp", "4369/tcp", "50113/tcp"] }
+  vars:
+    name: ovn_multidc_sync
+    node_name: ovn_multidc_sync
+    service_name: ovn_multidc_sync
+    source_dir: "{{ multidc_sync_ovngit_ref|default('files/') }}"
+    source_file: ovn_multidc_sync.tar.gz

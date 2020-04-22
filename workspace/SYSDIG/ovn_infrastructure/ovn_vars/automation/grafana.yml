@@ -1,0 +1,14 @@
+---
+# grafana context-path.  the grafana monitoring CI jenkins is accessible on the
+# jenkins master with the url
+# http://<master host>:<ssl_port>/<grafana_context_path>
+# e.g.:  https://sl73ovnapd112:8443/grafana-ci
+#
+grafana_context_path: 'grafana-ci'
+
+# 
+# This is the grafana http listen port
+# where nginx is forwarding on the loop back address
+# it is defined here in case there is port conflict on
+# the target machine for override.
+grafana_port: 3000

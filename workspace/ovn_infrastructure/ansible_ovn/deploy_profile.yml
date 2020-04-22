@@ -1,0 +1,55 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_switch_servers,ovn_mediator_servers,ftps_server[0]
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+
+
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+
+- name: deploy profile to switch nodes
+  hosts: ovn_switch_servers
+  roles:
+    - { role: profile, dispatch: ['deploy'] }
+  vars:
+    name: ovn_switch
+    source_dir: "{{ profile_tarball|default('files/') }}"
+    source_file: profile.tar
+
+- name: deploy profile to mediator nodes
+  hosts: ovn_mediator_servers
+  roles:
+    - { role: profile, dispatch: ['deploy'] }
+  vars:
+    name: ovn_mediator
+    source_dir: "{{ profile_tarball|default('files/') }}"
+    source_file: profile.tar
+
+- name: deploy profile to ovn_vip_ef_sync nodes
+  hosts: ftps_server[0]
+  roles:
+    - { role: profile, dispatch: ['deploy'] }
+  vars:
+    name: ovn_vip_ef_sync
+    source_dir: "{{ profile_tarball|default('files/') }}"
+    source_file: profile.tar

@@ -1,0 +1,64 @@
+# Playbook to enable TLS 1.2 for hdfs cluster.
+# Assumption: hdfs cluster is already installed.
+# Pass hadoop_enable_tls = True to enable tls on cluster.
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=hdfs_HA_All_nodes
+
+# stop hadoop services in specific order
+- name:  stop all hadoop services
+  hosts: hdfs_HA_All_nodes:!zookeeper
+  roles:
+    - { role: hadoop, dispatch: ['stop-all'], when: hadoop_enable_tls == true }
+
+# install certificates on all hadoop nodes (NN, DN, JN)
+- name: install certificates on all hdfs nodes
+  hosts: hdfs_HA_All_nodes:!zookeeper
+  roles:
+    - { role: certificates, when: hadoop_enable_tls == true }
+  vars:
+    - cert_path: "{{ hdfs_cert_path }}"
+    - cert_name: "{{ hdfs_cert_name }}"
+    - cert_data: "{{ hdfs_certificate }}"
+    - key_path: "{{ hdfs_key_path }}"
+    - key_name: "{{ hdfs_key_name }}"
+    - key_data: "{{ hdfs_private_key }}"
+    - ca_cert_path: "{{ hdfs_ca_path }}"
+    - ca_cert_name: "{{ hdfs_ca_name }}"
+    - ca_cert_data: "{{ hdfs_ca_bundle }}"
+    - cert_user: "{{ hdfs_user }}"
+    - cert_group: "{{ hdfs_group }}"
+
+# install java keystore and truststore on all nodes
+- name: install keystores on all hdfs nodes
+  hosts: hdfs_HA_All_nodes:!zookeeper
+  roles:
+    - { role: keystore, when: hadoop_enable_tls == true }
+  vars:
+    - keystore_cert: "{{ hdfs_cert_path }}/{{ hdfs_cert_name }}"
+    - keystore_key: "{{ hdfs_key_path }}/{{ hdfs_key_name }}"
+    - keystore_ca: "{{ hdfs_ca_path }}/{{ hdfs_ca_name }}"
+    - keystore_owner: "{{ hdfs_user }}"
+    - keystore_group: "{{ hdfs_group }}"
+    - keystore_file_name: "{{ hdfs_keystore_file_name }}"
+    - keystore_password: "{{ hdfs_server_keystore_password }}"
+    - keystore_key_pass: "{{ hdfs_server_keystore_password }}"
+    - keystore_truststore_file_name: "{{ hdfs_truststore_file_name }}"
+    - keystore_truststore_password: "{{ hdfs_server_truststore_password }}"
+    - keystore_truststore_key_pass: "{{ hdfs_server_truststore_password }}"
+    - keystore_truststore_ca: "{{ hdfs_truststore_ca }}"
+    - keystore_pkcs12_dir: "{{ hdfs_keystore_path }}"
+    - keystore_dir: "{{ hdfs_keystore_path }}"
+    - keystore_truststore_dir: "{{ hdfs_truststore_path }}"
+    - keystore_pkcs12_dir: "{{ hdfs_keystore_path }}"
+
+# update hadoop configuration files (core-site.xml and hdfs-site.xml)
+- name: update config on all hdfs nodes (NN, DN, JN)
+  hosts: hdfs_HA_All_nodes:!zookeeper
+  roles:
+    - { role: hadoop, dispatch: ['update-config'], when: hadoop_enable_tls == true }
+
+# start hadoop cluster
+- name:  start all hadoop services
+  hosts: hdfs_HA_All_nodes:!zookeeper
+  roles:
+    - { role: hadoop, dispatch: ['start-all'], when: hadoop_enable_tls == true }

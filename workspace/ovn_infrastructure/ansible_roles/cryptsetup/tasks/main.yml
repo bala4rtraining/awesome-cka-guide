@@ -1,0 +1,8 @@
+---
+# Main tasks file that dispatches requests
+
+- name: Cryptsetup role task dispatcher
+  include: "{{ subtask_file }}.yml" # assumes no nested includes from loops
+  with_items: "{{ dispatch|default(['install']) }}"
+  loop_control:
+    loop_var: subtask_file

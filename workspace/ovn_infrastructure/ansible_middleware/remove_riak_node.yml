@@ -1,0 +1,11 @@
+---
+
+# Use this playbook to add a node to an existing riak cluster
+
+- include: mware_vars.yml ovn_vars_hosts="{{ target_hosts }}"
+
+
+- name: Remove the node from the cluster
+  hosts: "{{ target_hosts }}"
+  roles:
+    - { role: riak, dispatch: ['removenode'] }

@@ -1,0 +1,146 @@
+---
+- name: create Prometheus group
+  group: name={{ prometheus_group }}  state=present
+
+- name: create Prometheus user
+  user:
+    name: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    createhome: no
+    comment: "Prometheus User"
+    state: present
+
+- name: Adding existing user {{ prometheus_user }} to group {{ cert_group }}
+  user: 
+    name: "{{ prometheus_user }}"
+    groups: "{{ cert_group }}"
+    append: "yes"
+
+- name: ensure that /opt/app exists and has proper permissions/owner
+  file:
+    path: /opt/app
+    state: directory
+    mode: "0755"
+    owner: "root"
+    group: "root"
+
+- name: create prometheus install directory {{ prometheus_install_dir }}
+  file:
+    dest: "{{ prometheus_install_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    state: directory
+
+- name: check if {{ prometheus_archive_base }} is already provisioned
+  stat:
+    path: "{{ prometheus_install_dir }}/{{ prometheus_archive_base }}"
+  register: prometheus_provision_status
+
+- name: deploy prometheus package
+  unarchive:
+    src: "{{ prometheus_archive }}"
+    dest: "{{ prometheus_install_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    copy: no
+    validate_certs: no
+  when: prometheus_provision_status.stat.exists == false
+
+- name: link to prometheus directory {{ prometheus_base_dir }}
+  file:
+    src: "{{ prometheus_archive_base }}"
+    dest: "{{ prometheus_base_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+
+- name: create prometheus data directory {{ prometheus_data_dir }}
+  file:
+    dest: "{{ dir_val }}"
+    state: directory
+    recurse: "yes"
+    mode: "0750"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  with_items:
+    - "{{ prometheus_data_dir }}"
+    - "{{ prometheus_rule_path }}"
+  loop_control:
+    loop_var: dir_val
+
+- name: install alert rule files in {{ prometheus_config_dir }}/rules for prometheus
+  copy:
+    src: "{{ dir_val.src }}"
+    dest: "{{ dir_val.dest }}"
+    mode: "{{ dir_val.mode }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    validate: "{{ prometheus_base_dir }}/promtool check rules %s"
+  with_items: "{{ prometheus_rule_files }}"
+  loop_control:
+    loop_var: dir_val
+
+- name: deploy prometheus config
+  template:
+    src: "{{ dir_val.src }}"
+    dest: "{{ dir_val.dest }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "{{ dir_val.mode }}"
+    validate: "{{ prometheus_base_dir }}/promtool check config %s"
+  with_items:
+    - "{{ prometheus_config_files }}"
+  loop_control:
+    loop_var: dir_val
+  register: prometheus_config_result
+
+- name: link prometheus config for mode active and standby
+  file:
+    src: "{{ prometheus_config_dir }}/prometheus-{{ hostvars[inventory_hostname]['prometheus_mode'] }}.yml"
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+  when: ('prometheus_mode' in hostvars[inventory_hostname])
+
+- name: link prometheus config for mode not defined
+  file:
+    src: "{{ prometheus_config_dir }}/prometheus-active.yml"
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+  when: ('prometheus_mode' not in hostvars[inventory_hostname])
+
+- name: prometheus systemd configuration
+  template:
+    src: "prometheus.service.j2"
+    dest: "/etc/systemd/system/prometheus.service"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+  register: prometheus_service_result
+
+- name: reload system service configs.
+  shell: systemctl daemon-reload
+  when: prometheus_service_result.changed == true
+
+- name: enable and start prometheus package.
+  service:
+    name: prometheus
+    state: restarted
+  when: prometheus_service_result.changed == true
+
+- name: ensure prometheus is started and enabled to start at boot.
+  service:
+    name: prometheus
+    state: started
+    enabled: yes
+
+- name: reload prometheus config
+  service:
+    name: prometheus
+    state: reloaded

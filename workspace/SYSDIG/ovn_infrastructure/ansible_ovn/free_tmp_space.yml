@@ -1,0 +1,23 @@
+# Playbook for clearing the tmp space to bring the disk usage below the warning level
+# It installs a cron job, which will run daily once to check the /tmp space and free up its space if needed
+# ***This is only for "NON-PROD" systems (dev and test)***
+
+- name: Clear the tmp file to bring the disk usage below the warning level
+  gather_facts: yes
+  hosts: all
+  vars:
+   tmp_max_percUse_limit: 60
+   delete_file_in_each_cycle: 10
+  tasks:  
+   - name: copy the bash script to free space in tmp which the cron job will invoke
+     template: 
+      src: templates/cleanTmp.sh.j2 
+      dest: /usr/local/bin/cleanTmp.sh
+      mode: "0755"
+
+   - name: installs cron job to delete old files residing in /tmp
+     cron:
+      name: "cron job to delete old files from /tmp"
+      minute: "0"
+      hour: "2"
+      job: "/usr/local/bin/cleanTmp.sh {{ tmp_max_percUse_limit }} {{ delete_file_in_each_cycle }}"

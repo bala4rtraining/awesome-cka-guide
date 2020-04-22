@@ -1,0 +1,3 @@
+#ipaddress of docker ea
+bridge_ea: "{{ bridge_ea_servers[0] }}"
+bridge_ftp_user: "ftp_user_1"

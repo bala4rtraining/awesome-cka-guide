@@ -1,0 +1,72 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /opt/app/ovnhub:/opt/app/ovnhub'
+        }
+    }
+
+    parameters {
+        string(name: 'REPO_URL', description: "Repository SSH URL - example: ssh://git@stash.trusted.visa.com:7999/op/ovn-commons.git")
+        string(name: 'project_prefix', defaultValue: 'OVN_0030023_DEV_' , description: "Prefix for Checkmarx project - example: OVN_0030023_DEV_")
+    }
+
+    environment {
+        project_name_checkmarx = sh(script: "echo ${project_prefix}\$(echo ${REPO_URL} | cut -d '/' -f 5 | cut -d '.' -f 1 | tr '[a-z]' '[A-Z]')", returnStdout: true).trim()
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
+    stages {
+        stage('Updating Jenkins Build Display Name') {
+            steps {
+                script {
+                    currentBuild.displayName = " $BUILD_NUMBER-${project_name_checkmarx} "
+                }
+            }
+        }
+
+        stage('Copy Checkmarx script to /tmp') {
+            steps {
+                ansiColor('xterm') {
+                    sh '''
+                    cp jenkins-sh/checkmarx* /tmp/
+                    '''
+                }
+            }
+        }
+
+        stage('Checkmarx scan') {
+            steps {
+                git url: '$REPO_URL', branch: 'master'
+                withCredentials([
+                    usernamePassword(credentialsId: 'jenkins_ovn_checkmarx', usernameVariable: 'checkmarx_user', passwordVariable: 'checkmarx_token'),
+                    usernamePassword(credentialsId: 'jira_service_account', usernameVariable: 'jira_service_account_user', passwordVariable: 'jira_service_account_password'),
+                    usernamePassword(credentialsId: 'ovn_database', usernameVariable: 'ovn_database_user', passwordVariable: 'ovn_database_password')
+                ]) {
+                    ansiColor('xterm'){
+                    sh '''
+                        zip -r /tmp/golang_repo.zip * -x '*test.go' '*testing/**'
+                        /bin/bash /tmp/checkmarx_scan_report_retrieve.sh "$project_name_checkmarx" "$BUILD_TAG" "$checkmarx_token" "$jira_service_account_user" "$jira_service_account_password" "$project_prefix" "$ovn_database_user" "$ovn_database_password"
+                    '''
+                  }
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            mail body: "For more information and console log please visit the Jenkins_URL: ${BUILD_URL}",
+            subject: '[Failed] checkmarx_scan_upload jenkins job is failed',
+            from: "OVN Admin Job Jenkins <noreply@visa.com>",
+            to: "Jenkins Enterprise - OVN DevOps Team _Foster City_ <4509073a.visainc.onmicrosoft.com@amer.teams.ms>"
+        }
+        always {
+            archiveArtifacts artifacts: 'scan_report.txt', fingerprint: true
+            cleanWs()
+	}
+    }
+}

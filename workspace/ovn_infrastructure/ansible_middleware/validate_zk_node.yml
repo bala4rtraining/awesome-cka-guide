@@ -1,0 +1,7 @@
+---
+- include: mware_vars.yml
+
+- name: Validate Zookeeper on nodes status
+  hosts: "{{ node }}"
+  roles:
+    - { role: zk, dispatch: ['validate'] }

@@ -1,0 +1,24 @@
+---
+#
+# This is the main file for running Ansible
+# on OGL to configure a Cumulus switch
+#
+# This is run independently after all IB are up
+#
+# *Important assumption*
+#    The IPv4 subnet only differs from site to site
+#    in the first 3 bytes
+#
+# This playbook uses the dynamically created group var 'ib'
+#
+# TODO renaming
+#
+
+- name: Configure Cumulus IB switches
+  hosts: ib
+  user: cumulus
+  become: yes
+  become_method: sudo
+  roles:
+    - interfaces
+    - quagga

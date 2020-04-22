@@ -1,0 +1,12 @@
+# this playbook prints the permissions on user home directories specified in /etc/passwd
+- name: print values for tsr_5137
+  hosts: all
+  gather_facts: yes
+  tasks:
+
+    - name: print permissions of user home directories in /etc/passwd
+      shell: for dir in $(cat /etc/passwd | awk 'BEGIN{FS=":"}{print $6}'); do ls -ld $dir; done
+      register: store
+    
+    - debug:
+        var: store.stdout_lines

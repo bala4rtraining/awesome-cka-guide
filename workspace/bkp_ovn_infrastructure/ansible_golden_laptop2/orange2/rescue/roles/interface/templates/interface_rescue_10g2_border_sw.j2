@@ -1,0 +1,13 @@
+{# Use site specific variables to create interface configuration on the rescue server #}
+
+{% set int = rescue.int_10g_border_sw %}
+
+BOOTPROTO=none
+#IPADDR={{ int.subnet_int_ip }}
+#PREFIX={{ int.subnet_int_ip_len }}
+DEVICE={{ int.subnet_int_ip_name2 }}
+#GATEWAY={{ int.subnet_int_ip_router }}
+ONBOOT=yes
+MASTER={{ int.subnet_int_ip_bond_name }}
+SLAVE=yes
+

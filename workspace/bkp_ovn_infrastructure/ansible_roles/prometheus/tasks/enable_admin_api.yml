@@ -1,0 +1,34 @@
+---
+- name: Check prometheus is started and enabled to collect snapshot
+  service:
+    name: prometheus
+    state: started
+    enabled: yes
+
+- name: Update the prometheus.service to enable snapshot
+  template:
+    src: "prometheus.service.j2"
+    dest: "/etc/systemd/system/prometheus.service"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: 0644
+    
+- name: Execute deamon-reload
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: prometheus
+    
+- pause:
+    seconds: 30    
+  
+- name: reload prometheus
+  service:
+    name: prometheus
+    state: reloaded
+
+- name: Check prometheus is started and enabled
+  service:
+    name: prometheus
+    state: started
+    enabled: yes

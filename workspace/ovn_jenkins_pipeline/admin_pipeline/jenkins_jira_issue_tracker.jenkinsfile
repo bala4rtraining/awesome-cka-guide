@@ -1,0 +1,70 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /opt/app/ovnhub:/opt/app/ovnhub'
+        }
+    }
+
+    parameters {
+        string(name: 'Jenkins_Status', description: 'Jenkins Build Status - example: success/failed')
+        string(name: 'Jenkins_Build_Url', description: 'Triggered Jenkins Build URL - example: https://jenkins-oce-corp.visa.com:8443/netproc/job/OVN/job/OVN_dev/job/new_for_jira/2/')
+        string(name: 'Jenkins_Job_Name', description: 'Triggered Jenkins Job Name - example: OVN/OVN_dev/OVN-OP/new-new-jira')
+        string(name: 'Jenkins_Build_Id', description: 'Triggered Jenkins Build ID - example: 2')
+        string(name: 'Bitbucket_Git_Commit', description: 'Bitbucket Git Commit - example: c57ebb6820219c2a51b961c71697a04edd182718')
+    }
+
+    environment {
+    	reponame_name = sh(script: '''echo ${Jenkins_Job_Name} | cut -d '/' -f 4''', returnStdout: true).trim()
+    }
+
+    options { 
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
+    stages {
+        stage('Updating Jenkins Build Display Name') {
+            steps {
+                script {
+                    currentBuild.displayName = " ${reponame_name}-master-${Jenkins_Build_Id}-${Jenkins_Status} "
+                }
+            }
+        }
+
+        stage('Copy jira script to /tmp') {
+            steps {
+                ansiColor('xterm') {
+                    sh '''
+                    cp jenkins-sh/jenkins_jira_issue_tracker.py /tmp/
+                    '''
+                }
+            }
+        }
+
+        stage('Jira jenkins integration') {
+            steps {
+                git url: "ssh://git@stash.trusted.visa.com:7999/op/${reponame_name}.git", branch: 'master'
+                withCredentials([
+                    usernamePassword(credentialsId: 'jira_service_account', usernameVariable: 'jira_service_account_user', passwordVariable: 'jira_service_account_password')
+                ]) {
+                    sh '''
+                    /tmp/jenkins_jira_issue_tracker.py $Jenkins_Status $Jenkins_Build_Url $Jenkins_Job_Name $Jenkins_Build_Id $Bitbucket_Git_Commit $jira_service_account_user $jira_service_account_password
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            mail body: "For more information and console log please visit the Jenkins_URL: ${BUILD_URL}. This job is triggered by ${Jenkins_Build_Url}",
+            subject: '[Failed] jenkins_jira_issue_tracker jenkins job is failed',
+            from: "OVN Admin Job Jenkins <noreply@visa.com>",
+            to: "Jenkins Enterprise - OVN DevOps Team _Foster City_ <4509073a.visainc.onmicrosoft.com@amer.teams.ms>"
+            cleanWs()
+        }
+    }
+}
+
+
+

@@ -1,0 +1,69 @@
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_gobuild:stable'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /var/run/docker.sock:/var/run/docker.sock'
+      customWorkspace "${env.JOB_NAME}/${env.BUILD_ID}"
+    }
+  }
+
+   parameters {
+                  string(name: 'branch', defaultValue: 'feature/OVNLTA-5429-add-test-running-capability-make-file', description: 'Enter the release branch details')
+   }
+   environment {
+        GOPATH = "$WORKSPACE/.go"
+        //MODULENAME = sh(script: '''sed -n 's/^module[ ]*\\([^ ]*\\)/\\1/p' go.mod''', returnStdout: true).trim()
+        //PACKAGE_DIR = "$GOPATH/src/${MODULENAME}"
+        PACKAGE_DIR = "$GOPATH/src/visa.com/ovn"
+        REPONAME = sh(script: '''basename -s .git `git config --get remote.origin.url`''', returnStdout: true).trim()
+        TAG_VERSION=sh(script: '''git describe --match "v[0-9]*.[0-9]*.[0-9]*" --exclude "*-*" --abbrev=0 --tags $(git rev-list --tags --max-count=1) ||echo "v0.0.0"''' , returnStdout: true).trim()
+        GO111MODULE = "on"
+        ARTIFACTORY_CREDS = credentials('svcnpovndev_id')
+        //SONARQUBE_KEY = credentials('ovn_sonarqube')
+        GOPROXY="https://artifactory.trusted.visa.com/api/go/ovn-go-virtual"
+        //ARTIFACTORY_URL="https://artifactory.trusted.visa.com"
+        //GO_LOCAL_REPO="ovn-go-local"
+        //REPOSITORY_TYPE="${configParams.RepoType}"
+        //HUB_LOG_LEVEL = 'INFO'
+        //RED='\033[0;31m'
+        //GREEN='\033[0;32m'
+        //YELLOW='\033[0;33m'
+        //NC='\033[0m'
+        //CLOUDVIEW_CREDS = credentials('cloudview')
+      }
+  stages{
+    stage('Checkout ovn-commons testcases') {
+       steps{
+          git credentialsId: '', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn-commons.git', branch: "${params.branch}"
+       }
+    }
+    stage('prepare') {
+          steps {
+            // 1. setting up GOPATH structure, since we do not have a src/visa.com prefix inside of our repo
+            // 2. fetching dependencies with glide
+            sh '''
+              git show -s --pretty=%ce > .git/committer-email
+              go version
+              rm -rf $PACKAGE_DIR
+              mkdir -p $PACKAGE_DIR
+              cp -r * $PACKAGE_DIR
+              cd $PACKAGE_DIR
+
+              '''
+        }
+    }
+    stage('middleware commons test') {
+      steps {
+         ansiColor('xterm') {
+           sh '''
+            go version
+            mkfifo pipe
+            tee test.out < pipe &
+            make commons-middleware-test > pipe
+            '''
+         }
+      }
+    }
+  }
+}

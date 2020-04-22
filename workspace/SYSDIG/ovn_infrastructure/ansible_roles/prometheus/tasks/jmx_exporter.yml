@@ -1,0 +1,72 @@
+---
+- name: create Prometheus group for jmx_exporter
+  group: name={{ prometheus_group }}  state=present
+
+- name: create Prometheus user for jmx_exporter
+  user:
+    name: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    createhome: no
+    comment: "Prometheus User"
+    state: present
+
+- name: create jmx_exporter install directory {{ exporter_install_dir }} and log dir {{ jmx_exporter_config_dir }}
+  file:
+    dest: "{{ dir_val }}"
+    state: directory
+    recurse: yes
+    mode: "0750"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+  with_items:
+    - "{{ exporter_install_dir }}"
+    - "{{ jmx_exporter_config_dir }}"
+  loop_control:
+    loop_var: dir_val
+
+- name: check if {{ jmx_exporter_archive_base }} is already provisioned
+  stat:
+    path: "{{ exporter_install_dir }}/{{ jmx_exporter_archive_base }}"
+  register: jmx_exporter_provision_status
+
+- name: deploy jmx_exporter package
+  unarchive:
+    src: "{{ jmx_exporter_archive }}"
+    dest: "{{ exporter_install_dir }}/"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    validate_certs: no
+    copy: no
+
+- name: link to jmx_exporter directory {{ jmx_exporter_base_dir }}
+  file:
+    src: "{{ jmx_exporter_archive_base }}"
+    dest: "{{ jmx_exporter_base_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    force: yes
+    state: link
+
+- name: deploy jmx_exporter agent config file
+  template:
+    src: "jmx_exporter.yml.j2"
+    dest: "{{ jmx_exporter_config_dir }}/jmx_exporter.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+
+- name: deploy jmx_exporter agent config file for kafka
+  template:
+    src: "kafka_jmx_exporter_config.yml.j2"
+    dest: "{{ jmx_exporter_config_dir }}/kafka_jmx_exporter_config.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+
+- name: deploy jmx_exporter agent config file for zookeeper
+  template:
+    src: "zookeeper_jmx_exporter_config.yml.j2"
+    dest: "{{ jmx_exporter_config_dir }}/zookeeper_jmx_exporter_config.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"

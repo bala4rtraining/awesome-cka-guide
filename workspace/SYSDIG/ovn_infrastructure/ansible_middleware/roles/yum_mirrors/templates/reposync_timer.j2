@@ -1,0 +1,8 @@
+[Unit]
+Description=Run {{ item }}.service
+
+[Timer]
+OnCalendar={{ timer_year }}-{{ timer_month }}-{{ timer_date }} {{ timer_hour }}:{{ timer_minute }}:{{ timer_second }}
+
+[Install]
+WantedBy=timers.target

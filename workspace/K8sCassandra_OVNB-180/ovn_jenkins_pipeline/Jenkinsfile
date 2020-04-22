@@ -1,0 +1,131 @@
+pipeline {
+    agent {
+        docker {
+          image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+          label 'ovn_build'
+          args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /home/was:/home/was -v /opt/app/ivy2/cache:/opt/app/ivy2/cache'
+        }
+    }
+
+    options {
+            ansiColor('xterm-256color')
+            timeout(time: 1, unit: 'HOURS')
+    }
+
+    environment {
+        RED='\033[0;31m'
+        GREEN='\033[0;32m'
+        YELLOW='\033[0;33m'
+        BLUE='\033[0;34m'
+        NC='\033[0m'
+    }
+    
+    stages {
+        stage('Prepare') {
+            steps {
+                sh '''
+                    git show -s --pretty=%ce > .git/committer-email
+                '''
+            }
+        }
+    stage('validate Jenkins file'){
+        steps{
+        ansiColor('xterm'){
+         sh "jenkins-sh/validatejenkinsfile.sh $PWD"
+        }
+          }
+        }
+        stage('Build Jenkins Jobs xmls files') {
+            steps {
+                ansiColor('xterm') {
+                  sh returnStatus: true, script: '''make'''
+               }
+            }
+        }
+
+
+        stage('Build release tarball') {
+            steps {
+                ansiColor('xterm') {
+                  sh '''
+                  make generatetarball
+                  for i in *.tar.gz; do mv "$i" "${i%.tar*}-${BRANCH_NAME}-build${BUILD_ID}".tar.gz; done
+                  '''
+                  archiveArtifacts '*.tar.gz'
+               }
+            }
+        }
+
+        stage('Publish RELEASE to Artifactory') {
+            when { anyOf { branch 'master'; branch 'release-*' } }
+            steps {
+                script {
+                        def artifactory = Artifactory.server('ovn-artifactory')
+                        def uploadSpec =
+                            """{"files":
+                                 [{"pattern": "*.tar.gz",
+                                   "target": "ovn-app-el7",
+                                   "recursive": "false"}]
+                               }"""
+                        artifactory.upload(uploadSpec)
+                }
+            }
+        }
+
+        stage('Changelog tracking') {
+            when { 
+                expression {env.TAG_NAME != null}
+            }
+            steps{
+                script{
+                    sh '''
+                      LOGGING_FORMAT_GUIDE_LINK="https://visawiki.trusted.visa.com/display/OVN/CHANGELOG.md+Logging+Format+Guide"
+
+                      if [[ ! -e ./CHANGELOG.md ]]; then
+                        echo -e "${RED}[ERROR]${NC} CHANGELOG.md is missing from repo directory."
+                        echo "deleting tag: ${TAG_NAME}"
+                        curl -s -X DELETE -H "Authorization: Bearer ${BITBUCKET_API_TOKEN}" -H "Content-Type: application/json" https://stash.trusted.visa.com:7990/rest/git/1.0/projects/OP/repos/${REPONAME}/tags/${TAG_NAME}
+                        exit 1
+                      else
+                        echo "Checking CHANGELOG.md logging format..."
+                        RELEASE_TITLE=$(sed -n '1p' < CHANGELOG.md)
+                        RELEASE_DESCRIPTION=$(sed -n '3p' < CHANGELOG.md)
+                        if [[ $RELEASE_TITLE =~ ^#[[:space:]][v][0-9]{1,2}\\.[0-9]{1,3}\\.[0-9]{1,3}$  && $RELEASE_DESCRIPTION =~ ^### ]] ;then
+                          echo -e "${BLUE}[INFO]${NC} CHANGELOG.md logging format is ${GREEN}OK${NC}."
+                        else
+                          echo -e "${RED}[ERROR]${NC} CHANGELOG.md will need additional description! For more information, please visit OVN logging format guide:  ${LOGGING_FORMAT_GUIDE_LINK}"
+                          echo "deleting tag: ${TAG_NAME}"
+                          curl -s -X DELETE -H "Authorization: Bearer ${BITBUCKET_API_TOKEN}" -H "Content-Type: application/json" https://stash.trusted.visa.com:7990/rest/git/1.0/projects/OP/repos/${REPONAME}/tags/${TAG_NAME}
+                          exit 1
+                        fi;
+                      fi;
+                    '''
+                }
+            }
+        
+        }
+    }
+
+    post {
+        success {
+            script {
+                def committer_email = readFile('.git/committer-email').trim()
+                mail body: "project build success.\n More info at: ${env.BUILD_URL} \nLast committer was: ${committer_email} \nCommit number: ${GIT_COMMIT}" ,
+                        subject: "${JOB_NAME} build success" ,
+                        to: "${committer_email}"
+                echo "\033[32m [BUILD SUCCESS] The build result has been notified to ${committer_email} \033[0m"  
+            }
+        }
+        failure {
+            script {
+                def committer_email = readFile('.git/committer-email').trim()
+                mail body: "project build error is here: ${env.BUILD_URL} \nLast committer was: ${committer_email} \nCommit number: ${GIT_COMMIT}" ,
+                        subject: "${JOB_NAME} job: Build failed",
+                        to: "${committer_email}"
+                echo "\033[31m [BUILD FAILURE] The build result has been notified to ${committer_email} \033[0m"
+            }
+        }
+        
+    }
+
+}

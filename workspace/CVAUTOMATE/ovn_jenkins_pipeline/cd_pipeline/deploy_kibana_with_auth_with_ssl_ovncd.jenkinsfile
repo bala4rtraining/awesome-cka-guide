@@ -1,0 +1,47 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+
+  parameters {
+      string(defaultValue: "", description: "Artifactory URL", name: "artifactory_url")
+      string(defaultValue: "5.6.9", description: "Kibana version to uninstall", name: "kibana_old_version")	  
+	  string(defaultValue: "kibana-5.6.16-x86_64", description: "Kibana version for Upgrade", name: "kibana_rpms")
+	  string(defaultValue: "false", description: "Nginx Auth Passthrough", name: "nginx_auth_passthrough")
+	  string(name: 'RELEASE_BRANCH', defaultValue: '', description: 'Enter the release branch details')
+	  string(name: 'extra_vars', defaultValue: '', description: 'any extra vars')
+  }
+ 
+
+  stages {
+     stage('Set cluster variables') {
+         // boilerplate for stage must be the first stage
+         // in all the cd pipeline jobs.
+         // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+         steps {
+           setClusterAndDatacenter(env);
+         }
+     }
+	stage('Checkout SCM'){
+      steps{
+        git credentialsId: '', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+     stage('Start Kibana behind nginx with SSL') {
+       steps {
+         ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", playbook: 'ansible_ovn/deploy_kibana_with_ssl_and_auth.yml', extras: "-e @config/${env.ENV}.vars.secret.yml --vault-password-file ~/.vault-${env.ENV} -e artifactory_url=$artifactory_url -e kibana_rpms=$kibana_rpms -e kibana_old_version=$kibana_old_version --extra-vars kibana_nginx_enable_ssl='true' --extra-vars nginx_auth_passthrough=$nginx_auth_passthrough --extra-vars kibana_reverse_proxy_enabled='true' --extra-vars elasticsearch_client_ssl_enabled='true' --extra-vars elasticsearch_client_use_fqdn='true' --extra-vars nginx_enable_ssl='true' ${params.extra_vars} --become"
+         }
+       }
+     }
+  }
+}

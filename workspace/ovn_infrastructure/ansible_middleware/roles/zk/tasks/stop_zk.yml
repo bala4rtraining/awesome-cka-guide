@@ -1,0 +1,6 @@
+---
+- name: stop zookeeper centos 7
+  systemd:
+      name: zookeeper
+      state: stopped
+  ignore_errors: true

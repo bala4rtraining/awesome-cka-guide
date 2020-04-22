@@ -1,0 +1,2 @@
+@Library('ovn-shared-library') _
+cdTemplate_InvokeAnsiblePlaybook('ovn_infrastructure', '$RELEASE_BRANCH', 'ansible_ovn/copy_encrypted_dek.yml','-e @config/${env.ENV}.vars.secret.yml')

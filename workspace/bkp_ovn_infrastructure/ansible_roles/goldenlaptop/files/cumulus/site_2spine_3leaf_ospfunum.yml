@@ -1,0 +1,26 @@
+---
+#
+# This is the main file for running Ansible
+# on OGL to configure a Cumulus switch
+# for a 2spine2leaf topology
+#
+
+- name: Configure Cumulus leaf switches
+  hosts: ovn-leafs 
+  user: cumulus
+  become: yes
+  become_method: sudo
+  roles: 
+    - leafs
+    
+
+- name: Configure Cumulus spine switches
+  hosts: ovn-spines 
+  user: cumulus
+  become: yes
+  become_method: sudo
+  roles: 
+    - spines 
+    
+
+  

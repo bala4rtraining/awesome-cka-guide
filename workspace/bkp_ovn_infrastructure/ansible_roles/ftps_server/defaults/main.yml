@@ -1,0 +1,13 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+pasv_min_port: 0
+pasv_max_port: 0
+ssl_cert_file: need_cert_file
+ssl_pkey: need_private_key

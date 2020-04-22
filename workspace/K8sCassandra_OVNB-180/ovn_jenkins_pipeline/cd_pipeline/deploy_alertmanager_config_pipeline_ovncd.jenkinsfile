@@ -1,0 +1,44 @@
+@Library('ovn-shared-library') _
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '15'))
+    }
+    
+    parameters {
+        string(name:'alertmanager_repeat_interval', defaultValue: '3h', description: 'Enter the time interval to resend the alert notification')
+        string(name:'alertmanager_email_to', defaultValue: 'GDLnonprodprometheusovnalerts@visa.com', description: 'Enter the email id(s) to whom the alert mails will be sent')
+        string(name:'Netcool_email', defaultValue: 'EmailNetcoolQA@visa.com', description: 'Enter the email id(s) to which the Netcool alert mails will be sent')
+        string(name:'RELEASE_BRANCH', defaultValue: '', description: 'Enter the release branch details')
+        string(name:'extra_vars', defaultValue: '', description: 'extra variables')
+    }
+
+    stages {
+        stage('set cluster variables') {
+            // boilerplate for stage must be the first stage
+            // in all the cd pipeline jobs.
+            steps {
+                setClusterAndDatacenter(env);
+            }
+        }
+        stage('Checkout SCM'){
+            steps{
+                git credentialsId: 'ovncd_ssh_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+            }
+        }
+         stage('deploy-alertmanager_config') {
+            steps {
+                ansiColor('xterm') {
+                   ansiblePlaybook credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} --extra-vars alertmanager_repeat_interval=${alertmanager_repeat_interval} --extra-vars alertmanager_email_to=${alertmanager_email_to} --extra-vars Netcool_email=${Netcool_email} ${params.extra_vars} --become", playbook: 'ansible_prometheus/prometheus_alertmanager_config.yml'
+                }
+            }
+        }
+    }
+}

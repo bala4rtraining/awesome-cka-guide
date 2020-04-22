@@ -1,0 +1,20 @@
+---
+kibana_png: "kibanaOvnPROD.png"
+elasticsearch_heapsize: "32g"
+alertmanager_email_to : "OVNPrometheusALERTS@visa.com"
+nginx_enable_ssl: "true"
+enable_nginx_ssl: "true"
+elasticsearch_client_ssl_enabled: "true"
+
+#elastalert related defines
+elasticsearch_port: 9200
+elastalert_config_use_ssl: False
+elastalert_config_es_url_prefix: '""'
+
+Netcool_email: Netcoolemail@visa.com
+
+td_agent_secure_forward: false
+
+#HSM
+# TODO -  Actual HSM address
+hsm_address: ""

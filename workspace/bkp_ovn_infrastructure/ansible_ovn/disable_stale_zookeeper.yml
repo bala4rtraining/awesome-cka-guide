@@ -1,0 +1,9 @@
+---
+- name: Disable stale zookeeper service
+  hosts: "{{ target_hosts }}"
+  roles:
+   - { role: zk, dispatch: ['disable_stale_zookeeper_service'] }
+  vars:
+    - monitor_zookeeper_using_prometheus: "false"
+    - zookeeper_enable_client_authentication: "false"
+    - zookeeper_enable_server_authentication: "false"

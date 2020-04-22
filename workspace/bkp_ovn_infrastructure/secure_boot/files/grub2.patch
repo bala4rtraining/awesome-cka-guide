@@ -1,0 +1,16 @@
+diff -u -r rpmbuild.orig/SPECS/grub2.spec rpmbuild/SPECS/grub2.spec
+--- rpmbuild.orig/SPECS/grub2.spec	2015-12-17 13:10:51.251999363 -0800
++++ rpmbuild/SPECS/grub2.spec	2015-12-18 16:38:42.055256756 -0800
+@@ -399,8 +399,10 @@
+ mv %{grubefiname}.orig %{grubefiname}
+ mv %{grubeficdname}.orig %{grubeficdname}
+ %else
+-%pesign -s -i %{grubefiname}.orig -o %{grubefiname} -a %{SOURCE1} -c %{SOURCE1} -n redhatsecureboot301
+-%pesign -s -i %{grubeficdname}.orig -o %{grubeficdname} -a %{SOURCE1} -c %{SOURCE1} -n redhatsecureboot301
++pesign -n %{certdb} -c %{certname} -s -i %{grubefiname}.orig   -o %{grubefiname}
++pesign -n %{certdb} -c %{certname} -s -i %{grubeficdname}.orig -o %{grubeficdname}
++#% pesign -s -i %{grubefiname}.orig -o %{grubefiname} -a %{SOURCE1} -c %{SOURCE1} -n redhatsecureboot301
++#% pesign -s -i %{grubeficdname}.orig -o %{grubeficdname} -a %{SOURCE1} -c %{SOURCE1} -n redhatsecureboot301
+ %endif
+ cd ..
+ %endif

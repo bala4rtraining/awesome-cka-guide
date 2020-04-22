@@ -1,0 +1,73 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        booleanParam(name: 'OVN_INFRASTRUCTURE_REQUIRED',     defaultValue: false, description: 'Is OVN Infrastructure required? Check only if you know what you are doing')
+        booleanParam(name: 'OVN_APP_INFRASTRUCTURE_REQUIRED', defaultValue: false, description: 'Is OVN App Infrastructure required? Check only if you know what you are doing')
+        booleanParam(name: 'OVN_JENKINS_PIPELINE_REQUIRED',   defaultValue: false, description: 'Is OVN JENKINS PIPELINE required? Check only if you know what you are doing')
+
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        RELEASE_BRANCH = "infra-${params.RELEASE_VERSION}"
+        RELEASE_TAG = "v${params.RELEASE_VERSION}-rc1"
+    }
+
+    stages {
+
+        stage('Releasing OVN_INFRASTRUCTURE') {
+            when { expression { return params.OVN_INFRASTRUCTURE_REQUIRED } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_infrastructure_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git']]]
+                sh "cd ovn_infrastructure_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh "cd ovn_infrastructure_repo/ && git tag -a -m \"OVN INFRASTRUCTURE RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_infrastructure_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+        }
+
+        stage('Releasing OVN_APP_INFRASTRUCTURE') {
+            when { expression { return params.OVN_APP_INFRASTRUCTURE_REQUIRED } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_app_infrastructure_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git']]]
+                sh "cd ovn_app_infrastructure_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh "cd ovn_app_infrastructure_repo/ && git tag -a -m \"OVN APP_INFRASTRUCTURE RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_app_infrastructure_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+        }
+        stage('Releasing OVN_JENKINS_PIPELINE') {
+            when { expression { return params.OVN_JENKINS_PIPELINE_REQUIRED } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_jenkins_pipeline_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_jenkins_pipeline.git']]]
+                sh "cd ovn_jenkins_pipeline_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh "cd ovn_jenkins_pipeline_repo/ && git tag -a -m \"OVN JENKINS PIPELINE RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_jenkins_pipeline_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+        }
+    }
+}
+
+

@@ -1,0 +1,35 @@
+- name: run the ansible setup role to gather facts about the chaos coordinator
+  hosts: chaos_coordinator:ovn_vm
+  gather_facts: yes
+  tasks:
+    - set_fact:
+        ansible_virtualbox:
+          ipv4:
+            address: "{{ item }}"
+      with_items: "{{ ansible_all_ipv4_addresses }}"
+      when: "item.startswith('192.168')"
+
+- name: start chaos agent on all machines
+  hosts: ovn_vm
+  gather_facts: yes
+  become: true
+  roles:
+    - chaos
+  vars:
+    username: chaos
+    name: chaos_agent
+    source: "files/chaos_agent.tar.gz"
+    default_iface: "virtualbox"
+    coordinator_ip: "{{ hostvars[groups['chaos_coordinator'][0]]['ansible_virtualbox']['ipv4']['address'] }}"
+
+- name: start chaos coordinator
+  hosts: chaos_coordinator
+  gather_facts: yes
+  become: true
+  roles:
+    - chaos
+  vars:
+    username: chaos
+    name: chaos_coordinator
+    source: "files/chaos_coordinator.tar.gz"
+    default_iface: "virtualbox"

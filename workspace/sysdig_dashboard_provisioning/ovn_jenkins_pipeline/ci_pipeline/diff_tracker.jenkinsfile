@@ -1,0 +1,46 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  stages {
+    stage('Cloning repositories') {
+      steps{
+        sh '''
+          git clone ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git || true
+          git clone ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git || true
+        '''
+      }
+    }
+    stage('Finding difference between repositories') {
+        steps{
+          sh '''
+            pwd > curr_dir
+            cat curr_dir
+            sh ./jenkins-sh/diff_tracker.sh -pxhs ovn_app_infrastructure ovn_infrastructure
+          '''
+        }
+    }
+    stage('archiving artifacts') {
+     steps{
+          archiveArtifacts 'temp/*'
+
+      }
+    }
+
+  }
+  post {
+    success {
+         sh '''
+            rm -r temp
+            rm -r ovn_app_infrastructure
+            rm -r ovn_infrastructure
+          '''
+    }
+  }
+}

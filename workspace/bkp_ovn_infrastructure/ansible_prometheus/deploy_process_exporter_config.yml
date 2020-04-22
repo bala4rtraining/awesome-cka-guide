@@ -1,0 +1,6 @@
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: process_exporter config deploy playbook
+  hosts: all
+  roles:
+    - { role: prometheus, dispatch: ['process_exporter_config'] }

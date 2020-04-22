@@ -1,0 +1,22 @@
+---
+- name: deploy alertmanager service
+  template:
+    src: "alertmanager.service.j2"
+    dest: "/etc/systemd/system/alertmanager.service"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: "0644"
+
+- name: reload system service configs.
+  shell: systemctl daemon-reload
+
+- name: Restart alertmanager service.
+  service:
+    name: alertmanager
+    state: restarted
+
+- name: Ensure alertmanager is started and enabled to start at boot.
+  service:
+    name: alertmanager
+    state: started
+    enabled: yes

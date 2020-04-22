@@ -1,0 +1,278 @@
+---
+- name: <1-34 DSE_prereq> create datastax group
+  group:
+    name: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    state: present
+    system: yes
+
+# Create User and Group ---
+- name: <2-34 DSE_prereq> create datastax user
+  user:
+    name: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    comment: "datastax ops center"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    groups: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    system: yes
+    home: "{{dstax511_ovn_datastax['dstax511_dse']['home'] }}"
+    shell: /bin/bash
+    expires: 1422403387
+    state: present
+
+- name: <3-34 DSE_prereq> create working dir datastax Opscenter= "{{dstax511_ovn_datastax['dstax511_dse']['dstax511_wrking_foldr']}}"
+  file:
+    path: "{{ dstax511_ovn_datastax['dstax511_dse']['dstax511_wrking_foldr'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+###### Folder creation. Do not loop
+#-- data file directories
+- name: <4-34 DSE_prereq> create folder "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_data_file_directories'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_data_file_directories'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+#-- binary directory
+- name: <5-34 DSE_prereq> create working dir datastax Opscenter= "{{dstax511_ovn_datastax['dstax511_dse']['dstax511_partition_foldr']}}"
+  file:
+    path: "{{ dstax511_ovn_datastax['dstax511_dse']['dstax511_partition_foldr'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+#-- saved caches directory
+- name: <6-34 DSE_prereq> create folder "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_saved_caches_directory'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_saved_caches_directory'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+#-- Commit log directory
+- name: <7-34 DSE_prereq> create folder "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_commitlog_directory'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_commitlog_directory'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+#-- Log directory
+- name: <8-34 DSE_prereq> create folder "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_log_directory'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_log_directory'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+#-- Backup directory
+- name: <9-34 DSE_prereq> create folder "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_backup_directory'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_backup_directory'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+#-- tomcat log directory
+- name: <10-34 DSE_prereq> create log directory datastax Opscenter= "{{dstax511_ovn_datastax ['dstax511_dse'] ['dstax511_tomcat_log_foldr'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_dse'] ['dstax511_tomcat_log_foldr']  }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+#-- heapdump directory
+- name: <11-34 DSE_prereq> create folder "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_heapdump_directory'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_heapdump_directory'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+#-- ssh home
+- name: <12-34 DSE_prereq> create folder - "{{ dstax511_ovn_datastax ['dstax511_dse'] ['ssh_home'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_dse'] ['ssh_home'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0700"
+#-- ssh/authorized_keys home. We did in two steps for a reason
+- name: <13-34 DSE_prereq> create folder - "{{ dstax511_ovn_datastax ['dstax511_dse'] ['auth_keys_home'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_dse'] ['auth_keys_home'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0700"
+
+- name: <14-34 DSE_prereq> create folder "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_cql_cmd_foldr'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_cql_cmd_foldr'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+#-- Solr data dir
+- name: <15-34 DSE_prereq> create log directory  "{{dstax511_ovn_datastax ['dstax511_solr'] ['dstax511_data_dir'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_solr'] ['dstax511_data_dir']  }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+  when: dstax511_ovn_datastax ['dstax511_dse']['dstax511_solr_status']
+
+#-- Config /etc/sysctl.conf
+- name: <16-34 DSE_prereq> edit vm.max_map_count in /etc/sysctl.conf
+  lineinfile:
+    path: /etc/sysctl.conf
+    state: present
+    regexp: "^(?!#)vm.max_map_count.*=.*131072$"
+    line: "vm.max_map_count = 131072"
+    create: yes
+
+- name: <17-34 DSE_prereq> verify if datastax community repository file exists {{dstax511_ovn_datastax['dstax511_dse']['dstax511_repos_filepath']}}
+  stat:
+    path: "{{dstax511_ovn_datastax['dstax511_dse']['dstax511_repos_filepath']}}"
+  register: file_status
+
+- name: <18-34 DSE_prereq> rename datastax community repository file if found to *.org
+  command: "mv {{dstax511_ovn_datastax['dstax511_dse']['dstax511_repos_filepath']}} {{dstax511_ovn_datastax['dstax511_dse']['dstax511_repos_filepath']}}_org"
+  when: file_status.stat.exists
+
+- name: <19-34 DSE_prereq> Set parameters for NUMA systems
+  command: "echo 0 > /proc/sys/vm/zone_reclaim_mode"
+  when: dstax511_ovn_datastax['dstax511_dse']['dstax511_numa']
+
+- name: <20-34 DSE_prereq> Turn off swap by running command /swapoff -a/
+  command: "swapoff -a"
+  when: dstax511_ovn_datastax['dstax511_dse']['dstax511_swap_disabled']
+
+- name: <21-34 DSE_prereq> Turn off swap permanently in /etc/rc.local
+  lineinfile:
+    path: /etc/rc.local
+    state: present
+    regexp: "swapoff -a"
+    line: "swapoff -a"
+    create: yes
+  when:  dstax511_ovn_datastax['dstax511_dse']['dstax511_swap_disabled']
+
+- name: <22-34 DSE_prereq> verify if '/etc/rc.d/rc.local' exists
+  stat:
+    path: /etc/rc.d/rc.local
+  register: rclocal_status
+
+- name: <23-34 DSE_prereq> create file = /etc/rc.d/rc.local
+  file:
+    path: "/etc/rc.d/rc.local"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+  when: not rclocal_status.stat.exists
+
+- name: <24-34 DSE_prereq> Now that we made changes refresh sysctl settings
+  command: "sysctl -p"
+  register: sysctl_status
+  ignore_errors: True
+
+- debug:
+    msg: "{{sysctl_status.stdout}}"
+- debug:
+    msg: "{{sysctl_status.stderr}}"
+
+- name: <25-34 DSE_prereq> embed create_admin.cql --> "{{dstax511_ovn_datastax['dstax511_dse']['rsc_dse_conf_foldr']}}/logback.xml"
+  template:
+    src: "create_admin.cql.j2"
+    dest: "{{dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_cql_cmd_foldr'] }}/create_admin.cql"
+    owner: "{{dstax511_ovn_datastax['dstax511_dse']['user']}}"
+    group: "{{dstax511_ovn_datastax['dstax511_dse']['group']}}"
+    mode: '0775'
+
+- name: <26-34 DSE_prereq> embed script.cql.j2
+  template:
+    src: "script.cql.j2"
+    dest: "{{dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_cql_cmd_foldr'] }}/script.cql"
+    owner: "{{dstax511_ovn_datastax['dstax511_dse']['user']}}"
+    group: "{{dstax511_ovn_datastax['dstax511_dse']['group']}}"
+    mode: '0775'
+
+###########################################################################################################
+# Now additional folders are to be created.
+
+#-- download folder to download tars
+- name: <27-34 DSE_prereq> create download directory datastax Opscenter= "{{dstax511_ovn_datastax['dstax511_dse']['dstax511_download_foldr']}}"
+  file:
+    path: "{{dstax511_ovn_datastax['dstax511_dse']['dstax511_download_foldr']}}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+#-- logback.xml relevant
+- name: <28-34 DSE_prereq> create log directory datastax Opscenter= "{{dstax511_ovn_datastax ['dstax511_dse'] ['rsc_dse_log_foldr'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_dse'] ['rsc_dse_log_foldr'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+- name: <29-34 DSE_prereq> create log directory datastax Opscenter= "{{dstax511_ovn_datastax ['dstax511_dse'] ['rsc_dse_audit_log_foldr'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_dse'] ['rsc_dse_audit_log_foldr'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+- name: <30-34 DSE_prereq> create log directory  "{{dstax511_ovn_datastax ['dstax511_dse'] ['dstax511_log4j_srvr_log_foldr'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_dse'] ['dstax511_log4j_srvr_log_foldr']  }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+- name: <31-34 DSE_prereq> create log directory  "{{dstax511_ovn_datastax ['dstax511_solr'] ['dstax511_solr_logs_foldr'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_solr'] ['dstax511_solr_logs_foldr']  }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+- name: <32-34 DSE_prereq> create folder "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_runtime_foldr'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_runtime_foldr'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+- name: <33-34 DSE_prereq> create folder "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_locks_foldr'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_locks_foldr'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+- name: <34-34 DSE_prereq> create folder "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_hints_foldr'] }}"
+  file:
+    path: "{{ dstax511_ovn_datastax ['dstax511_req_foldrs'] ['dstax511_hints_foldr'] }}"
+    state: directory
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode: "0755"
+
+#-- logback specifcs end here --

@@ -1,0 +1,30 @@
+//
+// This pipeline is used to Deleting Kafka Topic
+//
+ 
+pipeline {
+     
+	 agent any
+        
+      stages {
+         
+                stage('KafkaEnv:Setup') {
+             steps {
+	            sh './download_kafka.sh'
+		    sleep 3
+}
+}
+stage('Kafka:DeleteTopic') {
+             steps {
+		    sh './delete_topic.sh'
+			sleep 3
+             }
+         }
+     }
+	post {
+        always {
+            cleanWs()
+        }
+    }
+         
+}

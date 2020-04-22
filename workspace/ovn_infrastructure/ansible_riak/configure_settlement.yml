@@ -1,0 +1,41 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_riak_servers[0]
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+
+# Required for the settlement system to be able to use Riak.
+- name: configure buckets and properties for settlement
+  hosts: ovn_riak_servers[0]
+  tasks:
+    - name: creating riak leveldb bucket-type called ovn_settlement for the settlement bucket
+      shell: '/usr/sbin/riak-admin bucket-type create ovn_settlement ''{"props":{"backend":"leveldb_multi"}}'''
+      register: result
+      changed_when: "result.rc == 0 and 'already_active' not in result.stdout"
+      failed_when: "result.rc != 0 and 'already_active' not in result.stdout"
+
+    - name: activating riak ovn_settlement bucket-type
+      shell: /usr/sbin/riak-admin bucket-type activate ovn_settlement
+      register: result
+      changed_when: "'ovn_settlement has been activated' not in result.stdout"

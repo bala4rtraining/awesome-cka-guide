@@ -1,0 +1,13 @@
+#######
+#!!! Please DO NOT EDIT.  This configuration is maintained by Ansible !!!
+#######
+
+/var/log/messages /var/log/secure /var/log/maillog /var/log/audit/audit.log /var/log/spooler /var/log/boot.log /var/log/daemon.log /var/log/cron {
+    create 0644 root root
+    sharedscripts
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+        /bin/kill -HUP `cat /var/run/rsyslogd.pid 2> /dev/null` 2> /dev/null || true
+        /sbin/service auditd restart 2> /dev/null || true
+    endscript
+}

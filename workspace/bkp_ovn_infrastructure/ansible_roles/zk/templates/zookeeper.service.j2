@@ -1,0 +1,15 @@
+[Unit]
+Description=Zookeeper Service
+After=network.target
+
+[Service]
+User={{ zookeeper_user }}
+Group={{ zookeeper_group }}
+Restart=always
+RestartSec=3
+TimeoutStopSec=120
+ExecStart="{{ zookeeper_install_dir }}/bin/zkServer.sh" start-foreground
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

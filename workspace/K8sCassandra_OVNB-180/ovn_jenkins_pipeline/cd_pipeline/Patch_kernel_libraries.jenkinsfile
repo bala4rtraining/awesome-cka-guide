@@ -1,0 +1,2 @@
+@Library('ovn-shared-library') _
+cdTemplate_InvokeAnsiblePlaybook('ovn_infrastructure', '$RELEASE_BRANCH', 'ansible_ovn/ovn_umf_delivery_start_stop.yml', '-e @config/$ENV.vars.secret.yml -e "patch_filename=\'kernel_ind_prod_6103\"')

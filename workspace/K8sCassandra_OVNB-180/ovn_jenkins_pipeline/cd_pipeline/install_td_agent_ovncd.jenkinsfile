@@ -1,0 +1,41 @@
+@Library('ovn-shared-library') _
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '15'))
+    }
+    parameters {
+        string(name: 'target_hosts', defaultValue: '', description: 'Target Hosts separated by comma')
+        string(name: 'artifactory_url', defaultValue: '', description: 'Artifactory URL')
+        string(name: 'RELEASE_BRANCH', defaultValue: '', description: 'Enter the release branch details')
+    }
+    stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+        stage('Checkout SCM'){
+            steps{
+        git credentialsId: 'ovncd_ssh_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+  }
+}
+         stage('deploy-prometheus-grafana_dashboards') {
+            steps {
+                ansiColor('xterm') {
+                   ansiblePlaybook credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} --extra-vars artifactory_url=${artifactory_url}  --extra-vars target_hosts=${target_hosts} --become", playbook: 'ansible_td_agent/install_td_agent.yml'
+
+       }
+    }
+  }
+ }
+}
+

@@ -1,0 +1,4 @@
+---
+dependencies:
+- {role: prometheus, dispatch: ['jmx_exporter'], when: monitor_kafka_using_prometheus == "true"}
+- {role: kerberos, dispatch: [], when: kafka_enable_zk_client_authentication == "true"}

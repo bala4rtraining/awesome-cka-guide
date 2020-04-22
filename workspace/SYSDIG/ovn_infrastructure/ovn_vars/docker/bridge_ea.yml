@@ -1,0 +1,6 @@
+---
+vip_connector: '[{enabled, true}, {ea_khe, "10.211.44.24"}, {ea_khc, localhost}, {ea_idd, localhost}, {ea_idt, localhost}, {ea_mock1, localhost}, {ea_mock2, localhost}]'
+mock_vip_ports: '[{10000, 11999}, {19500, 19500}]'
+
+client_ea_ip : "172.19.0.190"
+bridge_ea_ip : "172.19.0.190"

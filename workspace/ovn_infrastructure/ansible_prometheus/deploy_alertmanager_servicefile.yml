@@ -1,0 +1,8 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=prometheus_alertmanager
+
+- name: install alertmanager, nginx_auth without ssl enabled
+  hosts: prometheus_alertmanager
+  gather_facts: yes
+  roles:
+    - { role: prometheus, dispatch: ['update_alertmanager_servicefile'] }

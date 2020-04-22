@@ -1,0 +1,38 @@
+---
+ovn_cas_user: ovn
+ovn_cas_group: ovn
+ovn_cas_collection_delivery_version: "2.11-0.0.1"
+ovn_cas_install_prefix: "/opt"
+ovn_cas_collection_delivery_install_dir: "{{ovn_cas_install_prefix}}/collection_delivery"
+artifact_url: "{{artifactory_host}}/ovn-app-temp-e17/{{ovn_clearing_jobs_tarball}}"
+ovn_cas_collection_delivery_future_timeout: 60
+ovn_cas_collection_delivery_riak_bucket: "ovn_cas_collection_delivery"
+default_iface: "{{ ansible_default_ipv4.alias }}"
+riak_endpoints: >
+  {% set join = joiner(",") %}
+  {% for item in groups['ovn_riak_servers'] -%}
+    {{ join() }}{{ hostvars[item]['ansible_'+default_iface]['ipv4']['address']}}:{{protobuf_listener_port}}
+  {%- endfor %}
+kafka_endpoints: >
+  {% set join = joiner(",") %}
+  {% for item in groups['kafka'] -%}
+    {{ join() }}"{{ hostvars[item]['ansible_'+default_iface]['ipv4']['address']}}:{{kafka_port}}"
+  {%- endfor %}
+vault_endpoints: >
+  {% set join = joiner(",") %}
+    {% for item in groups['ovn_cluster_vault_nodes'] -%}
+      {{ join() }}"{{ hostvars[item]['ansible_'+default_iface]['ipv4']['address']}}:{{vault_service_port}}"
+    {%- endfor %}
+ovn_cas_collection_delivery_riak_min_connections: 10
+ovn_cas_collection_delivery_riak_max_connections: 20
+ovn_cas_collection_delivery_ssl_source: vault
+ovn_cas_collection_delivery_ssl_keystore_path: ""
+ovn_cas_collection_delivery_ssl_keystore_password: ""
+ovn_cas_collection_delivery_ssl_vault_open_timeout: 5
+ovn_cas_collection_delivery_ssl_vault_read_timeout: 30
+ovn_cas_collection_delivery_ssl_vault_verify_cert: "false"
+ovn_cas_collection_delivery_ssl_vault_pki_mount: "/external-pki"
+ovn_cas_collection_delivery_ssl_vault_role: "ovn-ea-KHE"
+ovn_cas_collection_delivery_ssl_vault_validity: "1h"
+ovn_bridge_ea_ip: "10.207.189.92"
+ovn_bridge_ea_ftps_port: 80

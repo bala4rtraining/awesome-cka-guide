@@ -1,0 +1,24 @@
+{# This template uses the group vars dynamically created
+by top level playbook that sets up the rescue server.
+This applied to both OOB SW and OOB Serv #}
+
+{% set intvars = oob_switch[ansible_hostname] %}
+
+auto lo
+iface lo inet loopback
+
+#
+# eth0 gets IP from DHCP server on rescue
+#
+auto eth0
+iface eth0 inet dhcp
+
+auto bridge
+iface bridge
+   bridge-ports {{intvars.swp_ports}}
+   bridge-stp on
+   bridge-vlan-aware yes
+
+auto bridge.{{intvars.vlan_id}}
+iface bridge.{{intvars.vlan_id}}
+   address {{intvars.vlan_ip}}

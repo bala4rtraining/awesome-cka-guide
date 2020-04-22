@@ -1,0 +1,257 @@
+def boltdbfilename='initial_value'
+pipeline {
+     agent {
+         docker {
+           image 'ovn-docker.artifactory.trusted.visa.com/ovn-dsl-tools:43'
+           label 'ovn_build'
+            }
+     }
+     environment {
+         GOFLAGS='-mod=readonly'
+         GOPROXY='https://artifactory.trusted.visa.com/api/go/ovn-go-virtual-plusdev'
+         GOSUMDB='off'
+         JQ_PATH='/usr/bin/jq'
+         PUBLISH_URL='https://artifactory.trusted.visa.com/'
+         PUBLISH_REPO='ovn/profile/lta'
+         publishVersion= 1
+     }
+     options {
+         ansiColor('xterm-256color')
+         disableConcurrentBuilds()
+         skipDefaultCheckout()
+         timeout(time: 1, unit: 'HOURS')
+     }
+     parameters {
+		choice(name: 'ENV', choices: 'Dev1A\nDev1B\nQA1A\nQA1B', description: 'Select the ENV Details')
+        string(name: 'Branch', defaultValue: 'master', description: 'Enter the branch details')
+        choice(name: 'BOLTDB_TYPE', choices: 'auth\nclearing\nrates\nrecords\nsystem', description: 'Select which Bolt db file you want')
+		booleanParam(name: 'publish_to_artifactory', defaultValue: false, description: 'please check mark to upload the artifactory')
+		string(name: 'Mount_Path', defaultValue: '/mnt/ovn-profile', description: 'add the mount path for doing SCP')
+    }
+    stages {
+        stage('Clone OVN Client Profile Repo'){
+             steps{
+                 git credentialsId: 'stash', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn-client-profile.git', branch: "${params.Branch}"
+            }
+        }
+        stage('Generate last build BoltDB file name') {
+            steps {
+                echo "${boltdbfilename}"
+                sh 'rm -f myfile.txt || true '
+                sh 'echo profile_lastbuild_$(date +%Y%m%d).db > myfile.txt'
+                    script {
+			            boltdbfilename = readFile('myfile.txt').trim()
+                    }
+                echo "${boltdbfilename}"
+            }
+        }
+		stage('Remove and Create the required Dirs'){
+            steps{
+                script {
+                    sh '''
+						echo "#### Clean-up old artifacts ####"
+                        rm -rf cpilbolt.db
+                        rm -rf codegen.jar
+                        rm -rf testdata/auth.db
+                        rm -rf testdata/cpilbolt.db
+                        rm -rf testdata/codegen.jar
+                        rm -rf testdata/cpil/working/definitions
+                        rm -rf testdata/cpil/working
+                        mkdir -p testdata/cpil/working/definitions
+                        rm -rf source || true
+                        mkdir -p source || true
+                        '''
+                }
+            }
+        }
+        stage ('Generate AUTH BoltDB Files') {
+		   	steps {
+		   	    script {
+		   	        if (params.BOLTDB_TYPE == "auth") {
+		   	            sh '''
+						echo "#### Copy cpil file ####"
+						cp -r dsl/auth/*.cpil testdata/cpil/working/definitions
+	                    cp -r testdata/cpil/auth/*.cpil testdata/cpil/working
+	                    
+						echo "#### Copy codegen.jar ####"
+						curl -o codegen.jar https://artifactory.trusted.visa.com/ovn/dsl/snapshots/master/com.visa.ovn.dsl.codegen-1.0.0-SNAPSHOT.jar
+				
+						echo "#### Check cpil file copied ####"
+						ls -ltr testdata/cpil/working/definitions
+						
+						echo "#### Generate Boltdb file ####"
+				        java -jar -Xmx5G codegen.jar testdata/cpil/working -m cpil -D com.visa.ovn.dsl.cpil.generateData=yes
+						
+						echo "#### Copy cpil Bolt-DB file ####"
+						cp cpilbolt.db profile.db
+                        mv profile.db source
+		   	            '''
+		   	        }
+		   	    }
+			}
+		}
+		stage ('Generate Clearing BoltDB Files') {
+		   	steps {
+		   	    script {
+		   	        if (params.BOLTDB_TYPE == "clearing") {
+		   	            sh '''
+		   	            echo "#### Copy cpil file ####"
+						cp -r dsl/clearing/*.cpil testdata/cpil/working/definitions
+						cp -r testdata/cpil/clearing/*.cpil testdata/cpil/working
+						
+						echo "#### Copy codegen.jar ####"
+						curl -o codegen.jar https://artifactory.trusted.visa.com/ovn/dsl/snapshots/master/com.visa.ovn.dsl.codegen-1.0.0-SNAPSHOT.jar
+						
+						echo "#### Check cpil file copied ####"
+						ls -ltr testdata/cpil/working/definitions
+						
+						echo "#### Generate Boltdb file ####"
+						java -jar -Xmx5G codegen.jar testdata/cpil/working -m cpil -D com.visa.ovn.dsl.cpil.generateData=yes
+
+						echo "#### Copy cpil Bolt-DB file ####"
+						cp cpilbolt.db profile.db
+                        mv profile.db source
+						'''
+		   	        }
+		   	    }
+			}
+		}
+		stage ('Generate Rates BoltDB Files') {
+		   	steps {
+		   	    script {
+		   	        if (params.BOLTDB_TYPE == "rates") {
+		   	            sh '''
+		   	            echo "#### Copy cpil file ####"
+						cp -r dsl/rates/*.cpil testdata/cpil/working/definitions
+						cp -r testdata/cpil/rates/*.cpil testdata/cpil/working
+						
+						echo "#### Copy codegen.jar ####"
+						curl -o codegen.jar https://artifactory.trusted.visa.com/ovn/dsl/snapshots/master/com.visa.ovn.dsl.codegen-1.0.0-SNAPSHOT.jar
+						
+						echo "#### Check cpil file copied ####"
+						ls -ltr testdata/cpil/working/definitions
+						
+						echo "#### Generate Boltdb file ####"
+						java -jar -Xmx5G codegen.jar testdata/cpil/working -m cpil -D com.visa.ovn.dsl.cpil.generateData=yes
+
+						echo "#### Copy cpil Bolt-DB file ####"
+						cp cpilbolt.db profile.db
+                        mv profile.db source
+						'''
+		   	        }
+		   	    }
+			}
+		}
+		stage ('Generate Records BoltDB Files') {
+		   	steps {
+		   	    script {
+		   	        if (params.BOLTDB_TYPE == "records") {
+		   	            sh '''
+		   	            echo "#### Copy cpil file ####"
+						cp -r dsl/records/*.cpil testdata/cpil/working/definitions
+						cp -r testdata/cpil/records/*.cpil testdata/cpil/working
+						
+						echo "#### Copy codegen.jar ####"
+						curl -o codegen.jar https://artifactory.trusted.visa.com/ovn/dsl/snapshots/master/com.visa.ovn.dsl.codegen-1.0.0-SNAPSHOT.jar
+						
+						echo "#### Check cpil file copied ####"
+						ls -ltr testdata/cpil/working/definitions
+						
+						echo "#### Generate Boltdb file ####"
+						java -jar -Xmx5G codegen.jar testdata/cpil/working -m cpil -D com.visa.ovn.dsl.cpil.generateData=yes
+
+						echo "#### Copy cpil Bolt-DB file ####"
+						cp cpilbolt.db profile.db
+                        mv profile.db source
+						'''
+		   	        }
+		   	    }
+			}
+		}
+		stage ('Generate System BoltDB Files') {
+		   	steps {
+		   	    script {
+		   	        if (params.BOLTDB_TYPE == "system") {
+		   	            sh '''
+		   	            echo "#### Copy cpil file ####"
+						cp -r dsl/system/*.cpil testdata/cpil/working/definitions
+						cp -r testdata/cpil/system/*.cpil testdata/cpil/working
+						
+						echo "#### Copy codegen.jar ####"
+						curl -o codegen.jar https://artifactory.trusted.visa.com/ovn/dsl/snapshots/master/com.visa.ovn.dsl.codegen-1.0.0-SNAPSHOT.jar
+						
+						echo "#### Check cpil file copied ####"
+						ls -ltr testdata/cpil/working/definitions
+						
+						echo "#### Generate Boltdb file ####"
+						java -jar -Xmx5G codegen.jar testdata/cpil/working -m cpil -D com.visa.ovn.dsl.cpil.generateData=yes
+
+						echo "#### Copy cpil Bolt-DB file ####"
+						cp cpilbolt.db profile.db
+                        mv profile.db source
+						'''
+		   	        }
+		   	    }
+			}
+		}
+		stage ('Publish the Boltdb file') {
+		   	steps {
+				script {
+					if (params.publish_to_artifactory) {
+							sh "curl -k -O https://artifactory.trusted.visa.com/ovn/profile/${BOLTDB_TYPE}/profile.db"
+							sh "echo ${boltdbfilename}"
+							sh "mv profile.db ${boltdbfilename}"
+							sh "curl -H X-JFrog-Art-Api:AKCp5ZjpcJUYrqpvnf2SjipvQcX6Hct729RxJM3p79uWWgkBnqfMBPzoE34Aq6vKsKQdjJdh7 -XPUT https://artifactory.trusted.visa.com/ovn/profile/${BOLTDB_TYPE}/${boltdbfilename} -T ${boltdbfilename}"
+							sh "curl -H X-JFrog-Art-Api:AKCp5ZjpcJUYrqpvnf2SjipvQcX6Hct729RxJM3p79uWWgkBnqfMBPzoE34Aq6vKsKQdjJdh7 -XPUT https://artifactory.trusted.visa.com/ovn/profile/${BOLTDB_TYPE}/profile.db -T source/profile.db"
+					}
+				}
+			}
+		}
+		stage ('Copy Generated BoltDB to Mount Point') {
+		    steps{
+		    	script {
+		    		if (params.ENV == "Dev1A") {
+						sshagent(['ovnschedappid']) {
+							sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapd030 mv ${Mount_Path}/profile.db ${Mount_Path}/${boltdbfilename}"
+		   				 	sh "scp -o StrictHostKeyChecking=no source/* ovnschedappid@sl73ovapd030:${Mount_Path}"
+		   				 	sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapd030 ls -ltr ${Mount_Path}"
+							sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapd031 mv ${Mount_Path}/profile.db ${Mount_Path}/${boltdbfilename}"
+		   				 	sh "scp -o StrictHostKeyChecking=no source/* ovnschedappid@sl73ovapd031:${Mount_Path}"
+		   				 	sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapd031 ls -ltr ${Mount_Path}"			
+						}
+					}
+		    		if (params.ENV == "Dev1B") {
+						sshagent(['ovnschedappid']) {
+							sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapd032 mv ${Mount_Path}/profile.db ${Mount_Path}/${boltdbfilename}"
+		   				 	sh "scp -o StrictHostKeyChecking=no source/* ovnschedappid@sl73ovapd032:${Mount_Path}"
+		   				 	sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapd032 ls -ltr ${Mount_Path}"
+							sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapd033 mv ${Mount_Path}/profile.db ${Mount_Path}/${boltdbfilename}"
+		   				 	sh "scp -o StrictHostKeyChecking=no source/* ovnschedappid@sl73ovapd033:${Mount_Path}"
+		   				 	sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapd033 ls -ltr ${Mount_Path}"
+						}
+					}
+					if (params.ENV == "QA1A") {
+						sshagent(['ovnschedappid']) {
+						    sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapq007 mv ${Mount_Path}/profile.db ${Mount_Path}/${boltdbfilename}"
+		   				 	sh "scp -o StrictHostKeyChecking=no source/* ovnschedappid@sl73ovapq007:${Mount_Path}"
+		   				 	sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapq007 ls -ltr ${Mount_Path}"
+		   				 	sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapq008 mv ${Mount_Path}/profile.db ${Mount_Path}/${boltdbfilename}"
+		   				 	sh "scp -o StrictHostKeyChecking=no source/* ovnschedappid@sl73ovapq008:${Mount_Path}"
+		   				 	sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapq008 ls -ltr ${Mount_Path}"
+						}
+					}
+					if (params.ENV == "QA1B") {
+						sshagent(['ovnschedappid']) {
+						    sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapq009 mv ${Mount_Path}/profile.db ${Mount_Path}/${boltdbfilename}"
+		   				 	sh "scp -o StrictHostKeyChecking=no source/* ovnschedappid@sl73ovapq009:${Mount_Path}"
+		   				 	sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapq009 ls -ltr ${Mount_Path}"
+		   				 	sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapq010 mv ${Mount_Path}/profile.db ${Mount_Path}/${boltdbfilename}"
+		   				 	sh "scp -o StrictHostKeyChecking=no source/* ovnschedappid@sl73ovapq010:/${Mount_Path}"
+		   				 	sh "ssh -o StrictHostKeyChecking=no ovnschedappid@sl73ovapq010 ls -ltr ${Mount_Path}"
+						}
+					}
+		    	}
+		    }
+		}
+    }   
+}

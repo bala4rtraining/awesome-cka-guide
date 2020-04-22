@@ -1,0 +1,35 @@
+---
+# Check the timer service is running or not
+- name: check the {{ yum_mirror_id }}.timer status
+  shell: "systemctl status {{ yum_mirror_id }}.timer"
+  register: result_srv
+
+- debug: var=result_srv.stdout_lines
+
+# check when was the timer executed
+- name: check when was the {{ yum_mirror_id }}.timer executed
+  shell: "systemctl list-timers {{ yum_mirror_id }}.timer"
+  register: result_tmr
+
+- debug: var=result_tmr.stdout_lines
+
+# check the timer running time
+- name: check the {{ yum_mirror_id }}.timer running time
+  shell: "cat {{ yum_mirror_service_dir }}/{{ yum_mirror_id }}.timer"
+  register: result_trt
+
+- debug: var=result_trt.stdout_lines
+
+# check the list of artifacts downloaded
+- name: check the list of artifacts downloaded to {{ yum_mirror_id }} repo
+  shell: "ls -lt {{ yum_mirror_dir }}/{{ yum_mirror_id }}"
+  register: result_lof
+
+- debug: var=result_lof.stdout_lines
+
+# check the server is pointed to which mirror
+- name: check the server is pointed to which mirror
+  shell: "cat {{ yum_config_dir }}/ovn_centos_el7.repo"
+  register: result_rps
+
+- debug: var=result_rps.stdout_lines

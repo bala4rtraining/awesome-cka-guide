@@ -1,0 +1,12 @@
+---
+#####
+# Suricata IDS servers (DC1) indonesia
+#####
+suricata_ids_server:
+  - '10.237.1.130'
+
+#####
+# Qualys scan servers (DC1) indonesia
+#####
+qualys_scan_server:
+  - '10.237.1.131'

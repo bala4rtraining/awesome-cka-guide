@@ -1,0 +1,15 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts | default('all,!cumulus_switch') }}"
+
+# Update packages found through qualys
+
+- name: "Update packages"
+  hosts: "{{ target_hosts | default('all,!cumulus_switch') }}"
+  serial: 1
+  roles:
+    - { role: update_packages, dispatch: ['update'] }
+    - { role: update_packages, dispatch: ['validate'] }
+  vars:
+    path_to_artifactory_not_present: false
+    disable_secure_boot: false
+    validate_packages: true

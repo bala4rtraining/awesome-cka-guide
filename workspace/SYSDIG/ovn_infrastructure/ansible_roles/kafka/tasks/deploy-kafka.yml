@@ -1,0 +1,150 @@
+---
+- name: ensure clean starting state A
+  file: >
+    path={{ kafka_install_dir }}
+    state=absent
+
+- name: ensure java is present
+  yum: name={{ jre_name }} state=present
+
+- name: ensure java is set to unlimited crypto policy
+  include_role:
+    name: java
+    tasks_from: enable-crypto
+
+- name: create group for java applications
+  group: name=java state=present
+
+- name: create group for kafka
+  group: name={{ kafka_username }} state=present
+
+- name: create group for prometheus
+  group: name={{ prometheus_group }} state=present
+  when: monitor_kafka_using_prometheus == "true"
+
+- name: create user for kafka
+  user: >
+    name={{ kafka_username }}
+    group={{ kafka_group }}
+    state=present
+
+- name: add kafka user to java group
+  user: name={{ kafka_username }} groups=java append=yes state=present
+
+- name: add kafka user to prometheus group
+  user: >
+    name={{ kafka_username }}
+    groups={{ prometheus_group }}
+    append=yes
+    state=present
+  when: monitor_kafka_using_prometheus == "true"
+
+- name: install kerberos client
+  include_role:
+    name: kerberos
+    tasks_from: kerberos_client
+  vars:
+    kerberos_principal_names: ["{{ kafka_principal_name }}"]
+    kerberos_merged_keytab: "{{ kafka_principal_name }}"
+    kerberos_keytab_owner: "{{ kafka_username }}"
+    kerberos_keytab_group: "{{ kafka_group }}"
+  when: kafka_enable_zk_client_authentication == "true"
+
+- name: unarchive kafka release
+  unarchive:
+    src: "{{artifact_url}}"
+    dest: /opt/
+    copy: no
+    validate_certs: no
+    owner: "{{ kafka_username }}"
+    group: "{{ kafka_group }}"
+
+- name: create link
+  file: >
+    path={{ kafka_install_dir }}
+    src=/opt/{{ tarball }}
+    state=link
+
+- name: create the ovn data directory
+  file :
+    dest={{ ovn_data_dir }}
+    state=directory
+    recurse=no
+    owner=root
+    group=root
+    mode=755
+
+- name: kafka data/log dirs
+  file :
+    dest={{ dir }}
+    state=directory
+    recurse=yes
+    owner={{ kafka_username }}
+    group={{ kafka_group }}
+  with_items:
+    - "{{kafka_data_dir}}"
+    - "{{kafka_log_dir}}"
+  loop_control:
+    loop_var: dir
+
+- name: broker configurations
+  template: >
+    src={{ item }}.j2
+    dest={{ kafka_install_dir }}/config/{{ item }}
+    owner={{ kafka_username }}
+    group={{ kafka_group }}
+  with_items:
+    - server.properties
+    - jaas.conf
+  notify:
+    - restart kafka
+
+- name: kafka systemd configuration
+  template: >
+    src=kafka.service.j2
+    dest=/etc/systemd/system/kafka.service
+    owner={{ kafka_username }}
+    group={{ kafka_group }}
+    mode=0644
+  when: rhel_centos_7
+
+- name: reload kafka service configuration
+  command: systemctl daemon-reload
+
+- name: make sure pip is installed
+  yum: name=python-pip state=present
+
+- name: download pykafka pypi tarballs to local /tmp
+  get_url:
+    url: "{{ python_module_tarball_path }}/{{ item }}"
+    dest: /tmp/{{ item }}
+    use_proxy: no
+    validate_certs: no
+  with_items: "{{ pykafka_pyi }}"
+
+- name: install pykafka pypi packages
+  pip:
+    name: /tmp/{{ item }}
+    state: present
+    umask: '022'
+  with_items: "{{ pykafka_pyi }}"
+
+- name: delete uploaded pypi tarballs (remote)
+  file:
+    dest: /tmp/{{ item }}
+    state: absent
+  with_items: "{{ pykafka_pyi }}"
+
+- name: set the default jvm settings
+  lineinfile:
+    path: "{{ kafka_install_dir }}/bin/kafka-run-class.sh"
+    regexp: '^KAFKA_OPTS='
+    insertbefore: '^# Generic jvm settings you want to add'
+    line: |
+      KAFKA_OPTS="
+      {%- if kafka_enable_zk_client_authentication == "true" -%}
+      -Djava.security.auth.login.config={{ kafka_install_dir }}/config/jaas.conf $KAFKA_OPTS
+      {%- else -%}
+      $KAFKA_OPTS
+      {%- endif -%}
+      "

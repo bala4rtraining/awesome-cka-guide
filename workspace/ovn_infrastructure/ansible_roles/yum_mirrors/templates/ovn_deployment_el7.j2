@@ -1,0 +1,9 @@
+######
+#!!! Please DO NOT EDIT.  This configuration is maintained by Ansible !!!
+#######
+
+[ovn-deployment-el7]
+name=ovn-deployment-el7
+baseurl=https://{{ yum_repos_source }}/ovn-deployment-el7
+enabled={{ enable_ovn_yumrepo }}
+gpgcheck=0

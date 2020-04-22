@@ -1,0 +1,7 @@
+---
+# defaults file for bro
+bro_rpms:
+  - libbroccoli-2.4.1-visa.3.el7.centos
+  - bro-core-2.4.1-visa.3.el7.centos
+  - broctl-2.4.1-visa.3.el7.centos
+  - bro-2.4.1-visa.3.el7.centos

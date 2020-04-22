@@ -1,0 +1,49 @@
+#Input
+<worker 0>
+  <source>
+    @type tail
+    path /opt/app/nomad/alloc/*/alloc/logs/cas_tools_cli.stdout*
+    pos_file /opt/app/td-agent/td_agent_nomadjobs_stdout_tail.pos
+    tag ovn.log.{{ td_agent_mode }}.nomadjobs
+    format /^(?<logTimestamp>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}.\d{3})\s+(?<class>\S+)[\s]+\[(?<severity>[^ ]+)\]\s+(?<tmp_payload>.+)$/
+    read_from_head true
+    limit_recently_modified 7d
+    path_key tailed_path
+  </source>
+</worker>
+
+<worker 0>
+  <source>
+    @type tail
+    path /opt/app/nomad/alloc/*/alloc/logs/cas_tools_cli.stderr*
+    pos_file /opt/app/td-agent/td_agent_nomadjobs_stderr_tail.pos
+    tag ovn.log.{{ td_agent_mode }}.nomadjobs
+    format /^(?<logTimestamp>\d{4}\/\d{2}\/\d{2}\s+\d{2}:\d{2}:\d{2})\s+\[(?<severity>[^ ]+)\]\s+\[(?<module>\S+)\]\s+(?<tmp_payload>.+)$/
+    read_from_head true
+    limit_recently_modified 7d
+    path_key tailed_path
+  </source>
+</worker>
+
+#Discard debug logs
+<filter ovn.log.{{ td_agent_mode }}.nomadjobs>
+  @type grep
+  <exclude>
+    key severity
+    pattern ^(DEBUG|TRACE|debug|trace)$
+  </exclude>
+</filter>
+
+#Transform
+<filter ovn.log.{{ td_agent_mode }}.nomadjobs>
+  @type record_transformer
+  enable_ruby
+  <record>
+   hostname {{ ansible_hostname }}
+   logTimestamp ${ Time.parse(record["logTimestamp"]).strftime("%Y-%m-%dT%H:%M:%S.%L"); }
+   index_prefix fluentd_nomadjobs
+   jobId ${ record["tailed_path"].slice(/alloc\/(.*?)\/alloc/,1); }
+   payload ${ record["tmp_payload"].gsub(/\e\[(\d+)m/, '') ;} #Added to remove ansi color codes from message
+  </record>
+  remove_keys tailed_path,tmp_payload
+</filter>

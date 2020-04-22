@@ -1,0 +1,31 @@
+//
+// This pipeline is used for List Kafka Topics
+//
+ 
+pipeline {
+     
+	 agent any
+        
+      stages {
+         
+                stage('KafkaEnv:Setup') {
+             steps {
+                 sh './download_kafka.sh'
+		 sleep 3
+}
+}
+stage('Kafka:ListTopic') {
+             steps {
+		     sh './list_topic.sh'
+		     sleep 3
+             }
+         }
+     }
+
+post {
+        always {
+            cleanWs()
+        }
+    }
+         
+}

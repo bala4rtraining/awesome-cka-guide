@@ -1,0 +1,55 @@
+---
+#tasks for updating the JRE to latest version and restart elastic
+
+- name: Disable shard allocation
+  command: 'curl -Xput -H "Content-Type:application/json" --data-ascii "{ "transient": {  "cluster.routing.allocation.enable" : "none"} }"  http://{{inventory_hostname}}:{{ elasticsearch_port }}/_cluster/settings'
+  when: rolling_upgrade
+
+- name: Stop elastic search
+  service: name=elasticsearch state=stopped
+  
+- name: uninstall java 7 openjdk
+  yum: name=java-1.7.0-openjdk state=absent
+
+- name: uninstall openjdk if it installed
+  yum:
+   name: java-1.8.0-openjdk
+   state: absent
+
+- name: uninstall old jre version "{{ elasticsearch_jre_oldversion }}"
+  yum:
+   name: "{{ elasticsearch_jre_oldversion }}"
+   state: absent
+   
+- name: Install Jre  "{{ jre_name }}"
+  yum:
+   name: "{{ jre_name }}"
+   state: present
+
+- name: select the Jre using alternatives
+  alternatives:
+   name: java
+   path: /usr/java/{{ jre_version }}/bin/java
+
+- name: Start elastic search 
+  service: name=elasticsearch state=started
+
+- name: Wait for elasticsearch node to come back up
+  wait_for: port={{ elasticsearch_port }} delay=35 host={{ inventory_hostname }}
+  when: rolling_upgrade
+
+- name: Wait for cluster health to return to green
+  uri: url=http://{{ inventory_hostname }}:{{ elasticsearch_port }}/_cluster/health method=GET
+  register: response
+  until: "response.json.status == 'green'"
+  retries: 10 
+  delay: 30
+  when: rolling_upgrade
+   
+- name: enable shard allocation
+  command: 'curl -Xput -H "Content-Type:application/json" --data-ascii "{ "transient": {  "cluster.routing.allocation.enable" : "all"} }"  http://{{ inventory_hostname }}:{{ elasticsearch_port }}/_cluster/settings'
+  when: rolling_upgrade
+
+- name: Get the cluster status 
+  command: 'curl -Xget {{ inventory_hostname }}:{{ elasticsearch_port }}/_cluster/health?pretty'
+  when: rolling_upgrade

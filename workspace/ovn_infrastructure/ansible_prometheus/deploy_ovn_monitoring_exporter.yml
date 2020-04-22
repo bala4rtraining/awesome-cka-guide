@@ -1,0 +1,7 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch,!ovn_manager
+
+- name: install ovn_monitoring_exporter
+  hosts: ovn_monitoring_exporter
+  roles:
+    - { role: prometheus, dispatch: ['ovn_monitoring_exporter'] }

@@ -1,0 +1,65 @@
+//
+// This pipeline is for Sysdig Dashboard automation
+
+pipeline {
+
+ agent any
+
+ environment {
+  SDC_URL = "https://sysdig-nonprod.visa.com"
+  SDC_SSL_VERIFY = "false"
+  PYTHONWARNINGS = "ignore:Unverified HTTPS request"
+  PATH = "$PATH:$SDC_URL:$SDC_SSL_VERIFY:$PYTHONWARNINGS"
+ }
+
+ stages {
+
+
+  stage('checkout SCM') {
+   steps {
+    git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "master"
+   }
+  }
+
+  stage('K8sDashboard') {
+   when {
+    // when K8s dashboard is selected
+    expression {
+     params.DASHBOARD_TYPE == 'K8sDashboard'
+    }
+   }
+
+   steps {
+    sh 'env'
+    sh 'python jenkins-sh/create_sysdig_k8s_dashboard.py -d "${DASHBOARD_NAME}" -c "${KUBERNETES_CLUSTER_NAME}" -n "${KUBERNETES_NAMESPACE_NAME}" -p "${KUBERNETES_DEPLOYMENT_NAME}" 14c0f792-34be-4a87-b75c-dfd3a458ba65'
+   }
+
+   post {
+    always {
+     cleanWs()
+    }
+   }
+  }
+  stage('NonK8sDashboard') {
+   when {
+    // when K8s dashboard is selected
+    expression {
+     params.DASHBOARD_TYPE == 'NonK8sDashboard'
+    }
+   }
+
+   steps {
+    sh 'env'
+    sh 'python jenkins-sh/create_sysdig_non_k8s_dashboard.py -d "${DASHBOARD_NAME}" 63fb1678-1f8a-47c6-a5ab-38763bb9ce85'
+
+   }
+
+   post {
+    always {
+     cleanWs()
+    }
+   }
+  }
+
+ }
+}

@@ -1,0 +1,23 @@
+---
+# copy the file and execute the script
+- name: copy script to /tmp location
+  template: 
+    src: sshd_config_change_script.j2
+    dest: /tmp/sshd_config_script.sh 
+    owner: root
+    group: root
+    mode: 0755
+
+# Execute the script
+- name: Execute the script
+  shell: sh -x /tmp/sshd_config_script.sh 
+  register: output_deploy
+
+- debug: var=output_deploy.stdout_lines
+
+# check the sshd service status
+- name: check the sshd service status
+  shell: "systemctl status sshd"
+  register: result_sshd
+
+- debug: var=result_sshd.stdout_lines

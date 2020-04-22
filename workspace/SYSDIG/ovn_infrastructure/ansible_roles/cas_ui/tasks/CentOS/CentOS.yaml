@@ -1,0 +1,19 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: cas-ui server systemd configuration
+  template:
+    src: cas-ui.server.service.j2
+    dest: /etc/systemd/system/cas-ui-server.service
+    owner: root
+    group: root
+    mode: 0644
+  
+- name: reload systemd configuration
+  command: systemctl daemon-reload

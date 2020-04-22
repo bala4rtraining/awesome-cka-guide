@@ -1,0 +1,23 @@
+#######
+#!!! Please DO NOT EDIT.  This configuration is maintained by Ansible !!!
+#######
+
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+prompt = no
+[req_distinguished_name]
+C = US
+ST = California
+L = Foster City
+O = Visa Inc
+OU = Open VisaNet
+CN = OVN
+emailAddress = OVNDEV@visa.com
+[v3_req]
+subjectAltName = @alt_names
+basicConstraints       = CA:FALSE
+subjectKeyIdentifier   = hash
+keyUsage               = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement
+[alt_names]
+DNS = {{ hostvars[inventory_hostname].ansible_fqdn }}

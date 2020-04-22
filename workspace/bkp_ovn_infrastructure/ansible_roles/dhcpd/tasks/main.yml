@@ -1,0 +1,13 @@
+---
+# tasks file for dhcp
+#
+
+
+- name: Install DHCP pacakges
+  yum: name=dhcp
+  
+- name: Configure DHCP server
+  template: src=dhcpd.conf.j2 dest=/etc/dhcp/dhcpd.conf
+  notify: Restart DHCP server
+
+ 

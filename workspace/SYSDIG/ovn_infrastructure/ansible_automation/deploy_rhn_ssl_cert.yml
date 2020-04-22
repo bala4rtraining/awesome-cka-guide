@@ -1,0 +1,7 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch
+
+- name: Install redhat network ssl cert from internal Visa repository
+  hosts: all:!cumulus_switch
+  roles:
+    - rhn

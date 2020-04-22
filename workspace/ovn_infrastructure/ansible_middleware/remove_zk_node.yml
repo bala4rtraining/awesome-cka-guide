@@ -1,0 +1,18 @@
+---
+- include: mware_vars.yml
+
+- name: Remove node from Zookeeper cluster
+  hosts: zookeeper
+  serial: 1
+  roles:
+    - { role: zk, dispatch: ['update_zk_config'], "{{ node }}" }
+
+- name: Stop service on the node
+  hosts: "{{ node }}"
+  roles:
+    - { role: zk, dispatch: ['stop_zk'] }
+
+- name: Delete Zookeeper installation from the node
+  hosts: "{{ node }}"
+  roles:
+    - { role: zk, dispatch: ['removenode'] }

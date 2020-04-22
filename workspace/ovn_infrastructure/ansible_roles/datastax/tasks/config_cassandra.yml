@@ -1,0 +1,42 @@
+---
+# cassandra.yml -- resource folder
+- name: <1-5 CAS> configure cassandra.yaml and copy to {{ovn_datastax ['ops']['rsc_cassandra_conf_foldr_path']}}
+  template:
+    src: "cassandra_4_8_6.yaml.j2"
+    dest: "{{ovn_datastax ['ops']['rsc_cassandra_conf_foldr_path']}}/cassandra.yaml"
+    owner: "{{ovn_datastax['ops']['user']}}"
+    group: "{{ovn_datastax['ops']['group']}}"
+    mode: "0644"
+
+- name: <2-5 CAS> configure cassandra-env.sh and copy to {{ovn_datastax ['ops']['rsc_cassandra_conf_foldr_path']}}
+  template:
+    src: "cassandra-env_4_8_6.sh.j2"
+    dest: "{{ovn_datastax ['ops']['rsc_cassandra_conf_foldr_path']}}/cassandra-env.sh"
+    owner: "{{ovn_datastax['ops']['user']}}"
+    group: "{{ovn_datastax['ops']['group']}}"
+    mode: "0644"
+
+- name: <3-5 CAS> configure cassandra-rackdc.properties and copy to  {{ovn_datastax ['ops']['rsc_cassandra_conf_foldr_path']}}
+  template:
+    src: "cassandra-rackdc.properties_4_8_6.j2"
+    dest: "{{ovn_datastax ['ops']['rsc_cassandra_conf_foldr_path']}}/cassandra-rackdc.properties"
+    owner: "{{ovn_datastax['ops']['user']}}"
+    group: "{{ovn_datastax['ops']['group']}}"
+    mode: "0644"
+
+- name: <4-5 CAS> configure cassandra-topology.properties and copy to  {{ovn_datastax ['ops']['rsc_cassandra_conf_foldr_path']}}
+  template:
+    src: "cassandra-topology.properties_4_8_6.j2"
+    dest: "{{ovn_datastax ['ops']['rsc_cassandra_conf_foldr_path']}}/cassandra-topology.properties"
+    owner: "{{ovn_datastax['ops']['user']}}"
+    group: "{{ovn_datastax['ops']['group']}}"
+    mode: "0644"
+
+- name: <5-5 CAS> configure logback.xml and copy to {{ovn_datastax ['ops']['rsc_cassandra_conf_foldr_path']}}
+  template:
+    src: "cassandra_logback_4_8_6.xml.j2"
+    dest:  "{{ ovn_datastax ['ops']['rsc_cassandra_conf_foldr_path'] }}/logback.xml"
+    owner: "{{ ovn_datastax ['ops']['user'] }}"
+    group: "{{ ovn_datastax ['ops']['group'] }}"
+    mode: "0644"
+

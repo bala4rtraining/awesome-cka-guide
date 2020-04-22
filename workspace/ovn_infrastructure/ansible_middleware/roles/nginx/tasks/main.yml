@@ -1,0 +1,49 @@
+---
+#Create nginx group if not exist already
+- name: create nginx group
+  group: name={{ nginx_group }}  state=present
+
+# Create nginx user
+- name: create nginx user
+  user:
+    name: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    createhome: no
+    comment: "Nginx User"
+    state: present
+
+# Installing nginx rpm
+- name: install nginx rpm
+  yum:
+    name: "{{ nginx_rpm }}"
+    state: present
+  when: rhel_centos_7
+
+# install logrotation 
+- name: Add nginx logrotation file.
+  template:
+    src: 'nginx.logrotate.j2'
+    dest: /etc/logrotate.d/nginx
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+
+# Deploying nginx.conf
+- name: deploy nginx.conf
+  template:
+    src: "nginx.conf.j2"
+    dest: "/etc/nginx/nginx.conf"
+  notify:
+    - restart nginx
+
+# Run configuration tasks
+- name: include configuration tasks
+  include: configuration.yml
+
+# Start the nginx service
+- name: Restart the nginx service
+  service: 
+    name: "nginx"
+    state: restarted 
+    enabled: yes

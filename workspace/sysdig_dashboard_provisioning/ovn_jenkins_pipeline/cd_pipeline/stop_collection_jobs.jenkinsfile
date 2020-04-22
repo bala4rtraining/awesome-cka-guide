@@ -1,0 +1,32 @@
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  parameters {
+    booleanParam(name: 'nomad_enable_tls', defaultValue: true, description: 'Is tls currently enabled for nomad?')
+  }
+  stages {
+    stage('Checkout ovn_infrastructure repo') {
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    stage('Stop collection jobs') {
+      steps {
+        ansiColor('xterm') {
+          ansiblePlaybook playbook: 'ansible_ovn/stop_clearing_jobs.yml',
+                          inventory: 'inventories/$CLUSTER/$DATACENTER',
+                          credentialsId: 'ENV.root_key',
+                          colorized: true,
+                          forks: 5,
+                          sudoUser: null,
+                          extras: '--extra-vars "{nomad_enable_tls: $nomad_enable_tls}"'
+        }
+      }
+    }
+  }
+}

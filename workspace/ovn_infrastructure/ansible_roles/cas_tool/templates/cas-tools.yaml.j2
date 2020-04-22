@@ -1,0 +1,91 @@
+# HTTP Server
+server:
+  host: "{{ cas_tool_host }}"
+  port: "{{ cas_tool_http_port }}"
+  scheme: "{{ cas_tool_scheme }}"
+  tls_config:
+    server_cert: "{{ cas_tool_cert_location }}/{{ cas_tool_tls_cert_name }}"
+    server_key:  "{{ cas_tool_key_location  }}/{{ cas_tool_tls_key_name }}"
+    root_ca_certs:
+{% for cert in cas_tool_root_ca_certs %}
+      - "{{ cas_tool_cert_location }}/{{ cert.name }}"
+{% endfor %}
+    client_ca_certs:
+{% if cas_tool_cas_ui_mutual_auth == true %}
+{% for cert in cas_tool_client_ca_certs %}
+      - "{{ cas_tool_cert_location }}/{{ cert.name }}"
+{% endfor %}
+{% endif %}
+    ciphers:
+      - "TLS_RSA_WITH_AES_128_CBC_SHA256"
+      - "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+      - "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+      - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+      - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+      - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+      - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
+    min_version: 1.0
+
+  auth:
+    group_to_role:
+      {{ovn_cas_admin}}: admin
+      {{ovn_cas_viewer}}: viewer
+      {{ovn_cas_editor}}: editor
+
+# Logger
+logger:
+  file_backend:
+    log_level: {{ cas_tool_file_logger_level }}
+    path: {{ cas_tool_file_logger_path }}
+    prefix: {{ cas_tool_file_logger_prefix }}
+  syslog_backend:
+    log_level: {{ cas_tool_sys_logger_level }}
+    prefix: {{ cas_tool_sys_logger_prefix }}
+  console_backend:
+    log_level: {{ cas_tool_console_logger_level }}
+
+# Core Components
+profile:
+  path: "{{cas_tool_clearing_profile_path}}"
+riak:
+  nodes:
+{% for node in groups.ovn_riak_servers %}
+    - {{ node }}:{{ riak_port }}
+{% endfor %}
+  exception_bucket: "{{cas_tool_exception_bucketname}}"
+  job_history_bucket: "{{cas_tool_jobhistory_bucketname}}"
+  file_metadata_bucket: "{{cas_tool_file_metadata_bucket}}"
+  clearing_config_bucket: "{{cas_tool_clearing_config_bucket}}"
+  clearing_override_bucket: "{{cas_tool_clearing_override_bucket}}"
+  enable_tls: {{ riak_enable_tls }}
+  root_ca:     "{{ cas_tool_cert_location }}/{{ cas_riak_ca_cert }}"
+  client_cert: "{{ cas_tool_cert_location }}/{{ cas_riak_client_cert }}"
+  cert_key:    "{{ cas_tool_key_location  }}/{{ cas_riak_cert_key }}"
+nomad:
+  urls:
+{% for url in groups.nomad_server %}
+    - http://{{ url }}:{{ nomad_server_http_port }}
+{% endfor %}
+  relativePath: "{{cas_tool_relative_path}}"
+  localPath: "{{cas_tool_local_path}}"
+  enable_tls: {{ nomad_enable_tls }}
+{% if nomad_enable_tls == true %}
+  nomad-ca:       "{{ cas_tool_cert_location }}/{{ cas_tool_nomad_ca_cert_name }}"
+  nomad-cli:      "{{ cas_tool_cert_location }}/{{ cas_tool_nomad_cert_name }}"
+  nomad-cli-key:  "{{ cas_tool_key_location  }}/{{ cas_tool_nomad_key_name }}"
+{% endif %}
+artifactory:
+  url: "{{ cas_tool_config_artifactory_url }}"
+kafka:
+  brokers:
+{% for broker in groups.kafka %}
+    - {{ broker }}:{{ kafka_port }}
+{% endfor %}
+  topic: {{cas_tool_kafka_topic}}
+  enable_tls: {{ kafka_enable_tls }}
+cas:
+  ca:   "{{ cas_tool_cert_location }}/{{ cas_tool_tls_ca_name }}"
+  cert: "{{ cas_tool_cert_location }}/{{ cas_tool_tls_cert_name }}"
+  key:  "{{ cas_tool_key_location  }}/{{ cas_tool_tls_key_name }}"

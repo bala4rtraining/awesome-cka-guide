@@ -1,0 +1,65 @@
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /opt/app/ovnhub:/opt/app/ovnhub'
+    }
+  }
+  environment {
+    //placeholder
+    GO_VERSION = "1.9"
+    CLUSTER = 'integration'
+    DATACENTER1 = 'dc1'
+    DATACENTER2 = 'dc2'
+  }
+  stages {
+  stage('Checkout SCM'){
+          steps{
+          git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git'
+          }
+      }
+
+    stage('Run ci-nightly-clearing-healthcheck '){
+      steps{
+        ansiColor('xterm') {
+          ansiblePlaybook credentialsId: 'ENV.root_key', inventory: 'inventories/$CLUSTER/$DATACENTER1',  colorized: true, playbook: 'ansible_ovn/ci-nightly-clearing-healthcheck.yml', sudoUser: null
+          ansiblePlaybook credentialsId: 'ENV.root_key', inventory: 'inventories/$CLUSTER/$DATACENTER2',  colorized: true, playbook: 'ansible_ovn/ci-nightly-clearing-healthcheck.yml', sudoUser: null
+        }
+      }
+    }
+    stage('Install and Deploy GOOVNT package') {
+      steps {
+        ansiColor('xterm') {
+          // setting up by installing goovnt and profile packages
+          // along with other dependencies to run goovnt test
+          sh '''
+          cd /opt
+          sudo yum -y install goovnt
+          sudo yum -y install cfprocessor
+          sudo yum -y install bridgeeafetch
+          sudo yum -y install vsswrapper
+          sudo yum -y install ovn_mp
+          sudo yum -y install ovn_profile
+          '''
+        }
+      }
+    }
+    stage('GOOVNT test') {
+      steps {
+        ansiColor('xterm-256color') {
+	      // to capture the filename which may change for each new revision of ovn_profile package
+          // running goovnt test
+          sh '''
+          cd /opt/goovnt
+
+          PROFILE=`ls -rt /opt/ovn_profile/ovn_prof*`
+          sudo ./goovnt --config=goovnt.yaml --profile=$PROFILE -test.v --features=features/
+
+          '''
+        }
+      }
+    }
+
+  }
+}

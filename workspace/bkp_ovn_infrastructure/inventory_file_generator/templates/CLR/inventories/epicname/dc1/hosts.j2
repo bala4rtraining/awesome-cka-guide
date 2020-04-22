@@ -1,0 +1,318 @@
+#########
+# DC1 datacenter - integration CPT Flow environment {{ epic_name }}
+#########
+
+[{{ vm_dc1_name[0] }}]
+{{ vm_dc1_ip[0] }}
+
+[{{ vm_dc1_name[1] }}]
+{{ vm_dc1_ip[1] }}
+
+[{{ vm_dc1_name[2] }}]
+{{ vm_dc1_ip[2] }}
+
+[{{ vm_dc1_name[3] }}]
+{{ vm_dc1_ip[3] }}
+
+[{{ vm_dc1_name[4] }}]
+{{ vm_dc1_ip[4] }}
+
+[{{ vm_dc1_name[5] }}]
+{{ vm_dc1_ip[5] }}
+
+
+####### Inventory specific VARS
+
+[{{ vm_dc1_name[4] }}:vars]
+prometheus_mode='active'
+
+[{{ vm_dc1_name[1] }}:vars]
+eserv_type='lbonly'
+
+[{{ vm_dc1_name[2] }}:vars]
+eserv_type='default'
+
+[{{ vm_dc1_name[3] }}:vars]
+eserv_type='default'
+
+[{{ vm_dc1_name[4] }}:vars]
+eserv_type='default'
+
+####### DC1 OVN Components
+
+# (Restricted Zone)
+[dc1_kafka:children]
+{{ vm_dc1_name[0] }}
+{{ vm_dc1_name[1] }}
+{{ vm_dc1_name[2] }}
+
+# (Restricted Zone)
+[dc1_kafka_mirror_maker:children]
+{{ vm_dc1_name[2] }}
+
+# (Restricted Zone)
+[dc1_hadoop_namenodes:children]
+{{ vm_dc1_name[0] }}
+{{ vm_dc1_name[1] }}
+
+# (Restricted Zone)
+[dc1_hadoop_datanodes:children]
+{{ vm_dc1_name[2] }}
+{{ vm_dc1_name[3] }}
+{{ vm_dc1_name[4] }}
+
+# (Restricted Zone)
+[dc1_nomad_server:children]
+{{ vm_dc1_name[5] }}
+{{ vm_dc1_name[0] }}
+{{ vm_dc1_name[1] }}
+
+# (Restricted Zone)
+[dc1_nomad_client:children]
+{{ vm_dc1_name[2] }}
+{{ vm_dc1_name[3] }}
+{{ vm_dc1_name[4] }}
+
+# (Restricted Zone)
+[dc1_ovn_riak_servers:children]
+{{ vm_dc1_name[5] }}
+{{ vm_dc1_name[0] }}
+{{ vm_dc1_name[1] }}
+
+# (Restricted Zone)
+[dc1_zookeeper:children]
+{{ vm_dc1_name[2] }}
+{{ vm_dc1_name[3] }}
+{{ vm_dc1_name[4] }}
+
+# (Restricted Zone)
+[dc1_journalnodes:children]
+{{ vm_dc1_name[0] }}
+{{ vm_dc1_name[1] }}
+{{ vm_dc1_name[2] }}
+
+# (Restricted Zone)
+[dc1_ftps_server:children]
+{{ vm_dc1_name[3] }}
+
+# (Restricted Zone)
+[dc1_elasticsearch:children]
+{{ vm_dc1_name[0] }}
+{{ vm_dc1_name[1] }}
+{{ vm_dc1_name[2] }}
+
+# (Restricted Zone)
+[dc1_kibana:children]
+{{ vm_dc1_name[3] }}
+
+# (Restricted Zone)
+[dc1_grafana:children]
+{{ vm_dc1_name[4] }}
+
+# (Restricted Zone)
+[dc1_graphite:children]
+{{ vm_dc1_name[5] }}
+
+[dc1_haproxy:children]
+{{ vm_dc1_name[0] }}
+
+# (Restricted Zone)
+[dc1_prometheus_server:children]
+{{ vm_dc1_name[1] }}
+
+# (Restricted Zone)
+[dc1_prometheus_alertmanager:children]
+{{ vm_dc1_name[2] }}
+
+# (Restricted Zone)
+[dc1_prometheus_pushgateway:children]
+{{ vm_dc1_name[3] }}
+
+# (Restricted Zone)
+[dc1_ovn_xdc_sync:children]
+{{ vm_dc1_name[4] }}
+
+# (Restricted Zone)
+[dc1_fluentd_aggregator:children]
+{{ vm_dc1_name[5] }}
+{{ vm_dc1_name[0] }}
+
+[fluentd_aggregator_ha01:children]
+dc1_fluentd_aggregator_ha01
+
+[fluentd_aggregator_ha02:children]
+dc1_fluentd_aggregator_ha02
+
+[dc1_fluentd_aggregator_ha01:children]
+{{ vm_dc1_name[0] }}
+{{ vm_dc1_name[1] }}
+{{ vm_dc1_name[2] }}
+{{ vm_dc1_name[3] }}
+{{ vm_dc1_name[4] }}
+{{ vm_dc1_name[5] }}
+
+[dc1_fluentd_aggregator_ha02:children]
+{{ vm_dc1_name[0] }}
+{{ vm_dc1_name[1] }}
+{{ vm_dc1_name[2] }}
+{{ vm_dc1_name[3] }}
+{{ vm_dc1_name[4] }}
+{{ vm_dc1_name[5] }}
+
+[dc1_nomad_ui:children]
+{{ vm_dc1_name[4] }}
+
+[dc1_cas_tool:children]
+{{ vm_dc1_name[1] }}
+
+[dc1_ovn_vss_servers:children]
+{{ vm_dc1_name[2] }}
+{{ vm_dc1_name[3] }}
+
+[dc1_yum_mirror_servers:children]
+{{ vm_dc1_name[2] }}
+{{ vm_dc1_name[5] }}
+
+# all application in the dc1 datacenter
+[dc1_ovn_application:children]
+dc1_ovn_xdc_sync
+dc1_ovn_vss_servers
+
+# all infrastructure in the dc1 datacenter
+[dc1_ovn_infrastructure:children]
+dc1_kafka
+dc1_kafka_mirror_maker
+dc1_hadoop_namenodes
+dc1_hadoop_datanodes
+dc1_nomad_server
+dc1_nomad_client
+dc1_ovn_riak_servers
+dc1_zookeeper
+dc1_ftps_server
+dc1_elasticsearch
+dc1_kibana
+dc1_grafana
+dc1_graphite
+dc1_haproxy
+dc1_prometheus_server
+dc1_prometheus_alertmanager
+dc1_prometheus_pushgateway
+dc1_journalnodes
+dc1_fluentd_aggregator
+dc1_fluentd_aggregator_ha01
+dc1_fluentd_aggregator_ha02
+dc1_yum_mirror_servers
+
+# all nodes in the dc1 datacenter
+[dc1:children]
+dc1_ovn_application
+dc1_ovn_infrastructure
+
+# all hdfs components in dc1
+[dc1_hdfs_HA_All_nodes:children]
+dc1_zookeeper
+dc1_journalnodes
+dc1_hadoop_namenodes
+dc1_hadoop_datanodes
+
+######
+# OVN Components
+######
+
+# Restricted Zone
+[kafka:children]
+dc1_kafka
+
+# Restricted Zone
+[kafka_mirror_maker:children]
+dc1_kafka_mirror_maker
+
+# Restricted Zone
+[hadoop_namenodes:children]
+dc1_hadoop_namenodes
+
+# Restricted Zone
+[hadoop_datanodes:children]
+dc1_hadoop_datanodes
+
+# Restricted Zone
+[nomad_server:children]
+dc1_nomad_server
+
+# Restricted Zone
+[nomad_client:children]
+dc1_nomad_client
+
+# Restricted Zone
+[ovn_riak_servers:children]
+dc1_ovn_riak_servers
+
+# Restricted Zone
+[zookeeper:children]
+dc1_zookeeper
+
+# Restricted Zone
+[journalnodes:children]
+dc1_journalnodes
+
+# Restricted Zone
+[ftps_server:children]
+dc1_ftps_server
+
+# Restricted Zone
+[elasticsearch:children]
+dc1_elasticsearch
+
+# Restricted Zone
+[kibana:children]
+dc1_kibana
+
+# Restricted Zone
+[grafana:children]
+dc1_grafana
+
+# Restricted Zone
+[graphite:children]
+dc1_graphite
+
+# Perimeter Zone
+[haproxy:children]
+dc1_haproxy
+
+# Restricted Zone
+[prometheus_server:children]
+dc1_prometheus_server
+
+# (Restricted Zone)
+[prometheus_alertmanager:children]
+dc1_prometheus_alertmanager
+
+# (Restricted Zone)
+[prometheus_pushgateway:children]
+dc1_prometheus_pushgateway
+
+# (Restricted Zone)
+[ovn_xdc_sync:children]
+dc1_ovn_xdc_sync
+
+# (Restricted Zone)
+[fluentd_aggregator:children]
+dc1_fluentd_aggregator
+
+[datacenter:children]
+dc1
+
+[hdfs_HA_All_nodes:children]
+dc1_hdfs_HA_All_nodes
+
+[nomad_ui:children]
+dc1_nomad_ui
+
+[cas_tool:children]
+dc1_cas_tool
+
+[ovn_vss_servers:children]
+dc1_ovn_vss_servers
+
+[yum_mirror_servers:children]
+dc1_yum_mirror_servers

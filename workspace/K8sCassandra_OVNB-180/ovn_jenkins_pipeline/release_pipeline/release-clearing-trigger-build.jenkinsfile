@@ -1,0 +1,103 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        booleanParam(name: 'RELEASE_OVN_CLEARING_JOBS',          defaultValue: false, description: 'Do you want a build for OVN_CLEARING_JOBS?')
+        booleanParam(name: 'RELEASE_OVN_CLEARING_XDC_SYNC',      defaultValue: false, description: 'Do you want a build for OVN_CLEARING_XDC_SYNC?')
+        booleanParam(name: 'RELEASE_OVN_CAS_TOOLS',              defaultValue: false, description: 'Do you want a build for OVN_CAS_TOOLS?')
+        booleanParam(name: 'RELEASE_OVN_CAS_UI',                 defaultValue: false, description: 'Do you want a build for OVN_CAS_UI?')
+        booleanParam(name: 'RELEASE_OVN_NGINX_AUTH',             defaultValue: false, description: 'Do you want a build for OVN_NGINX_AUTH?')
+        booleanParam(name: 'RELEASE_OVN_CRYPTO',                 defaultValue: false, description: 'Do you want a build for OVN_CRYPTO?')
+        booleanParam(name: 'RELEASE_OVN2',                       defaultValue: false, description: 'Is OVN VIP EF Sync part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_RIAK_PERSISTENCE',       defaultValue: false, description: 'Is OVN RIAK_PERSISTENCE part of the upcoming release?')
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+    }
+
+    stages {
+
+        stage ('OVN_CLEARING_JOBS release build') {
+            when { expression { return params.RELEASE_OVN_CLEARING_JOBS } }
+            steps {
+                build job: "OVN-OP/ovn_clearing_jobs/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('OVN_CLEARING_XDC_SYNC release build') {
+            when { expression { return params.RELEASE_OVN_CLEARING_XDC_SYNC } }
+            steps {
+                build job: "OVN-OP/ovn_clearing_xdc_sync/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('OVN_CAS_TOOLS release build') {
+            when { expression { return params.RELEASE_OVN_CAS_TOOLS } }
+            steps {
+                build job: "OVN-OP/ovn_cas_tools/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('OVN_CAS_UI release build') {
+            when { expression { return params.RELEASE_OVN_CAS_UI } }
+            steps {
+                build job: "OVN-OP/ovn_cas_ui/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('OVN_NGINX_AUTH release build') {
+            when { expression { return params.RELEASE_OVN_NGINX_AUTH } }
+            steps {
+                build job: "OVN-OP/ovn_nginx_auth/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('Riak_Persistence Sync release build') {
+            when { expression { return params.RELEASE_OVN_RIAK_PERSISTENCE } }
+            steps {
+                build job: "OVN-OP/ovn_riak_persistence/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('Ovn_crypto release build') {
+            when { expression { return params.RELEASE_OVN_CRYPTO } }
+            steps {
+                build job: "OVN-OP/ovn_crypto/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('OVN2 release build') {
+            when { expression { return params.RELEASE_OVN2 } }
+            steps {
+                build job: "OVN-OP/ovn2/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+    }
+
+}

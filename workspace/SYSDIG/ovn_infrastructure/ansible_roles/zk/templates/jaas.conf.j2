@@ -1,0 +1,28 @@
+Server {
+  com.sun.security.auth.module.Krb5LoginModule required
+  useKeyTab=true
+  keyTab="{{ zookeeper_keytab }}"
+  storeKey=true
+  principal="{{ zookeeper_principal_name }}/{{ ansible_nodename }}@{{ zookeeper_realm_name }}";
+};
+Client {
+  com.sun.security.auth.module.Krb5LoginModule required
+  useKeyTab=true
+  keyTab="{{ zookeeper_keytab }}"
+  storeKey=true
+  principal="{{ zookeeper_principal_name }}/{{ ansible_nodename }}@{{ zookeeper_realm_name }}";
+};
+QuorumServer {
+  com.sun.security.auth.module.Krb5LoginModule required
+  useKeyTab=true
+  keyTab="{{ zookeeper_keytab }}"
+  storeKey=true
+  principal="{{ zookeeper_principal_name }}/{{ ansible_nodename }}@{{ zookeeper_realm_name }}";
+};
+QuorumLearner {
+  com.sun.security.auth.module.Krb5LoginModule required
+  useKeyTab=true
+  keyTab="{{ zookeeper_keytab }}"
+  storeKey=true
+  principal="{{ zookeeper_principal_name }}/{{ ansible_nodename }}@{{ zookeeper_realm_name }}";
+};

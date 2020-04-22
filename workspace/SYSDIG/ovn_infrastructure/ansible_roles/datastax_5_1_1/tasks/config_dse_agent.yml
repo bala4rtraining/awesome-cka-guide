@@ -1,0 +1,17 @@
+---
+# Configure OpsAgent
+- name: <1-1 DSE_agent> embed configured address.yaml and copy to  {{dstax511_ovn_datastax ['dstax511_agent']['dstax511_conf_foldr_path']}}
+  template:
+    src:   "address.yaml.j2"
+    dest:  "{{ dstax511_ovn_datastax ['dstax511_agent']['dstax511_conf_foldr_path'] }}/address.yaml"
+    owner: "{{ dstax511_ovn_datastax ['dstax511_agent']['user'] }}"
+    group: "{{ dstax511_ovn_datastax ['dstax511_agent']['group'] }}"
+    mode: '0775'
+
+- name: <1b-1 DSE_agent> configure agent service and copy to {{dstax511_ovn_datastax ['dstax511_agent']['dstax511_system_service_foldr']}}
+  template:
+    src: "datastax_agent.service.j2"
+    dest: "{{dstax511_ovn_datastax ['dstax511_agent']['dstax511_system_service_foldr']}}/datastax_agent.service"
+    owner: "{{dstax511_ovn_datastax['dstax511_agent']['user']}}"
+    group: "{{dstax511_ovn_datastax['dstax511_agent']['group']}}"
+    mode: "0644"

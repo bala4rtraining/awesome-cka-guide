@@ -1,0 +1,7 @@
+---
+# Main tasks file that dispatches requests
+
+- name: NTP Server role task dispatcher
+  include: "{{ item }}.yml" # assumes no nested includes from loops
+  with_items: "{{ dispatch|default([]) }}"
+  when: "dispatch != []"

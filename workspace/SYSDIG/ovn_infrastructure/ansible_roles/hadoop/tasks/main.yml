@@ -1,0 +1,12 @@
+---
+# tasks file for hadoop
+# Note: This script is should fail if there are hadoop nodes active
+#       When re-deploying to an already provisioned set of servers, ensure that the services are stopped
+#       and set the hadoop_reinstall flag.
+- name: includes overrides specific to the distribution+version (e.g. Centos7)
+  include_vars: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
+
+- name: HDFS role task dispatcher
+  include: "{{ item }}.yml" # assumes no nested includes from loops
+  with_items: "{{ dispatch|default([]) }}"
+  when: "dispatch != []"

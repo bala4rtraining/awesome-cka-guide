@@ -1,0 +1,22 @@
+---
+# stop and disable the timer
+- name: stop and disable the timer
+  systemd:
+    daemon_reload: yes
+    name: '{{ item }}.timer'
+    state: stopped
+    enabled: False
+  with_items: "{{ yum_mirror_id }}"
+
+# remove system config for timer, service and local repo
+- name: remove system config and local repo
+  file:
+    path: "{{ directory }}"
+    state: absent
+  with_items:
+    - "{{ yum_mirror_service_dir }}/reposync.timer"
+    - "{{ yum_mirror_service_dir }}/reposync.service"
+    - "{{ yum_mirror_dir }}"
+  loop_control:
+    loop_var: directory
+  when: yum_remove_data

@@ -1,0 +1,39 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    triggers {
+        cron('H 0 * * *')
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '50'))
+    }
+    stages {
+        stage('CONFIG clearing infrastructure EPIC6 integration environment') {
+            steps{
+                build 'CI-nightly-epic6config'
+            }
+        }
+        stage('DEPLOY clearing infrastructure to EPIC6 integration environment') {
+            steps{
+                build 'CI-nightly-epic6-infra-deploy'
+            }
+        }
+        stage('DEPLOY clearing app to EPIC6 integration environment') {
+            steps{
+                build 'CI-nightly-epic6-app-deploy'
+            }
+        }
+        stage('RUN Acceptance test (EPIC6)') {
+            steps{
+                build 'CI-nightly-epic6-test'
+            }
+        }
+    }
+}

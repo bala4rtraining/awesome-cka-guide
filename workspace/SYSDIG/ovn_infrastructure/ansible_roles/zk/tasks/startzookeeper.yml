@@ -1,0 +1,7 @@
+- name: start zookeeper
+  systemd:
+    name: zookeeper
+    state: started
+
+- name: check that its actually running
+  wait_for: port={{ zookeeper_port }} delay=20

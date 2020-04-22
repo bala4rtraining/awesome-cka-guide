@@ -1,0 +1,46 @@
+pipeline {
+  agent {
+    docker {
+      image 'centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /opt/app/ovnhub:/opt/app/ovnhub'
+    }
+  }
+  environment {
+      CREDENTIALS = credentials("svcovnrepoadm_pwd")
+  }
+  stages {
+    stage('Generate SQL file') {
+      steps {
+        ansiColor('xterm') {
+          sh '''
+          sh jenkins-sh/generate_keywords_sql_script.sh $CREDENTIALS
+          '''
+        }
+      }
+    }
+    stage ('Archive') {
+        steps {
+            echo "Archiving..."
+            archiveArtifacts artifacts: 'update_keywords.sql'
+        }
+    }
+  }
+  post {
+      success {
+          emailext attachmentsPattern: 'update_keywords.sql',
+          body: "",
+          subject: "Success! - Test generate keywords SQL file",
+          from: "OVN Admin Job Jenkins <noreply@visa.com>",
+          to: "gabaguil@visa.com"
+          cleanWs()
+      }
+      failure {
+          mail body: "",
+          subject: "Failed - Test generate keywords SQL file",
+          from: "OVN Admin Job Jenkins <noreply@visa.com>",
+          to: "gabaguil@visa.com"
+          cleanWs()
+      }
+  }
+}

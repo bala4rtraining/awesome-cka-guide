@@ -1,0 +1,90 @@
+pipeline {
+    agent {
+        docker {
+          image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+          label 'ovn_build'
+          args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /home/was:/home/was -v /opt/app/ivy2/cache:/opt/app/ivy2/cache'
+        }
+    }
+
+    options {
+            ansiColor('xterm-256color')
+            timeout(time: 1, unit: 'HOURS')
+    }
+
+    stages {
+        stage('Prepare') {
+            steps {
+                sh '''
+                    git show -s --pretty=%ce > .git/committer-email
+                '''
+            }
+        }
+    stage('validate Jenkins file'){
+        steps{
+        ansiColor('xterm'){
+         sh "jenkins-sh/validatejenkinsfile.sh $PWD"
+        }
+          }
+        }
+        stage('Build Jenkins Jobs xmls files') {
+            steps {
+                ansiColor('xterm') {
+                  sh returnStatus: true, script: '''make'''
+               }
+            }
+        }
+
+
+        stage('Build release tarball') {
+            steps {
+                ansiColor('xterm') {
+                  sh '''
+                  make generatetarball
+                  for i in *.tar.gz; do mv "$i" "${i%.tar*}-${BRANCH_NAME}-build${BUILD_ID}".tar.gz; done
+                  '''
+                  archiveArtifacts '*.tar.gz'
+               }
+            }
+        }
+
+        stage('Publish RELEASE to Artifactory') {
+            when { anyOf { branch 'master'; branch 'release-*' } }
+            steps {
+                script {
+                        def artifactory = Artifactory.server('ovn-artifactory')
+                        def uploadSpec =
+                            """{"files":
+                                 [{"pattern": "*.tar.gz",
+                                   "target": "ovn-app-el7",
+                                   "recursive": "false"}]
+                               }"""
+                        artifactory.upload(uploadSpec)
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                def committer_email = readFile('.git/committer-email').trim()
+                mail body: "project build success.\n More info at: ${env.BUILD_URL} \nLast committer was: ${committer_email} \nCommit number: ${GIT_COMMIT}" ,
+                        subject: "${JOB_NAME} build success" ,
+                        to: "${committer_email}"
+                echo "\033[32m [BUILD SUCCESS] The build result has been notified to ${committer_email} \033[0m"  
+            }
+        }
+        failure {
+            script {
+                def committer_email = readFile('.git/committer-email').trim()
+                mail body: "project build error is here: ${env.BUILD_URL} \nLast committer was: ${committer_email} \nCommit number: ${GIT_COMMIT}" ,
+                        subject: "${JOB_NAME} job: Build failed",
+                        to: "${committer_email}"
+                echo "\033[31m [BUILD FAILURE] The build result has been notified to ${committer_email} \033[0m"
+            }
+        }
+        
+    }
+
+}

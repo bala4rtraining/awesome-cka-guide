@@ -1,0 +1,78 @@
+---
+# Check user exists or not
+- name: Check user exists or not
+  command: 'id -u hdfs'
+  ignore_errors: yes
+  register: user_check
+
+# Check group exists or not
+- name: Check group exists or not
+  command: 'id -g hdfs'
+  ignore_errors: yes
+  register: group_check
+
+# create hdfs group
+- name: create hdfs group with gid= "{{ hdfs_grp_id }}" used for hdfs group in Global Enterprise
+  group:
+    name: hdfs
+    gid: "{{ hdfs_grp_id }}"
+    state: present
+    system: yes
+  when: group_check | failed
+
+# create hdfs user
+- name: create hdfs user with uid= "{{ hdfs_usr_id }}" used for hdfs user in Global Enterprise
+  user:
+    name: hdfs
+    comment: "Hadoop HDFS Cloudera"
+    group: hdfs
+    groups: hdfs,wheel
+    uid: "{{ hdfs_usr_id }}"
+    system: yes
+    home: "{{hadoop_dfs_home_dir}}"
+    shell: /bin/bash
+    state: present
+  when: user_check | failed
+
+# cleaning older keys
+- name: remove old keys
+  tags: config
+  local_action: shell rm -f /tmp/workdir/{{ item }}
+  with_items:
+    - hdfs_key*
+    - hdfs_known_hosts
+
+# create work directory
+- name: create workdir
+  local_action: shell mkdir -p /tmp/workdir
+
+# generate ssh keys
+- name: generate ssh key
+  tags: config
+  local_action: command ssh-keygen -q -N "" -t rsa -b 2048  -f /tmp/workdir/hdfs_key
+  run_once: true
+
+# change key permissions
+- name: set key permissions
+  tags: config
+  local_action: file path=/tmp/workdir/hdfs_key mode=a+r
+  run_once: true
+
+# generate known_hosts list
+- name: generate known_hosts
+  tags: config
+  local_action: shell ssh-keyscan {{ ansible_hostname }} >> /tmp/workdir/hdfs_known_hosts
+
+# create .ssh directory
+- name: create .ssh dir
+  tags: config
+  file: path=/opt/app/hadoop-hdfs/.ssh state=directory owner=hdfs group=hdfs mode=700
+
+# install ssh keys
+- name: install ssh auth files
+  tags: config
+  copy: src=/tmp/workdir/{{ item.src }} dest={{ item.dest }} owner=hdfs group=hdfs mode=700
+  with_items:
+    - { src: hdfs_key, dest: /opt/app/hadoop-hdfs/.ssh/id_rsa }
+    - { src: hdfs_key.pub, dest: /opt/app/hadoop-hdfs/.ssh/authorized_keys }
+    - { src: hdfs_known_hosts, dest: /opt/app/hadoop-hdfs/.ssh/known_hosts  }

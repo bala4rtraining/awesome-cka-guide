@@ -1,0 +1,12 @@
+---
+kibana_png: "kibanaOvnPROD.png"
+kibana_reverse_proxy_enabled: true
+kibana_reverse_proxy_path: "kibana"
+kibana_basepath: "/kibana"
+
+grafana_reverse_proxy_enabled: true
+grafana_reverse_proxy_path: "grafana"
+alertmanager_email_to : "OVNPrometheusALERTS@visa.com"
+elasticsearch_heapsize: "32g"
+
+Netcool_email: Netcoolemail@visa.com

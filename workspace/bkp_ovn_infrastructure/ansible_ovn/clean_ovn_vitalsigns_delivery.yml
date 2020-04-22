@@ -1,0 +1,11 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_vitalsigns_delivery
+
+- name: clean ovn_vitalsigns_delivery environment
+  hosts: ovn_vitalsigns_delivery
+  tasks:
+    - service: name={{item}} state=stopped
+    - file: path=/opt/{{item}} state=absent
+    - file: path=/var/lib/{{item}} state=absent
+  vars:
+    item: ovn_vitalsigns_delivery

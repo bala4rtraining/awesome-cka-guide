@@ -1,0 +1,10 @@
+---
+currency_ovngit_ref:     "test/currency/2017/04-27/1"
+profile_ovngit_ref:      "build/profile/2016/10-21/0"
+umf_broker_ovngit_ref:   "build/ovn_umf_broker/2017/05-18/25"
+
+#CAS Artifactory urls
+release_artifactory_url: "{{ artifactory_url }}/ovn-app-temp-el7"
+
+#Goovnt
+goovnt_version: "goovnt-0.1.0-1.el7.centos.x86_64-epic-1-build21"

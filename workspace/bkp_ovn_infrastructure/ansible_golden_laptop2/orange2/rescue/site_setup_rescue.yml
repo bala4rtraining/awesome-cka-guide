@@ -1,0 +1,32 @@
+#
+# 
+# Configure OVN orange2/rescue node after group files are
+# generated for each role
+#
+# This will be run locally on the orange2/rescue server
+# This is called from top-level playbook site.yml
+# 
+#
+
+- name: Configure OVN rescue server
+  hosts: localhost
+  #user: root
+  become: yes
+  vars_files:
+    - ../ovn_common_dci.yml
+  roles: 
+    - interface
+    - dhcpd
+    - tftp
+    - httpd
+    #- pxe
+    #- onie
+
+    
+    
+
+
+
+
+
+

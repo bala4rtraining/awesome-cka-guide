@@ -1,0 +1,212 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        booleanParam(name: 'RELEASE_VSSWRAPPER',          defaultValue: false, description: 'Is Vsswrapper part of the upcoming finalize release?')
+        booleanParam(name: 'RELEASE_BRIDGEEAFETCH',	      defaultValue: false, description: 'Is Bridgeeafetch part of the upcoming finalize release?')
+        booleanParam(name: 'RELEASE_DELIVERYPROCESSOR',   defaultValue: false, description: 'Is Deliveryprocessor part of the upcoming finalize release?')
+        booleanParam(name: 'RELEASE_WINDOWMANAGER',       defaultValue: false, description: 'Is Windowmanager part of the upcoming finalize release?')
+        booleanParam(name: 'RELEASE_OVN_MP',              defaultValue: false, description: 'Is Ovn_mp part of the upcoming finalize release?')
+        booleanParam(name: 'RELEASE_MOCKMVS',             defaultValue: false, description: 'Is Mockmvs part of the upcoming finalize release?')
+        booleanParam(name: 'RELEASE_GOOVNT',          	  defaultValue: false, description: 'Is Goovnt part of the upcoming finalize release?')
+        booleanParam(name: 'RELEASE_CTT',                 defaultValue: false, description: 'Is CTT part of the upcoming finalize release?')
+        booleanParam(name: 'RELEASE_COLLECTIONPROCESSOR', defaultValue: false, description: 'Is Collectionprocessor part of the upcoming finalize release?')
+        
+        validatingString(name: 'RELEASE_VERSION',
+                        defaultValue: '',
+                        regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$',
+                        failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+                        description: 'What is the version that this Release Candidate belongs to? Use semantic versioning, e.g: x.y.z')
+
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        TMP_DIR = "${SERVICE_NAME}_repo"
+        REPOSITORY_URL = "ssh://git@stash.trusted.visa.com:7999/op/${SERVICE_NAME}.git"
+        FINAL_RELEASE_TAG = "v${params.RELEASE_VERSION}"
+
+    }
+
+    stages {
+        stage('Releasing VSSWRAPPER') {
+            when { expression { return params.RELEASE_VSSWRAPPER } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn2_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git']]]
+                sh "cd ovn2_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn2_repo/cmd/vsswrapper/ && sed "s/.*Version:.*/Version:        ${RELEASE_VERSION}/" vsswrapper.spec >> vsswrapper.tmp && mv vsswrapper.tmp vsswrapper.spec'
+                sh "cd ovn2_repo/cmd/vsswrapper/ && git add vsswrapper.spec && git commit -m \"modify for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn2_repo/ && git tag -a -m \"VSSWRAPPER RC1 for ${params.RELEASE_VERSION}\" ${FINAL_RELEASE_TAG}"
+                sh "cd ovn2_repo/ && git push origin ${FINAL_RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing BRIDGEEAFETCH') {
+            when { expression { return params.RELEASE_BRIDGEEAFETCH } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn2_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git']]]
+                sh "cd ovn2_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn2_repo/cmd/bridgeeafetch/ && sed "s/.*Version:.*/Version:        ${RELEASE_VERSION}/" bridgeeafetch.spec >> bridgeeafetch.tmp && mv bridgeeafetch.tmp bridgeeafetch.spec'
+                sh "cd ovn2_repo/cmd/bridgeeafetch/ && git add bridgeeafetch.spec && git commit -m \"modify for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn2_repo/ && git tag -a -m \"BRIDGEEAFETCH RC1 for ${params.RELEASE_VERSION}\" ${FINAL_RELEASE_TAG}"
+                sh "cd ovn2_repo/ && git push origin ${FINAL_RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing DELIVERYPROCESSOR') {
+            when { expression { return params.RELEASE_DELIVERYPROCESSOR } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn2_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git']]]
+                sh "cd ovn2_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn2_repo/cmd/deliveryprocessor/rpm/ && sed "s/.*Version:.*/Version:        ${RELEASE_VERSION}/" deliveryprocessor.spec >> deliveryprocessor.tmp && mv deliveryprocessor.tmp deliveryprocessor.spec'
+                sh "cd ovn2_repo/cmd/deliveryprocessor/rpm/ && git add deliveryprocessor.spec && git commit -m \"modify for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn2_repo/ && git tag -a -m \"DELIVERYPROCESSOR RC1 for ${params.RELEASE_VERSION}\" ${FINAL_RELEASE_TAG}"
+                sh "cd ovn2_repo/ && git push origin ${FINAL_RELEASE_TAG}  && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing WINDOWMANAGER') {
+            when { expression { return params.RELEASE_WINDOWMANAGER } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn2_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git']]]
+                sh "cd ovn2_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn2_repo/cmd/windowmanager/rpm/ && sed "s/.*Version:.*/Version:        ${RELEASE_VERSION}/" windowmanager.spec >> windowmanager.tmp && mv windowmanager.tmp windowmanager.spec'
+                sh "cd ovn2_repo/cmd/windowmanager/rpm/ && git add windowmanager.spec && git commit -m \"modify for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn2_repo/ && git tag -a -m \"WINDOWMANAGER RC1 for ${params.RELEASE_VERSION}\" ${FINAL_RELEASE_TAG}"
+                sh "cd ovn2_repo/ && git push origin ${FINAL_RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing OVN_MP') {
+                    when { expression { return params.RELEASE_OVN_MP } }
+                    steps {
+                        checkout poll: false, scm: [$class: 'GitSCM',
+                                                    branches: [[name: "${RELEASE_BRANCH}"]],
+                                                    doGenerateSubmoduleConfigurations: false,
+                                                    extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn2_repo']],
+                                                    submoduleCfg: [],
+                                                    userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git']]]
+                        sh "cd ovn2_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                        sh 'cd ovn2_repo/cmd/ovn_mp/rpm/ && sed "s/.*Version:.*/Version:        ${RELEASE_VERSION}/" ovn_mp.spec >> ovn_mp.tmp && mv ovn_mp.tmp ovn_mp.spec'
+                        sh "cd ovn2_repo/cmd/ovn_mp/rpm/ && git add ovn_mp.spec && git commit -m \"modify for release ${params.RELEASE_VERSION}\""
+                        sh "cd ovn2_repo/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+                        sh "cd ovn2_repo/ && git tag -a -m \"OVN_MP RC1 for ${params.RELEASE_VERSION}\" ${FINAL_RELEASE_TAG}"
+                        sh "cd ovn2_repo/ && git push origin ${FINAL_RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+                    }
+
+        }
+
+        stage('Releasing MOCKMVS') {
+            when { expression { return params.RELEASE_MOCKMVS } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn2_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git']]]
+                sh "cd ovn2_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn2_repo/cmd/mockmvs/ && sed "s/.*Version:.*/Version:        ${RELEASE_VERSION}/" mockmvs.spec >> mockmvs.tmp && mv mockmvs.tmp mockmvs.spec'
+                sh "cd ovn2_repo/cmd/mockmvs/ && git add ovn_mp.spec && git commit -m \"modify for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn2_repo/ && git tag -a -m \"MOCKMVS RC1 for ${params.RELEASE_VERSION}\" ${FINAL_RELEASE_TAG}"
+                sh "cd ovn2_repo/ && git push origin ${FINAL_RELEASE_TAG}  && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing GOOVNT') {
+            when { expression { return params.RELEASE_GOOVNT } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn2_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git']]]
+                sh "cd ovn2_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn2_repo/cmd/goovnt/ && sed "s/.*Version:.*/Version:        ${RELEASE_VERSION}/" goovnt.spec >> goovnt.tmp && mv goovnt.tmp goovnt.spec'
+                sh "cd ovn2_repo/cmd/goovnt/ && git add ovn_mp.spec && git commit -m \"modify for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn2_repo/ && git tag -a -m \"goovnt RC1 for ${params.RELEASE_VERSION}\" ${FINAL_RELEASE_TAG}"
+                sh "cd ovn2_repo/ && git push origin ${FINAL_RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing CTT') {
+            when { expression { return params.RELEASE_CTT } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn2_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git']]]
+                sh "cd ovn2_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn2_repo/cmd/ctt/ && sed "s/.*Version:.*/Version:        ${RELEASE_VERSION}/" ctt.spec >> ctt.tmp && mv ctt.tmp ctt.spec'
+                sh "cd ovn2_repo/cmd/ctt/ && git add ctt.spec && git commit -m \"modify for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn2_repo/ && git tag -a -m \"CTT RC1 for ${params.RELEASE_VERSION}\" ${FINAL_RELEASE_TAG}"
+                sh "cd ovn2_repo/ && git push origin ${FINAL_RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+
+        stage('Releasing COLLECTIONPROCESSOR') {
+            when { expression { return params.RELEASE_COLLECTIONPROCESSOR } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn2_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git']]]
+                sh "cd ovn2_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd ovn2_repo/cmd/collectionprocessor/rpm/ && sed "s/.*Version:.*/Version:        ${RELEASE_VERSION}/" collectionprocessor.spec >> collectionprocessor.tmp && mv collectionprocessor.tmp collectionprocessor.spec'
+                sh "cd ovn2_repo/cmd/collectionprocessor/rpm/ && git add collectionprocessor.spec && git commit -m \"modify for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn2_repo/ && git tag -a -m \"COLLECTIONPROCESSOR RC1 for ${params.RELEASE_VERSION}\" ${FINAL_RELEASE_TAG}"
+                sh "cd ovn2_repo/ && git push origin ${FINAL_RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+
+        }
+        
+        stage ('Trigger new release build') {
+
+            steps {
+                build job: "OVN-OP/ovn2/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+
+        }
+    }
+}

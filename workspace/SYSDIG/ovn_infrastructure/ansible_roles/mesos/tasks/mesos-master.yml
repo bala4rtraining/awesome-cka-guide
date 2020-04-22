@@ -1,0 +1,10 @@
+---
+- name: Mesos default config file
+  template: src=conf-mesos.j2 dest=/etc/default/mesos
+  notify:
+    - Restart mesos-master
+
+- name: Mesos Master config file
+  template: src=conf-mesos-master.j2 dest=/etc/default/mesos-master
+  notify:
+    - Restart mesos-master

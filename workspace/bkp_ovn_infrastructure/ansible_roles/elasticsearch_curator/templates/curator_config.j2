@@ -1,0 +1,24 @@
+---
+client:
+{% if elasticsearch_client_ssl_enabled == "true" and elasticsearch_client_use_fqdn == "true" and ansible_fqdn is defined %}
+  hosts: "{{ ansible_fqdn }}"
+{% else %}
+  hosts: "{{ inventory_hostname }}"
+{% endif %}
+  port: "{{ elasticsearch_port }}"
+  url_prefix:
+{% if elasticsearch_client_ssl_enabled == "true" %}
+  use_ssl: true
+  certificate: {{ curator_elasticsearch_ca_cert_path }}
+  client_cert: {{ curator_elasticsearch_cert_path }}
+  client_key:  {{ curator_elasticsearch_key_path }}
+{% else %}
+  use_ssl: false
+  certificate: 
+  client_cert: 
+  client_key:  
+{% endif %}
+  ssl_no_validate: False
+  http_auth:
+  timeout: 60
+  master_only: False

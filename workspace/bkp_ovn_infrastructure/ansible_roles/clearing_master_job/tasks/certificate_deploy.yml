@@ -1,0 +1,71 @@
+---
+
+- name: create component directories
+  file:
+   path: "{{ pki_ca_trust_source_anchors }}/{{file}}"
+   state: directory
+   mode: 0755
+   group: root
+   owner: root
+  with_items:
+   - nomad
+  loop_control:
+    loop_var: file
+
+- name: Copy bundler certificate
+  copy: content={{ nomad_bundler_cert }} dest="{{ pki_ca_trust_source_anchors }}/bundler.crt" owner=root group=root mode=0644
+
+- name: Copy client certiticate
+  copy: content={{ nomad_client_cert }} dest="{{ pki_ca_trust_source_anchors }}/nomad/client.crt" owner=root group=root mode=0644
+
+- name: Copy private keys
+  copy: content={{ nomad_private_key }} dest="{{ pki_ca_trust_source_anchors }}/nomad/private.key" owner=root group=root mode=0600
+
+- name: install oracle jre if not installed
+  yum:
+   name: '{{ jre_name }}'
+   disable_gpg_check: true
+   state: present
+  register: yum_result
+
+- name: create symlink
+  file:
+   src: "{{ symlink.src }}"
+   dest: "{{ symlink.dest }}"
+   state: link
+  with_items:
+   - {src: "{{ jre_installation_directory }}/java", dest: "{{ java_alternatives_path }}/java"}
+   - {src: "{{ java_alternatives_path }}/java", dest: "{{ java_main_path }}/java"}
+   - {src: "{{ jre_installation_directory }}/keytool", dest: "{{ java_alternatives_path }}/keytool"}
+   - {src: "{{ java_alternatives_path }}/keytool", dest: "{{ java_main_path }}/keytool"}
+  loop_control:
+   loop_var: symlink
+
+- name: Delete the java keystore to create a new one.
+  file:
+   path="{{java_keystore_file_path}}"
+   state=absent
+
+- name: Add all certificates to the keystore
+  with_items:
+   - nomad
+  loop_control:
+   loop_var: comp_dir
+  shell: |
+    openssl pkcs12 -export  \
+      -in {{ pki_ca_trust_source_anchors }}/{{ comp_dir }}/client.crt \
+      -inkey {{ pki_ca_trust_source_anchors }}/{{ comp_dir }}/private.key \
+      -CAfile {{ pki_ca_trust_source_anchors }}/bundler.crt \
+      -passout pass:{{ java_keystore_file_password }} \
+      -name {{ comp_dir }} \
+      -out {{ pki_ca_trust_source_anchors }}/{{ comp_dir }}/client.p12
+
+    keytool -importkeystore \
+      -destkeystore {{ java_keystore_file_path }} \
+      -deststorepass {{ java_keystore_file_password }} \
+      -destkeypass {{ java_keystore_file_password }} \
+      -alias {{ comp_dir }} \
+      -srcstoretype PKCS12 \
+      -deststoretype pkcs12 \
+      -srcstorepass {{ java_keystore_file_password }} \
+      -srckeystore {{ pki_ca_trust_source_anchors }}/{{ comp_dir }}/client.p12

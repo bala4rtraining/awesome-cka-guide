@@ -1,0 +1,135 @@
+---
+- set_fact:
+    td_agent_mode: "aggregator"
+
+- name: create fluentd group
+  group: name={{ td_agent_group }}  state=present
+
+- name: create fluentd user
+  user:
+    name: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    createhome: no
+    comment: "Fluentd User"
+    state: present
+
+- name: add fluentd user to was group
+  user:
+    name: "{{ td_agent_user }}"
+    groups: "was"
+    state: present
+
+- name: run role to deploy SSL certificates
+  include_role:
+    name: certificates
+  when: "{{ td_agent_secure_forward }} == true"
+
+- name: ensure that /opt/app has proper permissions
+  file:
+    path: /opt/app
+    state: directory
+    mode: "0755"
+    owner: "root"
+    group: "root"
+
+- name: install td_agent
+  yum:
+    name: "{{ td_agent_rpm }}"
+    state: present
+
+- name: change ownership of dir /opt/td-agent to {{ td_agent_user }}
+  file:
+    path: /opt/td-agent/
+    mode: "0750"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    recurse: yes
+
+- name: create td-agent directory {{ td_agent_pid_dir }},{{ td_agent_log_dir }} and  {{ td_agent_buffer_dir }}
+  file:
+    dest: "{{dir_val}}"
+    state: directory
+    recurse: "yes"
+    mode: "0750"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+  with_items:
+    - "{{ td_agent_log_dir }}"
+    - "{{ td_agent_pid_dir }}"
+    - "{{ td_agent_data_dir }}"
+  loop_control:
+    loop_var: dir_val
+
+- name: Clean config path
+  file:
+    state: absent
+    path: "/etc/td-agent/conf/"
+  ignore_errors: yes
+
+- name: create directory for td-agent config files
+  file:
+    path: "{{ item }}"
+    state: directory
+    recurse: no
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    mode: "0750"
+  with_items:
+    - "/etc/td-agent"
+    - "/etc/td-agent/conf"
+    - "/etc/td-agent/conf/input"
+    - "/etc/td-agent/conf/output"
+
+- name: install fluentd prometheus plugin to export fluentd metrics to prometheus
+  shell: "td-agent-gem install fluent-plugin-prometheus -s {{ artifactory_gem_repo }} -v {{ fluent_plugin_prometheus_version }}"
+  become_user: "{{ td_agent_user }}"
+  become: true
+   
+- name: install fluentd erlangservices plugin to parse erlang logs
+  shell: "td-agent-gem install fluent-plugin-parser-erlangservices -s {{ artifactory_gem_repo }} -v {{ fluent_plugin_parser_erlangservices_version }}"
+  become_user: "{{ td_agent_user }}"
+  become: true
+
+- name: install td-agent config file in /etc/td-agent
+  template:
+    src: "td-agent-aggregator.conf.j2"
+    dest: "/etc/td-agent/td-agent.conf"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    mode: "0644"
+
+- name: install td-agent sysconfig file in /etc/sysconfig
+  template:
+    src: "td-agent.j2"
+    dest: "/etc/sysconfig/td-agent"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    mode: "0644"
+
+- name: cleanup zombie "td-agent" processes
+  shell: "ps -eaf | grep -v grep | grep -w /usr/sbin/td-agent | awk '{print $2}' | xargs kill"
+  when: "{{ cleanup_td_agent_process }} == true"
+  ignore_errors: True
+
+- name: deploy td-agent output config files
+  template:
+    src: "{{ item }}"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    dest: /etc/td-agent/conf/output/{{ item | basename | regex_replace('\.j2','') }}
+    mode: "0640"
+  with_fileglob:
+    - "../templates/output/*.j2"
+
+- name: Restart fluentd service.
+  systemd:
+    name: td-agent
+    state: restarted
+
+- name: ensure td-agent is started 
+  systemd:
+    name: td-agent
+    state: started
+
+- name: td-agent is enabled to start at boot.
+  shell: systemctl enable td-agent.service

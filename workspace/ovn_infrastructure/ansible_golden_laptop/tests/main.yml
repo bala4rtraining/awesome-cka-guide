@@ -1,0 +1,2 @@
+- name: the final exam you're totally unprepared for
+  fail: msg="If you so much as... I swear I will fail this test... Don't make me do it!"

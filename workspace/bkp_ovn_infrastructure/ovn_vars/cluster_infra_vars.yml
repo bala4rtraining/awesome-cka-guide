@@ -1,0 +1,56 @@
+---
+## These are complex variables that are set per datacenter and can be picked up by other datacenter
+dc1_kafka_members : >
+      {% set comma = joiner() %}
+      {%for item in groups.dc1_kafka -%}
+          {{ comma() }}{{hostvars[item]['ansible_default_ipv4']['address']}}:{{client_ssl_port}}
+      {%- endfor %}
+dc2_kafka_members : >
+      {% set comma = joiner() %}
+      {%for item in groups.dc2_kafka -%}
+          {{ comma() }}{{hostvars[item]['ansible_default_ipv4']['address']}}:{{client_ssl_port}}
+      {%- endfor %}
+dc1_zookeeper_members : >
+      {% set comma = joiner(",") %}
+      {%for item in groups.dc1_zookeeper -%}
+          {{ comma() }}{{hostvars[item]['ansible_default_ipv4']['address']}}:{{zk_port}}
+      {%- endfor %}
+dc2_zookeeper_members : >
+      {% set comma = joiner(",") %}
+      {%for item in groups.dc2_zookeeper -%}
+          {{ comma() }}{{hostvars[item]['ansible_default_ipv4']['address']}}:{{zk_port}}
+      {%- endfor %}
+dc1_zookeeper_members_nodenames : >
+      [{% set comma = joiner(",") %}
+      {%for item in groups.dc1_zookeeper -%}
+          {{ comma() }}{{hostvars[item]['ansible_nodename']}}
+      {%- endfor %} ]
+dc2_zookeeper_members_nodenames : >
+      [{% set comma = joiner(",") %}
+      {%for item in groups.dc2_zookeeper -%}
+          {{ comma() }}{{hostvars[item]['ansible_nodename']}}
+      {%- endfor %} ]
+dc1_namenode_members : >
+      [{% set comma = joiner(",") %}
+      {% set namenodes = groups.dc1_hadoop_namenodes if 'hadoop_namenodes' in groups else [] %}
+      {% for item in namenodes -%}
+          {{ comma() }}{{hostvars[item]['ansible_nodename']}}
+      {%- endfor %} ]
+dc2_namenode_members : >
+      [{% set comma = joiner(",") %}
+      {% set namenodes = groups.dc2_hadoop_namenodes if 'hadoop_namenodes' in groups else [] %}
+      {% for item in namenodes -%}
+          {{ comma() }}{{hostvars[item]['ansible_nodename']}}
+      {%- endfor %} ]
+dc1_kerberos_server_members : >
+      [{% set comma = joiner(",") %}
+      {% set kerberos_servers = groups.dc1_kerberos_server if 'kerberos_server' in groups else [] %}
+      {% for item in kerberos_servers -%}
+         {{ comma() }}{{hostvars[item]['ansible_default_ipv4']['address']}}
+      {%- endfor %} ]
+dc2_kerberos_server_members : >
+      [{% set comma = joiner(",") %}
+      {% set kerberos_servers = groups.dc2_kerberos_server if 'kerberos_server' in groups else [] %}
+      {% for item in kerberos_servers -%}
+         {{ comma() }}{{hostvars[item]['ansible_default_ipv4']['address']}}
+      {%- endfor %} ]

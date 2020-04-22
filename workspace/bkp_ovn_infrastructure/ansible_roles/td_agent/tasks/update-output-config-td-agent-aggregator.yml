@@ -1,0 +1,30 @@
+---
+- set_fact:
+    td_agent_mode: "aggregator"
+
+- name: take backup of existing file under /etc/td-agent/conf/output/fluentd-elasticsearch.conf
+  copy:
+    src: "/etc/td-agent/conf/output/fluentd-elasticsearch.conf"
+    dest: "/etc/td-agent/conf/output/fluentd-elasticsearch.conf_bak"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    mode:  "0644"
+    remote_src: true
+
+- name: update td-agent output config file in /etc/td-agent/conf/output/fluentd-elasticsearch.conf
+  template:
+    src: "../templates/output/fluentd-elasticsearch.conf.j2"
+    dest: "/etc/td-agent/conf/output/fluentd-elasticsearch.conf"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+    mode: "0644"
+
+- name: reload td-agent
+  service:
+    name: td-agent
+    state: reloaded
+
+- name: ensure td-agent is started
+  systemd:
+    name: td-agent
+    state: started

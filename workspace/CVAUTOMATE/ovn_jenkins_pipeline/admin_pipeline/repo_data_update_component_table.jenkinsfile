@@ -1,0 +1,47 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /opt/app/ovnhub:/opt/app/ovnhub'
+        }
+    }
+
+    options { 
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
+    triggers {
+            cron('H H * * *')
+        }
+
+    stages {
+
+        stage('############ Compare bitbucket repos and component table and create csv for new repos############') {
+            steps {
+                withCredentials([
+                    usernamePassword(credentialsId: 'bitbucket_service_account', usernameVariable: 'bitbucket_service_account_user', passwordVariable: 'bitbucket_service_account_password'),
+                    usernamePassword(credentialsId: 'ovn_database', usernameVariable: 'ovn_database_user', passwordVariable: 'ovn_database_password')
+                ]) {
+                    sh '''
+                        jenkins-sh/repo_data_retrieve_for_component_table.py $bitbucket_service_account_user $bitbucket_service_account_password $ovn_database_user $ovn_database_password
+                    '''
+                }
+            }
+        }
+
+        stage('############ Upload new repos to component table ############') {
+            steps {
+                withCredentials([
+                    usernamePassword(credentialsId: 'ovn_database', usernameVariable: 'ovn_database_user', passwordVariable: 'ovn_database_password')
+                ]) {
+                    sh '''
+                        jenkins-sh/repo_data_update_component_table.sh $ovn_database_user $ovn_database_password
+                    '''
+                }
+            }
+        }
+    }
+}
+

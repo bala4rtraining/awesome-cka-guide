@@ -1,0 +1,2 @@
+@Library('ovn-shared-library-ct') _
+CT_Engine(TestComponent: 'OVNTT', EnvironmentConfigPath: 'deployment_config/ovn-ct-auth-1.yaml', FeatureFile: 'AccountVerification:0.0.1', SubscriberEmail: 'jiasun@visa.com')

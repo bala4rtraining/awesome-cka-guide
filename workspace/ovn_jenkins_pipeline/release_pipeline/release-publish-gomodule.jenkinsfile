@@ -1,0 +1,124 @@
+pipeline {
+agent {
+    docker {
+        image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+        label 'ovn_build'
+        args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    parameters {
+        choice(name: 'MODULE_NAME',
+               choices: 'ovn-commons\novn-components\novn-eventbus\novn-dataaccess\novn-events\novn-dar\novn-mp-components\novn-apis\novn-client-profile\novn-datastoremanager\novn-dbconnector\novn-iso-message\novn-mp-rules\novn-mp-task\novn-workspace',
+               description: 'What service/library do you want to create a new tag for?')
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please, kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        GOPATH = "$WORKSPACE/.go"
+        RELEASE_TAG_MOD = "v${params.RELEASE_VERSION}"
+        PACKAGE_DIR = "$GOPATH/src/${params.MODULE_NAME}_repo"
+        GO_VERSION = "1.12"
+        GO_LOCAL_REPO="ovn-go-local"
+        ARTIFACTORY_CREDS = credentials('svcnpovndev_id')
+    }
+    stages {
+                stage('prepare') {
+                steps {
+                    // 1. setting up GOPATH structure, since we do not have a scr/visa.com prefix inside of our repo
+                    sh '''
+          ln -snf /usr/local/go/${GO_VERSION}* /usr/local/go/default
+          git show -s --pretty=%ce > .git/committer-email
+          go version
+          rm -rf "$PACKAGE_DIR"
+          mkdir -p "$PACKAGE_DIR"
+          cp -r * "$PACKAGE_DIR"
+          cd "$PACKAGE_DIR"
+          '''
+                }
+            }
+        stage ('Global Git Config') {
+
+                steps {
+                      sh "git config --global user.name 'svcovnrepoadm'"
+                      sh "git config --global user.email svcovnrepoadm@visa.com"
+                    }
+
+                }
+        stage('Versioning') {
+            when {
+                expression {
+                           params.MODULE_NAME == 'ovn-commons' ||
+                           params.MODULE_NAME == 'ovn-components' ||
+                           params.MODULE_NAME == 'ovn-eventbus' ||
+                           params.MODULE_NAME == 'ovn-dataaccess' ||
+                           params.MODULE_NAME == 'ovn-events' ||
+                           params.MODULE_NAME == 'ovn-dar' ||
+                           params.MODULE_NAME == 'ovn-mp-components' ||
+                           params.MODULE_NAME == 'ovn-apis' ||
+                           params.MODULE_NAME == 'ovn-client-profile' ||
+                           params.MODULE_NAME == 'ovn-datastoremanager' || 
+                           params.MODULE_NAME == 'ovn-dbconnector' || 
+                           params.MODULE_NAME == 'ovn-iso-message' ||
+                           params.MODULE_NAME == 'ovn-mp-rules' ||
+                           params.MODULE_NAME == 'ovn-mp-task' ||
+                           params.MODULE_NAME == 'ovn-workspace'
+
+                }
+
+            }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir:  "${PACKAGE_DIR}"]],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/${MODULE_NAME}.git']]]
+                sh "cd '$PACKAGE_DIR' && git checkout -b master"
+                sh "cd '$PACKAGE_DIR' && git tag -a -m \"${params.MODULE_NAME} for ${params.RELEASE_VERSION}\" ${RELEASE_TAG_MOD}"
+                sh "cd '$PACKAGE_DIR' && git push origin ${RELEASE_TAG_MOD} && git push origin master"
+
+            }
+
+        }
+
+        stage('Publish MODULE to Artifactory') {
+            steps {
+
+                     sh" cd '$PACKAGE_DIR' && jfrog rt config --url=https://artifactory.trusted.visa.com --user=$ARTIFACTORY_CREDS_USR --password=$ARTIFACTORY_CREDS_PSW --interactive=false"
+                     sh" cd '$PACKAGE_DIR' && jfrog rt go-publish ${GO_LOCAL_REPO} ${RELEASE_TAG_MOD}"
+
+                }
+            }
+
+            stage ('Trigger new master build') {
+                        when {
+                            expression {
+                                       params.MODULE_NAME == 'ovn-commons' ||
+                                       params.MODULE_NAME == 'ovn-components' ||
+                                       params.MODULE_NAME == 'ovn-eventbus' ||
+                                       params.MODULE_NAME == 'ovn-dataaccess' ||
+                                       params.MODULE_NAME == 'ovn-events' ||
+                                       params.MODULE_NAME == 'ovn-dar' ||
+                                       params.MODULE_NAME == 'ovn-mp-components' ||
+                                       params.MODULE_NAME == 'ovn-apis' ||
+                                       params.MODULE_NAME == 'ovn-client-profile' ||
+                                       params.MODULE_NAME == 'ovn-datastoremanager' || 
+                                       params.MODULE_NAME == 'ovn-dbconnector' || 
+                                       params.MODULE_NAME == 'ovn-iso-message' ||
+                                       params.MODULE_NAME == 'ovn-mp-rules' ||
+                                       params.MODULE_NAME == 'ovn-mp-task' ||
+                                       params.MODULE_NAME == 'ovn-workspace'
+                            }
+
+                        }
+                        steps {
+                            sleep(time:3,unit:"SECONDS")
+                            build job: "OVN/OVN_dev/OVN-OP/${params.MODULE_NAME}/master", parameters: [
+                                booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                            ]
+                        }
+
+            }
+    }
+}

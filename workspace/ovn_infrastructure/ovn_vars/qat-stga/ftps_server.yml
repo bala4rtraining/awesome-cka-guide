@@ -1,0 +1,10 @@
+---
+ftps_cert_file: ../config/test.ovn_manager.visa.full.crt
+ftps_address: 10.211.242.89
+
+# VIP CDB EF sync parms
+# The space after the first single quote is required for domain
+vip_ef_sync_domain: ' ["Cambodia"]'
+vip_ef_sync_sequence_prefix: "S"
+#vip_ef_sync_domain: ' ["Indonesia"]'
+#vip_ef_sync_sequence_prefix: "SE"

@@ -1,0 +1,46 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+
+  parameters {
+      string(defaultValue: "", description: "Branch name", name: "branch")
+      string(defaultValue: "", description: "Artifactory URL", name: "artifactory_url")
+      string(defaultValue: "", description: "Nginx auth tarball version", name: "nginx_auth_version")
+      string(defaultValue: "", description: "Nginx auth passthrough", name: "nginx_auth_passthrough")
+      string(defaultValue: "", description: "Nginx auth platform", name: "nginx_auth_platform")
+  }
+ 
+
+  stages {
+     stage('Set cluster variables') {
+         // boilerplate for stage must be the first stage
+         // in all the cd pipeline jobs.
+         // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+         steps {
+           setClusterAndDatacenter(env);
+         }
+     }
+     stage("GitSCM checkout for ovn_infrastructure"){
+       steps {
+         checkout poll: false, scm: [$class: 'GitSCM', branches: [[name: "$branch"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git']]]
+       }
+     }
+     stage('Deploy ovn_nginx_auth plugin') {
+       steps {
+         ansiColor('xterm') {
+            ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", playbook: 'ansible_ovn/deploy_nginx_auth.yml', extras: "-e nginx_auth_passthrough=$nginx_auth_passthrough -e release_artifactory_url='$artifactory_url/ovn-app-el7' -e nginx_auth_version=$nginx_auth_version -e nginx_auth_platform=$nginx_auth_platform"
+         }
+       }
+     }
+  }
+}

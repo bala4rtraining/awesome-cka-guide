@@ -1,0 +1,37 @@
+---
+#
+# This is the main file for running Ansible
+# on rescue to configure OOB switches
+#
+# This playbook uses hosts + group_vars/oob
+#
+# NOTE: This should be run separately AFTER
+#       the top level site.yml playbook is run.
+#
+#       This playbook will need to use the host inventory
+#       and group vars created by the top level site.yml
+#
+
+
+- name: Configure Cumulus OOB switches
+  hosts: oob
+  user: cumulus
+  become: yes
+  become_method: sudo
+
+  handlers:
+    - name: Reload network interface
+      command: ifreload -a
+      
+  tasks:
+    - name: Deploy OOB switch interface template
+      template:
+        src: interfaces_oob.j2
+        dest: /etc/network/interfaces
+        mode: 0644
+      notify: Reload network interface
+      
+    
+    
+
+  

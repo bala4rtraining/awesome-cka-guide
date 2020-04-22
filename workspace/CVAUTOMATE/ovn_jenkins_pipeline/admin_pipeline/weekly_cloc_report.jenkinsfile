@@ -1,0 +1,126 @@
+/*
+ * File: weekly_cloc_report.jenkinsfile
+ * Purpose: 
+ *   Jenkins pipeline that performs setup and triggers the weekly lines of code count. 
+ *   A report is sent to a specified list of recipients that is configured through an environment variable.
+ * Parameters: 
+ *   If this build is triggered automatically by cron, then "EMAIL_RECIPIENT_LIST_SUCCESS" and "EMAIL_RECIPIENT_LIST_FAIL" 
+ *   environment variables must be set under Configure > Properties > Environment Variables in Jenkins using the format 
+ *   EMAIL_RECIPIENT_LIST = person1@visa.com, person2@visa.com, etc. If these variables are left unset an emailed report 
+ *   will not be sent out. In addition, to allow for re-runs for missed reports, a "SEND_TO_SUBSCRIBERS" boolean parameter
+ *   must be configured in the job configuration by checking "This project is parameterized" and selecting boolean parameter.
+ *    
+ *   If this build is triggered manually then it sends the report to the person who initiated the build.
+*/
+def currentBuildInfo
+def attachment
+def sender
+def recipient
+def recipientCron
+def emailBody
+def subject
+  pipeline {
+    agent {
+      docker {
+        image 'centos7_ovn_docker'
+        label 'ovn_build'
+        args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /opt/app/ovnhub:/opt/app/ovnhub'
+      }
+    }
+    environment {
+      LOG_FILE = sh(returnStdout: true, script: "echo ovn-lta/line-of-code-weekly-report.csv")
+      CREDENTIALS = credentials("svcovnrepoadm_pwd")
+    }
+    stages {
+      stage('Setup') {
+        steps {
+          script {
+            currentBuildInfo = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause') // if build was started by user then this returns a JSON array
+            attachment = "ovn-lta/line-of-code-weekly-report.csv"
+            sender = "OVN Admin Job Jenkins <noreply@visa.com>"
+            recipient = "${currentBuildInfo.userId[0]}@visa.com"
+            if (!env.EMAIL_RECIPIENT_LIST_SUCCESS) {
+              println "\033[31mWARNING: Email recipient list for a successful run was not set. A report will not be sent if this job was triggered by cron.\033[0m"
+              recipientCronSuccess = " "
+            }
+            else {
+              recipientCronSuccess = "${EMAIL_RECIPIENT_LIST_SUCCESS}"
+            }
+            if (!env.EMAIL_RECIPIENT_LIST_FAIL) {
+              println "\033[31mWARNING: Email recipient list for a failed run was not set. A report will not be sent if this job was triggered by cron.\033[0m"
+              recipientCronFail = " "
+            }
+            else {
+              recipientCronFail = "${EMAIL_RECIPIENT_LIST_FAIL}"
+            }
+          }
+        }
+      }
+      stage('Pulling Git Repos') {
+        steps {
+          ansiColor('xterm') {
+            sh '''
+            mkdir ovn-lta
+            cd ovn-lta
+            sh ../jenkins-sh/clone_repos.sh $CREDENTIALS *-lta
+            '''
+          }
+        }
+      }
+      stage('Count on Git Repos') {
+          steps {
+              sh '''
+              sh jenkins-sh/count_lines_of_changes_in_repo.sh 21 ovn-lta/
+              '''
+          }
+      }
+      stage ('Archive') {
+          steps {
+              echo "Archiving..."
+              archiveArtifacts LOG_FILE
+          }
+      }
+    }
+    post {
+        success {
+            script {
+              emailBody = "OVN-LTA weekly lines of code report attached. For console output, see ${BUILD_URL}"
+              subject = "Weekly OVN-LTA Lines of Code Report"
+              if (currentBuildInfo && !params.SEND_TO_SUBSCRIBERS) {  // if build was started by a user then this should evaluate 
+                emailext attachmentsPattern: attachment,           // to true since currentBuildInfo contains a non-empty JSON array
+                body: emailBody,
+                subject: subject,
+                from: sender,
+                to: recipient
+              }
+              else {                                       // otherwise, currentBuildInfo contains an empty JSON array and it would evaluate to false
+                emailext attachmentsPattern: attachment,
+                body: emailBody,
+                subject: subject,
+                from: sender,
+                to: recipientCronSuccess
+              }
+            }
+            cleanWs()
+        }
+        failure {
+            script {
+              emailBody = "Weekly cloc report task failed, please check the console at ${BUILD_URL}"
+              subject = "[Failed] Weekly cloc report task failed [Failed]"
+              if (currentBuildInfo && !params.SEND_TO_SUBSCRIBERS) {
+                mail body: emailBody,
+                subject: subject,
+                from: sender,
+                to: recipient
+              }
+              else {
+                mail body: emailBody,
+                subject: subject,
+                from: sender,
+                to: recipientCronFail
+              }
+            }
+            cleanWs()
+        }
+    }
+  }

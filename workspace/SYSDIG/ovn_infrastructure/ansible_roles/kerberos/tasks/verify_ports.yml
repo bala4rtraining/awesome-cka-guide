@@ -1,0 +1,13 @@
+---
+# Verify firewall ports opened at Kerberos server
+- name: check firewalld status
+  shell:
+    cmd: firewall-cmd --state
+
+- name: check opened ports at kerberos server
+  shell: firewall-cmd --permanent --zone=public --list-all | grep -e 'port="{{ port }}"'
+  with_items:
+  - "{{ kerberos_kdc_port }}"
+  - "{{ kerberos_kadmind_port }}"
+  loop_control:
+    loop_var: port

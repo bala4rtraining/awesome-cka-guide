@@ -1,0 +1,105 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        booleanParam(name: 'RELEASE_OVN_INFRASTRUCTURE',        defaultValue: false, description: 'Is OVN Infrastructure required? Check only if you know what you are doing')
+        booleanParam(name: 'RELEASE_OVN_APP_INFRASTRUCTURE',	defaultValue: false, description: 'Is OVN App Infrastructure required? Check only if you know what you are doing')
+        booleanParam(name: 'RELEASE_OVN_CLEARING_JOBS',         defaultValue: false, description: 'Is OVN_CLEARING_JOBS part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_CLEARING_XDC_SYNC',     defaultValue: false, description: 'Is OVN_CLEARING_XDC_SYNC part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_CAS_TOOLS',             defaultValue: false, description: 'Is OVN_CAS_TOOLS part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_CAS_UI',                defaultValue: false, description: 'Is OVN_CAS_UI part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_NGINX_AUTH',          	defaultValue: false, description: 'Is OVN_NGINX_AUTH part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_CRYPTO',                defaultValue: false, description: 'Is OVN_CRYPTO part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN2',                      defaultValue: false, description: 'Is OVN2 part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_RIAK_PERSISTENCE',      defaultValue: false, description: 'Is OVN Riak Persistence part of the upcoming release?')
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        RELEASE_TAG = "v${params.RELEASE_VERSION}-rc1"
+    }
+
+    stages {
+
+        stage ('Check prerequisites') {
+
+            steps {
+                sh "echo To be defined, check status of master branches"
+                sh "echo Check that infrastructure is not created yet"
+            }
+
+        }
+
+        stage ('Tagging master branches for Clearing') {
+
+            steps {
+                build job: 'release-clearing-tag-master-branches', parameters: [
+                    booleanParam(name: 'RELEASE_OVN_CLEARING_JOBS',            	value: params.RELEASE_OVN_CLEARING_JOBS),
+                    booleanParam(name: 'RELEASE_OVN_CLEARING_XDC_SYNC',         value: params.RELEASE_OVN_CLEARING_XDC_SYNC),
+                    booleanParam(name: 'RELEASE_OVN_CAS_TOOLS',                 value: params.RELEASE_OVN_CAS_TOOLS),
+                    booleanParam(name: 'RELEASE_OVN_CAS_UI',                    value: params.RELEASE_OVN_CAS_UI),
+                    booleanParam(name: 'RELEASE_OVN_NGINX_AUTH',                value: params.RELEASE_OVN_NGINX_AUTH),
+                    booleanParam(name: 'RELEASE_OVN2',                          value: params.RELEASE_OVN2),
+                    booleanParam(name: 'RELEASE_OVN_CRYPTO',                    value: params.RELEASE_OVN_CRYPTO),
+                    booleanParam(name: 'RELEASE_OVN_RIAK_PERSISTENCE',          value: params.RELEASE_OVN_RIAK_PERSISTENCE),
+                    validatingString(name: 'RELEASE_VERSION',                   value: String.valueOf(RELEASE_VERSION))
+                ]
+            }
+        }
+
+        stage ('Freeze dependencies for Ovn_Riak_Persistence') {
+             when { expression { return params.RELEASE_OVN_RIAK_PERSISTENCE } }
+             steps {
+                   build job: 'release-freeze-dependencies', parameters: [
+                       booleanParam(name: 'RELEASE_OVN_RIAK_PERSISTENCE',      value: params.RELEASE_OVN_RIAK_PERSISTENCE),
+                   ]
+             }
+        }
+
+        stage ('Create release branches for Clearing') {
+
+            steps {
+                build job: 'release-clearing-create-branches', parameters: [
+                    booleanParam(name: 'RELEASE_OVN_CLEARING_JOBS',             value: params.RELEASE_OVN_CLEARING_JOBS),
+                    booleanParam(name: 'RELEASE_OVN_CLEARING_XDC_SYNC',         value: params.RELEASE_OVN_CLEARING_XDC_SYNC),
+                    booleanParam(name: 'RELEASE_OVN_CAS_TOOLS',                 value: params.RELEASE_OVN_CAS_TOOLS),
+                    booleanParam(name: 'RELEASE_OVN_CAS_UI',                    value: params.RELEASE_OVN_CAS_UI),
+                    booleanParam(name: 'RELEASE_OVN_NGINX_AUTH',                value: params.RELEASE_OVN_NGINX_AUTH),
+                    booleanParam(name: 'RELEASE_OVN2',                          value: params.RELEASE_OVN2),
+                    booleanParam(name: 'RELEASE_OVN_CRYPTO',                    value: params.RELEASE_OVN_CRYPTO),
+                    booleanParam(name: 'RELEASE_OVN_RIAK_PERSISTENCE',          value: params.RELEASE_OVN_RIAK_PERSISTENCE),
+                    validatingString(name: 'RELEASE_VERSION',                   value: String.valueOf(RELEASE_VERSION))
+                ]
+            }
+        }
+
+
+        stage ('Trigger release builds for Clearing') {
+
+            steps {
+                build job: 'release-clearing-trigger-build', parameters: [
+                    booleanParam(name: 'RELEASE_OVN_CLEARING_JOBS',             value: params.RELEASE_OVN_CLEARING_JOBS),
+                    booleanParam(name: 'RELEASE_OVN_CLEARING_XDC_SYNC',         value: params.RELEASE_OVN_CLEARING_XDC_SYNC),
+                    booleanParam(name: 'RELEASE_OVN_CAS_TOOLS',                 value: params.RELEASE_OVN_CAS_TOOLS),
+                    booleanParam(name: 'RELEASE_OVN_CAS_UI',                    value: params.RELEASE_OVN_CAS_UI),
+                    booleanParam(name: 'RELEASE_OVN_NGINX_AUTH',                value: params.RELEASE_OVN_NGINX_AUTH),
+                    booleanParam(name: 'RELEASE_OVN2',                          value: params.RELEASE_OVN2),
+                    booleanParam(name: 'RELEASE_OVN_CRYPTO',                    value: params.RELEASE_OVN_CRYPTO),
+                    booleanParam(name: 'RELEASE_OVN_RIAK_PERSISTENCE',          value: params.RELEASE_OVN_RIAK_PERSISTENCE),
+                    validatingString(name: 'RELEASE_VERSION',                   value: String.valueOf(RELEASE_VERSION))
+                ]
+            }
+        }
+
+
+    }
+}

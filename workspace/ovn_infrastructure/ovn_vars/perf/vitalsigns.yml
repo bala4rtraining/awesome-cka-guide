@@ -1,0 +1,2 @@
+---
+sftp_servers: '[{"10.203.221.116", 22, "ovnvs", "/vitalsigns/ovndata", 100}, {"10.203.221.119", 22, "ovnvs", "/vitalsigns/ovndata", 100}]'

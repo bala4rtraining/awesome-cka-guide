@@ -1,0 +1,40 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+       args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/'
+    }
+  }
+  options {
+     buildDiscarder(logRotator(numToKeepStr: '7'))
+  }
+  parameters {
+     choice(name: 'SERVICE_TYPE', choices: 'apf\nub', description: '') 
+     choice(name: 'RIAK_TLS_ENABLED', choices: 'true\nfalse', description: '') 
+     choice(name: 'KAFKA_TLS_ENABLED', choices: 'true\nfalse', description: '')
+	 string(name: 'RELEASE_BRANCH', defaultValue: 'release-0.3.27', description: 'Enter the release branch details')
+  }
+  stages {
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      steps {
+        setClusterAndDatacenter(env);
+      }
+    }
+    stage('Checkout SCM'){
+      steps{
+        git credentialsId: '', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    stage('deploy_umf_delivery'){
+      steps{
+        ansiColor('xterm') {
+                   ansiblePlaybook credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", extras: "--extra-vars @config/${env.ENV}.vars.secret.yml --vault-password-file=~/.vault-${env.ENV} --extra-vars riak_tls_enabled=${RIAK_TLS_ENABLED} --extra-vars kafka_tls_enabled=${KAFKA_TLS_ENABLED} --become", playbook: 'ansible_ovn/ovn_umf_delivery_${SERVICE_TYPE}.yml'
+        }	  
+      }
+    }
+  }
+}

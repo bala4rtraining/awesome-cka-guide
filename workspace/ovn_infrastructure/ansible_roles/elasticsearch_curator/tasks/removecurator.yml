@@ -1,0 +1,11 @@
+---
+- name: Delete old cron job
+  cron:
+    name: "delete older elasticsearch indices"
+    job: "python /etc/elasticsearch_curator/cleanup_indices.py"
+    state : absent
+
+- name: Check if elasticsearch_curator directory is present, if Yes, then remove the old configurations
+  file:
+    path: /etc/elasticsearch_curator/
+    state: absent

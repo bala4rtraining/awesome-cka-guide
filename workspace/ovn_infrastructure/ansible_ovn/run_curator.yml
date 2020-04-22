@@ -1,0 +1,9 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+
+# playbook for deploying elasticsearch curator to cleanup older indices.
+- name: run the elasticsearch curator to delete older indices
+  gather_facts: yes
+  hosts: elasticsearch
+  roles:
+    - { role: elasticsearch_curator, dispatch: ['runcurator'], when: "hostvars[inventory_hostname].curator_cron =='enabled'"  }

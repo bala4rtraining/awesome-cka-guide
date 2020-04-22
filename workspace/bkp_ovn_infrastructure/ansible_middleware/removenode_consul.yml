@@ -1,0 +1,6 @@
+---
+- name: Remove Consul node(s)
+  hosts: "{{ target_hosts }}"
+  gather_facts: yes
+  roles:
+    - { role: consul, dispatch: ['removenode'] }

@@ -1,0 +1,30 @@
+---
+- name: persist CA cert
+  copy: content="{{ docker_selfsigned_cacert }}" dest="{{ openssl_rootCA_cert }}"
+
+- name: persist CA key
+  copy: content="{{ docker_ca_key }}" dest="{{ openssl_rootCA_keyfile }}"
+
+- name: cleanup directories
+  shell: |
+    rm -rf index.txt* serial* newcerts
+    touch index.txt
+    echo '01' > serial
+    mkdir newcerts
+
+- name: config openssl
+  template:
+    src: ca.cnf.j2
+    dest: "{{ openssl_cert_output_path }}/ca.cnf"
+    mode: 0600
+
+- name: sign certificate request
+  command: openssl ca -batch -config {{ openssl_cert_output_path }}/ca.cnf -policy signing_policy -extensions signing_req -out {{ openssl_cert_output_path }}/{{ openssl_cert_name }}.pem -infiles {{ openssl_cert_output_path }}/{{ openssl_cert_name }}.csr
+
+- name: convert pem to crt
+  command: bash -c "awk '/BEGIN/,/END/' {{ openssl_cert_output_path }}/{{ openssl_cert_name }}.pem | tee {{ openssl_cert_output_path }}/{{ openssl_cert_name }}.crt"
+
+- name: remove pem file
+  file:
+    path: "{{ openssl_cert_output_path }}/{{ openssl_cert_name }}.pem"
+    state: absent

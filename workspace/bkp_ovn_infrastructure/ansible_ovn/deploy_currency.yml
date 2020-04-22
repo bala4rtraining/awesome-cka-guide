@@ -1,0 +1,11 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_switch_servers
+
+- name: deploy currency rates to switch nodes
+  hosts: ovn_switch_servers
+  roles:
+    - { role: currency, ovngit_ref: "{{currency_ovngit_ref|default(omit)}}" }
+  vars:
+    name: ovn_switch
+    source_dir: "{{ currency_ovngit_ref|default('files/') }}"
+    source_file: currency.tar

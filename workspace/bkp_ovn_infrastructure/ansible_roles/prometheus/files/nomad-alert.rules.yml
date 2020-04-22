@@ -1,0 +1,29 @@
+groups:
+- name: nomad-alert.rules
+  rules:
+  - alert: NomadNewLeaderElected
+    expr: changes(nomad_raft_state_leader{job="statsd_metrics"}[10m]) > 2
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      Description: Nomad Cluster elected new leader {{ $value | humanize }}
+        times in the last 10 minutes
+      Summary: Nomad Cluster elected New Leader
+  - alert: NomadNewLeaderElected
+    expr: changes(nomad_raft_state_leader{job="statsd_metrics"}[15m]) > 4
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      Description: Nomad Cluster elected new leader {{ $value | humanize }}
+        times in the last 15 minutes
+      Summary: Nomad Cluster elected New Leader
+  - alert: NomadNewLeaderElected
+    expr: changes(nomad_raft_state_leader{job="statsd_metrics"}[3m]) > 0
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      Description: Nomad Cluster elected new leader in the last 1 minute
+      Summary: Nomad Cluster elected New Leader

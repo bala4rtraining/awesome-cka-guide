@@ -1,0 +1,31 @@
+---
+#directory to store the packages
+yum_mirror_dir: /opt/app/yum-mirror
+yum_mirror_service_dir: /usr/lib/systemd/system
+yum_config_dir: /etc/yum.repos.d
+
+ovn_data_dir: "/var/lib"
+ovn_riak_data_dir: "{{ovn_data_dir}}/riak"
+ovn_riak_log_dir: '/var/log/riak'
+security_limits_dir: "/etc/security/limits.d"
+sysctl_dir: "/etc/sysctl.d"
+riak_install_dir: "/etc/riak"
+consul_user: "consul"
+consul_group: "consul"
+consul_home: "/opt/consul/"
+consul_bin_path: "/usr/local/bin/"
+consul_bin: "/usr/local/bin/consul"
+consul_conf_dir: "/etc/consul.d"
+consul_server_conf_file: "/etc/consul.d/server/config.json"
+consul_client_conf_file: "/etc/consul.d/client/config.json"
+consul_log_dir: "/var/log/consul"
+consul_data_dir: "/opt/app/data/consul"
+consul_server_log_file: "/var/log/consul/consul_server.log"
+consul_client_log_file: "/var/log/consul/consul_client.log"
+consul_server_systemd_file: "/etc/systemd/system/consul_server.service"
+consul_client_systemd_file: "/etc/systemd/system/consul_client.service"
+consul_server_logrotate_conf_file: "/etc/logrotate.d/consul_server.conf"
+consul_client_logrotate_conf_file: "/etc/logrorate.d/consul_client.conf"
+yum_mirror_dir: /opt/app/yum-mirror
+yum_mirror_service_dir: /usr/lib/systemd/system
+yum_config_dir: /etc/yum.repos.d

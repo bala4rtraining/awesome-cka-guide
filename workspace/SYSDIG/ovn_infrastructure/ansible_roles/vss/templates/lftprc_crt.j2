@@ -1,0 +1,6 @@
+set ssl:verify-certificate no
+set ftp:ssl-force yes
+set ssl:cert-file {{ vss_mvs_cert_file_crt }}
+set net:timeout 30
+set net:max-retries 15
+set cmd:fail-exit yes

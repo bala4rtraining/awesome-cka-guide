@@ -1,0 +1,68 @@
+---    
+# install core-site.xml
+- name: install core-site.xml file
+  template:
+    src: core-site.xml.j2
+    dest: /etc/hadoop/conf/core-site.xml
+    owner: hdfs
+    group: hdfs
+    mode: "0640"
+
+# install hdfs-site.xml
+- name: install hdfs-site.xml file
+  template:
+    src: hdfs-site.xml.j2
+    dest: /etc/hadoop/conf/hdfs-site.xml
+    owner: hdfs
+    group: hdfs
+    mode: "0640"
+
+# install ssl-server.xml and ssl-client.xml, if hadoop_enable_tls is enabled
+- name: install ssl-server.xml
+  template:
+    src: ssl-server.xml.j2
+    dest: /etc/hadoop/conf/ssl-server.xml
+    owner: hdfs
+    group: hdfs
+    mode: "0640"
+  when: hadoop_enable_tls == True
+
+- name: install ssl-client.xml
+  template:
+    src: ssl-client.xml.j2
+    dest: /etc/hadoop/conf/ssl-client.xml
+    owner: hdfs
+    group: hdfs
+    mode: "0640"
+  when: hadoop_enable_tls == True
+
+- name: install hdfs_jaas.conf
+  template:
+    src: hdfs_jaas.conf.j2
+    dest: /etc/hadoop/conf/hdfs_jaas.conf
+    owner: hdfs
+    group: hdfs
+    mode: "0640"
+  when: hadoop_enable_zkfc_kerberos == True
+
+# Update init script for datanode
+- name: install service script for the datanode
+  template:
+    src: hadoop-hdfs-datanode.j2
+    dest: "/etc/rc.d/init.d/hadoop-hdfs-datanode"
+    owner: hdfs
+    group: hdfs
+    mode: "0755"
+
+# Update init script for zkfc
+- name: install service script for the zkfc
+  template:
+    src: hadoop-hdfs-zkfc.j2
+    dest: "/etc/rc.d/init.d/hadoop-hdfs-zkfc"
+    owner: hdfs
+    group: hdfs
+    mode: "0755"
+
+# reload systemctl daemon
+- name: reload datanode service configuration
+  shell: systemctl daemon-reload

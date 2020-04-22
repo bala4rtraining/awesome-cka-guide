@@ -1,0 +1,27 @@
+# This reserve list holds hostname placeholders, and when combined with the other inventories
+# in this REPO we gain a full picture of which hosts are in use.
+#
+# Note: To determine unique host list use the devlist.sh script to list the unused ones.
+#
+
+
+# sl73ovnapd045 is OVNTEST.visa.com webserver and CD for TEST/QA systems running
+[sl73ovnapd045]
+10.211.242.89
+
+### reserved list for Production OVN-Manager servers
+[sl73ovnmgc01]
+10.184.254.25
+[sl73ovnmgc02]
+10.184.254.26
+[sl73ovnmgp01]
+10.184.254.27
+[sl73ovnmgp02]
+10.184.254.28
+
+### reserved for testing toolkit - Zack Petersen
+[sl73ovnapd540]
+10.160.46.113
+
+[sl73ovnapq225]
+10.160.45.103

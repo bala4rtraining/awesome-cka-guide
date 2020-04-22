@@ -1,0 +1,39 @@
+[Unit]
+Description=Kafka broker
+After=zookeeper.service
+
+[Service]
+Type=simple
+User={{kafka_username}}
+Group={{kafka_group}}
+Restart=always
+RestartSec=3
+TimeoutStopSec=180
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=kafka_service
+
+ExecStart=/bin/java -Xmx1G -Xms1G -server \
+  -XX:+UseG1GC \
+  -XX:MaxGCPauseMillis=20 \
+  -XX:InitiatingHeapOccupancyPercent=35 \
+  -XX:+DisableExplicitGC \
+  -Djava.awt.headless=true \
+  -Xloggc:{{kafka_log_dir}}/kafkaServer-gc.log \
+  -verbose:gc \
+  -XX:+PrintGCDetails \
+  -XX:+PrintGCDateStamps \
+  -XX:+PrintGCTimeStamps \
+  -Dkafka.logs.dir={{kafka_log_dir}} \
+{% if monitor_kafka_using_prometheus == "true" %}
+  -javaagent:{{jmx_exporter_base_dir}}/{{jmx_exporter_jar}}={{ kafka_jmxexporter_port }}:{{ jmx_exporter_config_dir}}/kafka_jmx_exporter_config.yml \
+{% endif %}
+  -Dlog4j.configuration=file:{{kafka_install_dir}}/config/log4j.properties \
+{% if kafka_enable_zk_client_authentication == "true" %}
+  -Djava.security.auth.login.config={{ kafka_install_dir }}/config/jaas.conf \
+{% endif %}
+  -cp :{{kafka_install_dir}}/libs/* kafka.Kafka {{kafka_install_dir}}/config/server.properties
+
+[Install]
+WantedBy=multi-user.target

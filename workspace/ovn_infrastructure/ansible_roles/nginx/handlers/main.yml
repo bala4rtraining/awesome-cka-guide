@@ -1,0 +1,33 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: restart nginx
+  debug: msg="checking config first"
+  changed_when: True
+  notify:
+    - check nginx configuration
+    - restart nginx after config check
+
+- name: reload nginx
+  debug: msg="checking config first"
+  changed_when: True
+  notify:
+    - check nginx configuration
+    - reload nginx after config check
+
+- name: check nginx configuration
+  command: "nginx -t"
+  register: result
+  changed_when: "result.rc != 0"
+
+- name: restart nginx after config check
+  service: name=nginx state=restarted
+
+- name: reload nginx after config check
+  service: name=nginx state=reloaded

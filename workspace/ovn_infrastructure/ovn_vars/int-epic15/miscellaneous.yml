@@ -1,0 +1,21 @@
+---
+##############
+# THIS FILE SHOULD NOT EXIST!
+# IF YOU ARE PLACING CONFIGS HERE, THEN YOU ARE DOING SOMETHING WRONG! :)
+#
+# The only reason this file exist is we don't know how to categorize these
+# config vars.
+#
+# Ansible config vars should be categorized properly into a separate file
+# that represent the category.
+##############
+
+environment_name: "int-epic15-1"
+processor_identity: "{{ local_instance }}"
+pull_key: "INT-EPIC15-1"
+remote_instances: "[{ {{remote_instance}}, to_instance_{{remote_instance}} }]"
+
+start_ovn: true
+autostart_ovn: true
+
+#ovn_time: "2016/10/30 02:00:00"

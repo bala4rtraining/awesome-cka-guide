@@ -1,0 +1,98 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=fluentd_aggregator,elasticsearch
+
+- gather_facts:
+  hosts: fluentd_aggregator:elasticsearch
+
+- name: Set Elastic Search Hostname based on eserv_type=lbonly host attribute
+  hosts: fluentd_aggregator
+  tasks:
+    - set_fact: elasticsearch_host="{{ hostvars[item]['ansible_nodename'] }}"
+      with_items: "{{ groups['elasticsearch'] }}"
+      when: hostvars[item].eserv_type == "lbonly"
+
+- name: install and start td_agent as log aggregator.
+  hosts: fluentd_aggregator
+  roles:
+    - nginx
+    - { role: td_agent, dispatch: ['deploy-as-log-aggregator'] }
+  vars:
+    - cert_data: "{{ elasticsearch_client_cert }}"
+    - key_data: "{{ elasticsearch_client_key }}"
+    - ca_cert_data: "{{ elasticsearch_client_ca_cert }}"
+    - cert_path: "/etc/pki/tls/elasticsearch-client/certs"
+    - key_path: "/etc/pki/tls/elasticsearch-client/private"
+    - ca_cert_path: "/etc/pki/tls/elasticsearch-client/certs"
+    - elasticsearch_client_ssl_enabled: "true"
+    - elasticsearch_client_use_fqdn: "true"
+    - nginx_enable_ssl: "true"
+    - nginx_sites:
+        elasticsearch:
+          - listen {{ nginx_elasticsearch_client_port }}
+          - server_name localhost
+    - nginx_configs:
+        elasticsearch_upstream:
+          - upstream elasticsearch {
+              server {{ elasticsearch_lbhost }}:{{ elasticsearch_port }};
+            }
+    - nginx_locations:
+      - site: elasticsearch
+        locations:
+          - name: elasticsearch
+            location:
+              - location / {
+                  proxy_ssl_protocols TLSv1.2;
+                  proxy_ssl_certificate {{ cert_path }}/{{ inventory_hostname }}.pem;
+                  proxy_ssl_certificate_key {{ key_path }}/{{ inventory_hostname }}.pem;
+                  proxy_ssl_trusted_certificate {{ ca_cert_path }}/bundle.pem;
+                  proxy_pass https://elasticsearch;
+                }
+
+- name: deploy nginx proxy for vss_reports with SSL
+  hosts: fluentd_aggregator
+  roles:
+    - { role: nginx, when: "{{ enable_nginx_ssl }} == true" }
+  vars:
+    - nginx_enable_ssl: "true"
+    - nginx_ssl_certificate_path: "/etc/pki/tls/certs/{{ inventory_hostname }}.pem"
+    - nginx_ssl_certificate_key_path: "/etc/pki/tls/private/{{ inventory_hostname }}.pem"
+    - nginx_ssl_client_certificate: "/etc/pki/tls/certs/bundle.pem"
+    - nginx_sites:
+        default:
+          - listen {{ nginx_default_port }} ssl
+          - server_name localhost
+          - ssl_certificate {{ nginx_ssl_certificate_path }}
+          - ssl_certificate_key {{ nginx_ssl_certificate_key_path }}
+          - ssl_client_certificate {{ nginx_ssl_client_certificate }}
+          - ssl_verify_depth 2
+          - ssl_verify_client on
+
+    - nginx_locations:
+      - site: default
+        locations:
+          - name: vss-output
+            location:
+              - location /{{ vss_output_context_path | default('vss-output') }} {
+                   alias /opt/app/vss/output;
+                   autoindex on;
+                }
+
+- name: deploy nginx proxy for vss_reports without SSL
+  hosts: fluentd_aggregator
+  roles:
+    - { role: nginx, when: "{{ enable_nginx_ssl }} == false" }
+  vars:
+    - nginx_enable_ssl: "false"
+    - nginx_sites:
+        default:
+          - listen {{ nginx_default_port }}
+          - server_name localhost
+    - nginx_locations:
+      - site: default
+        locations:
+          - name: vss-output
+            location:
+              - location /{{ vss_output_context_path | default('vss-output') }} {
+                   alias /opt/app/vss/output;
+                   autoindex on;
+                }

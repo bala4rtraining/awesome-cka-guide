@@ -1,0 +1,9 @@
+---
+# tasks file for httpd
+
+- name: Install httpd pacakges
+  yum: name=httpd
+
+- name: Restart HTTP server always
+  service: name=httpd state=restarted
+  

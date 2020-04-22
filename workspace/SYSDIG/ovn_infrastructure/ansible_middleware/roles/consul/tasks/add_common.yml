@@ -1,0 +1,61 @@
+---
+- name: Create group - consul
+  group:
+    state: present
+    name: "{{ consul_group }}"
+    system: yes
+
+- name: Create user - consul
+  user:
+    state: present
+    system: yes
+    name: "{{ consul_user }}"
+    group: "{{ consul_group }}"
+    home: "{{ consul_home }}"
+    shell: /bin/bash
+
+#- name: ensure unzip is at the latest version
+#  yum: name=unzip state=latest
+
+- name: Unzip Consul to bin directory
+  unarchive:
+    creates: "{{ consul_bin }}"
+    src: "{{ consul_url }}"
+    dest: "{{ consul_bin_path }}"
+    copy: no
+    owner: "{{ consul_user }}"
+    group: "{{ consul_group }}"
+    mode: 0700
+
+- name: Create /opt/app/data directory
+  file:
+    state: directory
+    path: "{{ consul_data_dir }}"
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create /opt/app/data/consul directory
+  file:
+    state: directory
+    path: "{{ consul_data_dir }}"
+    owner: "{{ consul_user }}"
+    group: "{{ consul_group }}"
+    mode: 0755
+
+- name: Create /var/log/consul directory
+  file:
+    state: directory
+    path: "{{ consul_log_dir }}"
+    owner: "{{ consul_user }}"
+    group: "{{ consul_group }}"
+    mode: 0755
+
+
+- name: Create /etc/consul.d directory
+  file:
+    state: directory
+    path: "{{ consul_conf_dir }}"
+    owner: "{{ consul_user }}"
+    group: "{{ consul_group }}"
+    mode: 0700

@@ -1,0 +1,2 @@
+@Library('ovn-shared-library') _
+cdTemplate_InvokeAnsiblePlaybook('ovn_infrastructure', '$RELEASE_BRANCH', 'ansible_ovn/site.yml','-e @/tmp/vars_about_$OTHER_ENV.yml --vault-password-file=~/.vault-$ENV --tags deploy_mediator --limit $INVENTORY_HOST_NAME')

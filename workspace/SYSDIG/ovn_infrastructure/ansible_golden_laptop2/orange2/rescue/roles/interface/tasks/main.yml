@@ -1,0 +1,41 @@
+---
+# tasks file for interface configuration on the orange2/rescue
+- name: Install bond module
+  command: modprobe --first-time bonding
+  ignore_errors: yes
+  
+- name: Configure static interfaces on the rescue (4 in total)
+  template:
+    
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+    
+  with_items:
+    
+    - src: "interface_rescue_1g_ogl.j2"
+      dest: "{{int_config_dir}}/ifcfg-{{ rescue.int_1g_ogl.subnet_int_ip_name }}"
+      
+    - src: "interface_rescue_1g_oob_sw_eth0.j2"
+      dest: "{{int_config_dir}}/ifcfg-{{ rescue.int_1g_oob_sw_eth0.subnet_int_ip_name }}"
+
+    - src: "interface_rescue_1g_oob_sw_swp1.j2"
+      dest: "{{int_config_dir}}/ifcfg-{{ rescue.int_1g_oob_sw_swp1.subnet_int_ip_name }}"
+
+    - src: "interface_rescue_1g_oob_serv_swp1.j2"
+      dest: "{{int_config_dir}}/ifcfg-{{ rescue.int_1g_oob_serv_swp1.subnet_int_ip_name }}"
+      
+    - src: "interface_rescue_10g_border_sw.j2"
+      dest: "{{int_config_dir}}/ifcfg-{{ rescue.int_10g_border_sw.subnet_int_ip_name }}"
+
+    - src: "interface_rescue_10g2_border_sw.j2"
+      dest: "{{int_config_dir}}/ifcfg-{{ rescue.int_10g_border_sw.subnet_int_ip_name2 }}"
+
+    - src: "interface_rescue_bond10g_border_sw.j2"
+      dest: "{{int_config_dir}}/ifcfg-{{ rescue.int_10g_border_sw.subnet_int_ip_bond_name }}"
+      
+  
+
+- name: Restart networking on rescue
+  shell: systemctl restart network
+  
+  

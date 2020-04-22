@@ -1,0 +1,12 @@
+---
+- name: create mock dir
+  file:
+    path: /tmp/vss_conn_test/
+    state: directory
+    mode: 0755
+
+- name: create mock file
+  copy:
+    dest: /tmp/vss_conn_test/INDOINPAMOCK
+    content: "this is a mock INDOINPA file"
+    mode: 0755

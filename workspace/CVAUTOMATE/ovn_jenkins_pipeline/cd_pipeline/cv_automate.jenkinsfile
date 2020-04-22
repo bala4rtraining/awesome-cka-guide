@@ -1,0 +1,93 @@
+//
+// This pipeline stages is for Project creating ,adding Pipeline, Building the dockerfile and Environment Provisioning in Cloud View
+//
+
+pipeline {
+
+ agent any
+
+
+ stages {
+
+  stage('checkout SCM') {
+   steps {
+    git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_devcassandra.git', branch: "master"
+   }
+  }
+
+
+  stage('CreateProject') {
+   steps {
+    sh 'cvautomate/cv_create_project.sh > project.txt'
+   }
+  }
+  stage('ProjectTools') {
+
+   environment {
+    PROJECT_ID = sh(returnStdout: true, script: ''
+     'grep -oP '( ? <= "id" : ")[^"] * ' project.txt | sed -n 1p'
+     '').trim()
+    STACK_ID = sh(returnStdout: true, script: ''
+     'grep -oP '( ? <= "id" : ")[^"] * ' project.txt | sed -n 2p'
+     '').trim()
+   }
+
+   steps {
+    sh 'env'
+    sh 'cat project.txt'
+    echo "PROJECT_ID = ${env.PROJECT_ID}"
+    echo "STACK_ID = ${env.STACK_ID}"
+    echo "displaying variables"
+    echo "${env.ProjectName}"
+    echo "${env.ProjectKey}"
+    echo "executing the tools script"
+    sh 'cvautomate/cv_create_project_tools.sh'
+   }
+  }
+  stage('Pipeline') {
+
+   steps {
+    sh 'env'
+    sh 'cvautomate/cv_create_pipeline.sh > pipeline.txt'
+    sh 'cat pipeline.txt'
+   }
+
+  }
+  stage('Build') {
+
+   environment {
+    PipelineId = sh(returnStdout: true, script: ''
+     'grep -oP '( ? <= "pipelineId" : ")[^"] * ' pipeline.txt'
+     '').trim()
+   }
+
+   steps {
+    sh 'env'
+    echo "${env.PipelineId}"
+    sh 'cvautomate/cv_build.sh  > build.txt'
+   }
+
+  }
+
+  stage('Provision') {
+
+   environment {
+    buildId = sh(returnStdout: true, script: ''
+     'grep -oP '( ? <= "data" : ")[^"] * ' build.txt'
+     '').trim()
+   }
+
+   steps {
+
+    sh 'cvautomate/cv_env_provisioning.sh'
+   }
+
+    post {
+    always {
+     cleanWs()
+    }
+   }
+  }
+
+ }
+}

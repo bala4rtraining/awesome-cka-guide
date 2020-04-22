@@ -1,0 +1,6 @@
+- include: ../ovn_vars.yml ovn_vars_hosts=kibana:grafana:prometheus:alertmanager:nomad_ui
+
+- name: deploy td-agent forwarder configuration for nginx log monitoring
+  hosts: kibana:grafana:prometheus_server:prometheus_alertmanager
+  roles:
+    - { role: td_agent, dispatch: ['deploy-input-config'], template_name: "ovn_nginx_auth", when: "'ovn_nginx_auth' in fluentd_input_config_list" }

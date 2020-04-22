@@ -1,0 +1,255 @@
+server:
+  host: {{ nginx_auth_host }}
+  port: {{ nginx_auth_port }}
+  csrfcode: {{nginx_auth_csrf}}
+  scheme: {{ nginx_auth_scheme }}
+  {% if nginx_auth_scheme == 'https' %}
+  tls_config:
+    server_cert: {{ nginx_auth_server_cert }}
+    server_key: {{ nginx_auth_server_key }}
+    root_ca_certs:
+      {% for cert in nginx_auth_root_ca_certs %}
+      - {{ cert }}
+      {% endfor %}
+    {% if nginx_auth_enable_mutual_ssl == 'true' %}
+    client_ca_certs:
+      {% for cert in nginx_auth_client_ca_certs %}
+      - {{ cert }}
+      {% endfor %}
+    {% endif %}
+    ciphers:
+      - "TLS_RSA_WITH_AES_128_CBC_SHA256"
+      - "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+      - "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+      - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+      - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+      - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+      - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
+    min_version: {{ nginx_auth_tls_min_version }}
+  {% endif %}
+
+auth:
+  ldap:
+    host: {{ nginx_auth_ldap_host }}
+    port: {{ nginx_auth_ldap_port }}
+    search_filter: "(sAMAccountName=%s)"
+    search_base_dn: "dc=visa,dc=com"
+    attributes:
+      name: "givenName"
+      surname: "sn"
+      username: "sAMAccountName"
+      member_of: "memberOf"
+      email: "mail"
+    groups:
+    {% for group in nginx_auth_ldap_groups %}
+      - {{ group }}
+    {% endfor %}
+session:
+    secret:   "{{ nginx_auth_session_secret }}"
+    path:     "/"
+    domain:   ""
+    maxAge:   {{ nginx_auth_session_maxage }}
+    secure:   {{ nginx_auth_session_secure }}
+    httpOnly: true
+
+# Applications config
+applications:
+  grafana:
+{% if nginx_auth_passthrough == 'true' %}
+      authorization_mode: "passthrough"
+{% elif nginx_auth_passthrough == 'false' %}
+      authorization_mode: "header"
+      header_info:
+          - name: "X-WEBAUTH-USER"
+          - value: "username"
+{% endif %}
+  kibana:
+{% if nginx_auth_passthrough == 'true' %}
+      authorization_mode: "passthrough"
+{% elif nginx_auth_passthrough == 'false' %}
+      authorization_mode: "url"
+      authorization-access-logging-level: "viewer"
+      filter_groups:
+        - {{ovn_nginx_admin}}
+        - {{ovn_nginx_viewer}}
+        - {{ovn_nginx_editor}}
+      groups_role_mapping:
+        {{ovn_nginx_admin}}: "admin"
+        {{ovn_nginx_editor}}: "editor"
+        {{ovn_nginx_viewer}}: "viewer"
+      url_role_mapping:
+        - ".*api/saved_objects/bulk_get.*":
+            default: "viewer"
+        - ".*/api/timelion/run.*":
+            default: "editor"
+        - ".*/es_admin/.kibana/dashboard/_search.*":
+            default: "viewer"
+        - ".*/es_admin/.kibana/dashboard/.*":
+            POST: "editor"
+            PUT: "editor"
+            DELETE: "admin"
+            default: "viewer"
+        - ".*/es_admin/.kibana/visualization/_search.*":
+            default: "any"
+        - ".*es_admin/.kibana/visualization/.*":
+            POST: "editor"
+            PUT: "editor"
+            DELETE: "admin"
+            default: "viewer"
+        - ".*/elasticsearch/.kibana/visualization/.*":
+            default: "editor"
+        - ".*path=.*&method=GET":
+            default: "editor"
+        - ".*path=.*&method=POST":
+            default: "admin"
+        - ".*path=.*&method=PUT":
+            default: "admin"
+        - ".*path=.*&method=DELETE":
+            default: "admin"
+        - ".*/_update.*":
+            default: "editor"
+        - ".*/_count.*":
+            default: "editor"
+        - ".*/_update_by_query.*":
+            default: "editor"
+        - ".*/_bulk.*":
+            default: "editor"
+        - ".*/_create.*":
+            default: "editor"
+        - ".*/_search.*":
+            default: "viewer"
+        - ".*/elasticsearch/.kibana/dashboard/.*":
+            POST: "editor"
+            DELETE: "admin"
+            PUT: "editor"
+            default: "viewer"
+        - ".*/_cat/.*":
+            default: "editor"
+        - ".*/_nodes/.*":
+            default: "editor"
+        - ".*/_snapshot/.*":
+            default: "editor"
+        - ".*/_tasks/.*":
+            default: "editor"
+        - ".*/_aliases/.*":
+            default: "editor"
+        - ".*/_segments/.*":
+            default: "editor"
+        - ".*/_flush/.*":
+            default: "editor"
+        - ".*/_refresh/.*":
+            default: "editor"
+        - ".*/_recovery/.*":
+            default: "editor"
+        - ".*/_upgrade/.*":
+            default: "editor"
+        - ".*/_stats/.*":
+            default: "editor"
+        - ".*/_reindex.*":
+            default: "editor"
+        - ".*/_refresh.*":
+            default: "editor"
+        - ".*/_rollover.*":
+            default: "editor" 
+        - ".*/_forcemerge.*":
+            default: "editor"
+        - ".*/_cluster/reroute.*":
+            default: "editor"
+        - ".*/_cluster/settings.*":
+            default: "editor" 
+        - ".*/es_admin/.kibana/search/.*":
+            default: "viewer"
+        - ".*/es_admin/.kibana/index-pattern/_search.*":
+            default: "viewer"
+        - ".*/es_admin/.*":
+            default: "viewer"
+        - ".*/elasticsearch/.*":
+            default: "viewer"
+        - ".*/api/saved_objects/index-pattern.*":
+            default: "admin"
+        - ".*":
+            DELETE: "admin"
+            POST: "editor"
+            PUT: "editor"
+            default: "viewer"
+{% endif %}
+  nomad_ui:
+      authorization_mode: "url"
+      authorization-access-logging-level: "viewer"
+      filter_groups:
+        - {{ovn_cas_viewer}}
+        - {{ovn_cas_editor}}
+        - {{ovn_cas_admin}}
+      groups_role_mapping:
+        {{ovn_cas_admin}}: "admin"
+        {{ovn_cas_editor}}: "editor"
+        {{ovn_cas_viewer}}: "viewer"
+      url_role_mapping:
+        - ".*":
+            default: {{ovn_cas_nomad_role_access}}
+  prometheus:
+{% if nginx_auth_passthrough == 'true' %}
+      authorization_mode: "passthrough"
+{% elif nginx_auth_passthrough == 'false' %}
+      authorization_mode: "url"
+      authorization-access-logging-level: "viewer"
+      groups_role_mapping:
+        {{ovn_nginx_admin}}: "admin"
+        {{ovn_nginx_editor}}: "editor"
+        {{ovn_nginx_viewer}}: "viewer"
+      url_role_mapping:
+        - ".*":
+            POST: "editor"
+            DELETE: "admin"
+            PUT: "editor"
+            default: "{{ovn_default_prometheus_role_access}}"
+{% endif %}
+  alertmanager:
+{% if nginx_auth_passthrough == 'true' %}
+      authorization_mode: "passthrough"
+{% elif nginx_auth_passthrough == 'false' %}
+      authorization_mode: "url"
+      authorization-access-logging-level: "viewer"
+      groups_role_mapping:
+        {{ovn_nginx_admin}}: "admin"
+        {{ovn_nginx_editor}}: "editor"
+        {{ovn_nginx_viewer}}: "viewer"
+      url_role_mapping:
+        - ".*":
+            POST: "admin"
+            DELETE: "admin"
+            PUT: "admin"
+            default: "{{ovn_default_alertmanager_role_access}}"
+{% endif %}
+
+
+#trustedurl configs
+trustedurls:
+{% for urls in nginx_auth_trusted_urls %}
+ - {{ urls }}
+{% endfor %}
+
+logger:
+  level: {{ nginx_auth_logger_level }}
+  development: false
+  disable-caller: false
+  disable-stacktrace: false
+  encoding: json
+  encoder-config:
+    message-key: msg
+    level-key: severity
+    time-key: logTimestamp
+    name-key: logger
+    caller-key: src
+    stacktrace-key: stacktrace
+    line-ending: "\n"
+    level-encoder: lowercase
+    time-encoder: iso8601
+    duration-encoder: seconds
+    caller-encoder: short
+  output-paths:
+  - {{ nginx_auth_logger_dest }}
+  error-output-paths:
+  - {{ nginx_auth_logger_dest }}

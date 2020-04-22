@@ -1,0 +1,18 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: Uninstall bridge ea fetch old version
+  yum:
+    name: "{{ bridge_ea_fetch_version }}"
+    state: absent
+
+- name: Install bridge ea fetch Package
+  yum:
+    name: "{{ bridge_ea_fetch_url }}"
+    state: present

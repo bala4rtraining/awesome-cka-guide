@@ -1,0 +1,29 @@
+---
+# defaults file for dns
+
+
+#
+# For BIND9
+#
+
+bind9_listening_port: "53"
+
+bind9_conf_dir: "/etc"
+bind9_conf_file: "named.conf"
+bind9_conf_subdir: "/etc/named"
+bind9_conf_option_file: "named.conf.options"
+bind9_conf_local_file: "named.conf.local"
+
+
+
+#
+# For zone definitions
+#
+
+bind9_zone_dir: "/var/named"
+default_ttl: "907200"
+default_serial: "1"
+default_refresh: "60"
+default_retry: "60"
+default_expire: "604800"
+default_min: "3600"

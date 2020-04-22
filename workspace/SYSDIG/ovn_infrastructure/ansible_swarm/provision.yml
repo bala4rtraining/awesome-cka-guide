@@ -1,0 +1,15 @@
+---
+- name: Install docker on swarm master and workers.
+  hosts: all
+  roles:
+    - { role: docker, dispatch: [ 'provision' ] }
+
+- hosts: masters[0]
+  tasks:
+  - name: Initialize docker swarm
+    shell: |
+      docker swarm init --advertise-addr {{ manager_node_ipaddr }}
+    register: swarm_init
+  - debug:
+      var: swarm_init.stdout
+  ignore_errors: True

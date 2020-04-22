@@ -1,0 +1,70 @@
+---
+- name: Provision groups for the SSH CA principal
+  group:
+    name: "{{ principal.group }}"
+    gid: "{{ principal.gid }}"
+    state: present
+  with_items:
+  - { group: "{{ admin_principal }}", gid: "{{ admin_principal_id }}" }
+  - { group: "{{ support_principal }}", gid: "{{ support_principal_id }}" }
+  - { group: "{{ appsupport_principal }}", gid: "{{ appsupport_principal_id }}" }
+  loop_control:
+    loop_var: principal
+
+- name: Provision accounts for the SSH CA principal
+  user:
+    name: "{{ principal.user }}"
+    uid: "{{ principal.uid }}"
+    group: "{{ principal.user }}"
+    shell: "/bin/bash"
+  with_items:
+  - { user: "{{ admin_principal }}", uid: "{{ admin_principal_id }}" }
+  - { user: "{{ support_principal }}", uid: "{{ support_principal_id }}" }
+  - { user: "{{ appsupport_principal }}", uid: "{{ appsupport_principal_id }}" }
+  loop_control:
+    loop_var: principal
+
+- name: Set account to `never expire`
+  shell: |
+    /usr/bin/chage -M 99999 {{ principal }}
+    chmod 0700 ~{{ principal }}
+    touch ~{{ principal }}/.hushlogin
+    chown {{ principal }}:{{ principal }} ~{{ principal }}/.hushlogin
+  with_items:
+  - "{{ admin_principal }}"
+  - "{{ support_principal }}"
+  - "{{ appsupport_principal }}"
+  - "{{ cd_principal }}"
+  loop_control:
+    loop_var: principal
+
+#
+# will remove `admin` principal as root user once we fully setup `sudo`
+# and start using it
+- name: Deploy Admin Security Zone
+  copy:
+    content: |
+      {{ principal.principal }}
+    dest: "{{ ca_principals_dir }}/{{ principal.user }}"
+    owner: "root"
+    group: "root"
+    mode: "{{ principal.mode }}"
+  with_items:
+  - { principal: "{{ admin_principal }}", user: "{{ admin_principal }}", mode: "0644" }
+  - { principal: "{{ support_principal }}", user: "{{ support_principal }}", mode: "0644" }
+  - { principal: "{{ appsupport_principal }}", user: "{{ appsupport_principal }}", mode: "0644" }
+  loop_control:
+    loop_var: principal
+
+- name: Deploy sudoer escalation file
+  copy:
+    content: |
+      {{ principal }} ALL=(ALL:ALL) NOPASSWD: SETENV: ALL
+    dest: "/etc/sudoers.d/{{ principal }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  with_items:
+  - "{{ admin_principal }}"
+  loop_control:
+    loop_var: principal

@@ -1,0 +1,23 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=cumulus_switch
+
+# Site specific host information
+- name: Run deployment of metrics toml scripts for cumulus switch
+  hosts: cumulus_switch
+  remote_user: cumulus
+  become: yes
+  vars:
+     carbon_host: "{{ groups['graphite'][0] }}"
+     heka_log_templates: "{{ metrics_templates }}"
+  roles:
+     - heka
+    
+- name: Run deployment of log heka toml scripts for cumulus switch
+  hosts: cumulus_switch
+  remote_user: cumulus
+  become: yes
+  vars:
+     elasticsearch_host: "{{ groups['elasticsearch'][0] }}"
+     heka_log_templates: "{{ cumuluslog_templates }}"
+  roles:
+     - heka

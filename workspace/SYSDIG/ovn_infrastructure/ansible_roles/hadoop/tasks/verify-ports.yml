@@ -1,0 +1,37 @@
+---
+# Verify firewall ports opened in HDFS cluster
+- name: check firewalld status
+  shell: firewall-cmd --state
+
+- name: check opened ports at datanodes
+  shell: firewall-cmd --permanent --zone=public --list-all | grep -e 'port="{{ port }}"'
+  with_items:
+  - "{{ hadoop_datanode_port }}"
+  - "{{ hadoop_datanode_ipc_port }}"
+  - "{{ hadoop_datanode_http_port }}"
+  - "{{ hadoop_datanode_https_port }}"
+  - "{{ hadoop_datanode_secure_port }}"
+  - "{{ hadoop_datanode_http_secure_port }}"
+  loop_control:
+    loop_var: port
+  when: inventory_hostname in groups['hadoop_datanodes']
+
+- name: check opened ports at namenodes
+  shell: firewall-cmd --permanent --zone=public --list-all | grep -e 'port="{{ port }}"'
+  with_items:
+  - "{{ hadoop_namenode_rpc_port }}"
+  - "{{ hadoop_namenode_http_port }}"
+  - "{{ hadoop_namenode_https_port }}"
+  loop_control:
+    loop_var: port
+  when: inventory_hostname in groups['hadoop_namenodes']
+
+- name: check opened ports at journalnodes
+  shell: firewall-cmd --permanent --zone=public --list-all | grep -e 'port="{{ port }}"'
+  with_items:
+  - "{{ hadoop_journalnode_edits_port }}"
+  - "{{ hadoop_journalnode_http_port }}"
+  - "{{ hadoop_journalnode_https_port }}"
+  loop_control:
+    loop_var: port
+  when: inventory_hostname in groups['journalnodes']

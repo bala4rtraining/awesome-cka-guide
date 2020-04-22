@@ -1,0 +1,6 @@
+[ovn_cluster_nodes]
+default ansible_ssh_host=127.0.0.1 ansible_ssh_port=2222 ansible_ssh_user='vagrant' ansible_ssh_private_key_file='../.vagrant/machines/default/virtualbox/yprivate_key'
+
+[ovn_cluster_nodes:vars]
+config_machine=vagrant
+# build=1

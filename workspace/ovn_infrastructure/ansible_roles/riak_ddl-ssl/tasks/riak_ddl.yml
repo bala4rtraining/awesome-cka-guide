@@ -1,0 +1,87 @@
+---
+
+- name: check OVN_CAS user exists
+  command: 'riak-admin security print-user OVN_CAS'
+  register: result
+  ignore_errors: yes
+
+- name: delete OVN_CAS user
+  command: 'riak-admin security del-user OVN_CAS'
+  when: result.rc == 0
+  
+- name: create riak db users
+  command: 'riak-admin security add-user {{ item.usr }}'
+  with_items: "{{ riak_users }}"
+
+- name: create riak db groups
+  command: 'riak-admin security add-group {{ item.grp }}'
+  with_items: "{{ riak_groups }}"
+
+- name: map riak db users to roles
+  command: "{{ item }}"
+  with_items:
+    - riak-admin security alter-user OVN_TRANSACTION groups=transaction
+    - riak-admin security alter-user OVNCAS groups=cas
+    - riak-admin security alter-user OVN_TOOLS groups=tools
+
+- name: backup the original file
+  copy:
+    src: /usr/lib64/riak/lib/env.sh
+    dest: /usr/lib64/riak/lib/env_bkp.sh
+    force: no
+    remote_src: yes
+
+- name: handle space in bucket names
+  lineinfile:
+    path: /usr/lib64/riak/lib/env.sh
+    regexp: '.*ESCAPED_ARGS=.*'
+    line: 'ESCAPED_ARGS=`echo "$@"`'
+
+- name: privileges for buckets mapped to roles
+  command: "{{ item }}"
+  with_items:
+    - riak-admin security grant riak_kv.get,riak_kv.put on default station to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.delete on default ovn_advice to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put on set ovn_advice_key to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.delete on vmg_routing vmg_routing to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put on default transaction_consistency to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put on default release_activation to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.delete on default exception_file to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put on clc_lock clc_lock to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put on clc_data clc_data to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put on tlc tlc_stage to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put on tlc tlc_data to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put on ovn_clearing XdcHdfsEventBucket to cas
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.index on ovn_clearing exception_monitor to cas
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.index on ovn_clearing job_history to cas
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.index on ovn_clearing file_metadata to cas
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.index on ovn_clearing clearing_config to cas
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.index on ovn_clearing clearing_override to cas
+    - riak-admin security grant riak_kv.get,riak_kv.put on ovn_settlement vss to cas
+    - riak-admin security grant riak_kv.get,riak_kv.put on map activity to transaction
+    - riak-admin security grant riak_kv.get,riak_kv.put on default vitalsigns_cursor to tools
+    - riak-admin security grant riak_kv.get,riak_kv.put on default vitalsigns_message to tools
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.delete on default "VIC_{{vic_identity | trim}}\ _PROCID_{{local_instance}}_CPCID_1_TO_{{vic_identity | trim}}\ APF_deduplication_kv" to tools
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.delete on default "VIC_{{vic_identity | trim}}\ _PROCID_{{local_instance}}_CPCID_1_TO_{{vic_identity | trim}}\ UB_deduplication_kv" to tools
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.delete on default "VIC_{{vic_identity | trim}}\ _PROCID_{{local_instance}}_CPCID_1_TO_{{vic_identity | trim}}\ APF_acn_log" to tools
+    - riak-admin security grant riak_kv.get,riak_kv.put,riak_kv.delete on default "VIC_{{vic_identity | trim}}\ _PROCID_{{local_instance}}_CPCID_1_TO_{{vic_identity | trim}}\ UB_acn_log" to tools
+
+- name: Add trusted source at the user and VM level
+  command: "{{ item }}"
+  with_items:
+    - riak-admin security add-source all {{ sub_net_of_servers }} trust
+    - riak-admin security add-source ovn_transaction {{ sub_net_of_servers }} certificate
+    - riak-admin security add-source ovncas {{ sub_net_of_servers }} certificate
+    - riak-admin security add-source ovn_tools {{ sub_net_of_servers }} certificate
+
+- name: copy from backup file
+  copy:
+    src: /usr/lib64/riak/lib/env_bkp.sh
+    dest: /usr/lib64/riak/lib/env.sh
+    force: yes
+    remote_src: yes
+
+- name: Delete backup file
+  file:
+    path: /usr/lib64/riak/lib/env_bkp.sh
+    state: absent

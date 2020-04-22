@@ -1,0 +1,13 @@
+#!/bin/bash
+#Execute this script to kill the dse service. Checks for any dse proceeses running and kills using pid
+
+ps -ef |grep dse |grep -v grep
+if [ $? -eq 0 ]; then
+  {{ dse_home }}/bin/dse cassandra-stop
+  sleep 30
+fi
+ps -ef |grep dse |grep -v grep
+if [ $? -eq 0 ]; then
+  pid=$(ps -ef|grep dse |grep -v grep | awk '{print $2}')
+  kill -9 $pid
+fi

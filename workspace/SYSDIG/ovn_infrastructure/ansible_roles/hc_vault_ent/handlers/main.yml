@@ -1,0 +1,15 @@
+---
+# handlers file for vault
+- name: restart vault
+  service:
+    name: vault
+    state: restarted
+
+#remove the -tls-skip-verify flag after we start using Visa Internal CAs
+- name: check vault status
+  command: "vault status -tls-skip-verify"
+  register: status
+  failed_when: "status.stderr"
+
+- name: reload systemd
+  command: systemctl daemon-reload

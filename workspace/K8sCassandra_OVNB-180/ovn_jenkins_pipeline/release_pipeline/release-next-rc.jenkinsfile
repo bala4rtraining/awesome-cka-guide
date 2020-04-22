@@ -1,0 +1,83 @@
+// Jenkinsfile to create a new Release Candidate for one Authorization service.
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        choice(name: 'SERVICE_NAME',
+               choices: 'ovn_mediator\novn_switch\novn_umf_delivery\novn_vitalsigns_delivery\novn_multidc_sync\novn_vip_ef_sync',
+               description: 'What service do you want to create a new Release Candidate for?')
+
+        validatingString(name: 'RELEASE_VERSION',
+                        defaultValue: '',
+                        regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$',
+                        failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+                        description: 'What is the version that this Release Candidate belongs to? Use semantic versioning, e.g: x.y.z')
+
+        string(name: 'RELEASE_CANDIDATE',
+               defaultValue: '',
+               description: 'What is the new Release Candidate number? It has to be larger than 1. E.g 2, 3, etc.')
+
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        RELEASE_TAG = "v${params.RELEASE_VERSION}-rc${params.RELEASE_CANDIDATE}"
+        REPOSITORY_URL = "ssh://git@stash.trusted.visa.com:7999/op/${params.SERVICE_NAME}.git"
+    }
+
+    stages {
+
+        stage ('Check prerequisites') {
+
+            steps {
+
+                // If any of the following checks fails, the pipeline should result as FAILURE.
+
+                // 0. Check if the release branch exists.
+                // The following command will return 1 (if branch does exist), 0 otherwise.
+
+                sh "git ls-remote --heads ${REPOSITORY_URL} ${RELEASE_BRANCH} | wc -l"
+
+                // 1. Check if there's a new commit after latest tag
+
+                // 2. Tag provided (${RELEASE_TAG}) doesn't exist.
+
+            }
+
+        }
+
+        stage ('Tagging release branch') {
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'temp_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: "${REPOSITORY_URL}"]]]
+                sh "cd temp_repo/ && git tag -a -m \"New Release Candidate ${params.RELEASE_CANDIDATE} for ${params.SERVICE_NAME}\" ${RELEASE_TAG}"
+                sh "cd temp_repo/ && git push origin ${RELEASE_TAG}"
+            }
+
+        }
+
+        stage ('Trigger new release build') {
+
+            steps {
+                build job: "OVN-OP/${params.SERVICE_NAME}/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+
+        }
+
+    }
+
+}

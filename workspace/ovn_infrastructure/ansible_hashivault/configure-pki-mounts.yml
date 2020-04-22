@@ -1,0 +1,12 @@
+---
+- include: "../ovn_vars.yml"
+
+- name: Configure in-country pki mounts
+  hosts: ovn_cluster_vault_nodes
+  gather_facts: yes
+  become: yes
+  become_method: sudo
+  vars:
+    cluster_vault_root_token: "{{hostvars[groups['ovn_cluster_vault_nodes'][0]].ansible_local.vault_tokens.root}}"
+  roles:
+    - { role: hashicorp_vault, dispatch: ['configure-pki-mounts'] }

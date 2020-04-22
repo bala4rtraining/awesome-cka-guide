@@ -1,0 +1,6 @@
+---
+# handlers file for interfaces
+- name: Reload networking
+  command: ifreload -a
+
+  

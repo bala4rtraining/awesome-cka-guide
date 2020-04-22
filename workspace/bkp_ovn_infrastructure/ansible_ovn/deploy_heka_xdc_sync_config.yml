@@ -1,0 +1,42 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!localhost,!cumulus_switch,!ovn_manager
+
+- name: Run deployment of heka toml scripts for all ovn erlang servers
+  hosts: ovn_xdc_sync
+  roles:
+  - { role: heka, dispatch: ['provision_heka_user'] }
+
+- name: Set Elastic Search Hostname based on eserv_type=lbonly host attribute
+  hosts: ovn_xdc_sync
+  tasks:
+  - set_fact: elasticsearch_host="{{ hostvars[item]['ansible_nodename'] }}"
+    with_items: "{{ groups['elasticsearch'] }}"
+    when: hostvars[item].eserv_type == "lbonly"
+
+
+- name: add the log forwarding for ovn_xdc_sync logs
+  hosts: ovn_xdc_sync
+  roles:
+  - { role: heka, dispatch: ['deploy_config_with_ssl'] }
+  vars:
+    heka_log_templates: "{{ xdc_sync_log_templates }}"
+    elasticsearch_client_ssl_enabled: "true"
+
+- name: Restart heka
+  hosts: ovn_xdc_sync
+  roles:
+  - { role: heka, dispatch: ['restart_heka'] }
+    
+
+- hosts: "{{ node_cleanup }}"
+  tasks:
+  - name: Cleanup config on "{{ node_cleanup }}"
+    file: 
+      path: '/etc/heka.d/ovn_xdc_sync.toml'
+      state: absent
+
+- name: Restart heka on {{ node_cleanup }}
+  hosts: {{ node_cleanup }}
+  roles:
+  - { role: heka, dispatch: ['restart_heka'] }
+

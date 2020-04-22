@@ -1,0 +1,12 @@
+---
+- include: "../ovn_vars.yml"
+
+# Use this playbook to deploy build artifacts to the set of servers.
+- name: Deploy Hashicorp Vault
+  hosts: ovn_cluster_vault_nodes
+  gather_facts: yes
+  become: yes
+  become_method: sudo
+  roles:
+    - { role: hashicorp_vault, dispatch: ['deploy', 'init'] }
+#    - { role: hashicorp_vault, dispatch: ['deploy'] }

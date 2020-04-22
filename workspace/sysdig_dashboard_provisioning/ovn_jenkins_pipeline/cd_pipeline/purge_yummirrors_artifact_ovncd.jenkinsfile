@@ -1,0 +1,33 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+        string(name: 'artifact_name', defaultValue: '', description: 'Enter the artifact name to be removed locally using COMMA as delimiter')
+        string(name: 'branch', defaultValue: '', description: 'Enter the release branch details')
+        string(name: 'extra_vars', defaultValue: '', description: 'any extra vars')
+    }
+
+    stages {
+
+        stage('Checkout ovn_infrastructure repo') {
+            steps{
+                git credentialsId: '', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${params.branch}"
+            }
+        }
+
+        stage('Delete yummirrors artifact from local repository') {
+            steps {
+                ansiColor('xterm') {
+                echo "Delete yummirrors artifact from local repository"
+                ansiblePlaybook colorized: true, credentialsId: 'ovncd_ssh_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER}", playbook: 'ansible_ovn/purge_yummirrors_artifact.yml',  extras: "-e artifact_name=${params.artifact_name}  -e @config/${env.ENV}.vars.secret.yml --vault-password-file ~/.vault-${env.ENV} ${params.extra_vars} --become"
+                }
+            }
+        }		
+    }
+}

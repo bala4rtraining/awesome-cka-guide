@@ -1,0 +1,20 @@
+[Unit]
+Description=node_exporter - Exporter for machine metrics.
+Documentation=https://github.com/William-Yeh/ansible-node_exporter
+After=network.target
+
+[Service]
+Restart=on-failure
+Type=simple
+WorkingDirectory={{ node_exporter_base_dir }}
+User={{ node_exporter_user }}
+Group={{ node_exporter_group }}
+
+{% if node_exporter_node_exporter_opts is defined %}
+ExecStart={{ node_exporter_base_dir }}/node_exporter  {{ node_exporter_node_exporter_opts }}
+{% else %}
+ExecStart={{ node_exporter_base_dir }}/node_exporter
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

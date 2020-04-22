@@ -1,0 +1,84 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        booleanParam(name: 'RELEASE_OVN_MEDIATOR',            defaultValue: false, description: 'Do you want a build for OVN Mediator?')
+        booleanParam(name: 'RELEASE_OVN_SWITCH',              defaultValue: false, description: 'Do you want a build for OVN Switch?')
+        booleanParam(name: 'RELEASE_OVN_UMF_DELIVERY',        defaultValue: false, description: 'Do you want a build for OVN UMF Delivery?')
+        booleanParam(name: 'RELEASE_OVN_VITALSIGNS_DELIVERY', defaultValue: false, description: 'Do you want a build for OVN Vitalsigns Delivery?')
+        booleanParam(name: 'RELEASE_OVN_MULTIDC_SYNC',        defaultValue: false, description: 'Do you want a build for OVN Multidc Sync?')
+        booleanParam(name: 'RELEASE_OVN_VIP_EF_SYNC',         defaultValue: false, description: 'Do you want a build for OVN VIP EF Sync?')
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+    }
+
+    stages {
+
+        stage ('Mediator release build') {
+            when { expression { return params.RELEASE_OVN_MEDIATOR } }
+            steps {
+                build job: "OVN-OP/ovn_mediator/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('Switch release build') {
+            when { expression { return params.RELEASE_OVN_SWITCH } }
+            steps {
+                build job: "OVN-OP/ovn_switch/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('UMF Delivery release build') {
+            when { expression { return params.RELEASE_OVN_UMF_DELIVERY } }
+            steps {
+                build job: "OVN-OP/ovn_umf_delivery/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('Vitalsigns Delivery release build') {
+            when { expression { return params.RELEASE_OVN_VITALSIGNS_DELIVERY } }
+            steps {
+                build job: "OVN-OP/ovn_vitalsigns_delivery/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('Multidc Sync release build') {
+            when { expression { return params.RELEASE_OVN_MULTIDC_SYNC } }
+            steps {
+                build job: "OVN-OP/ovn_multidc_sync/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+        stage ('VIP EF Sync release build') {
+            when { expression { return params.RELEASE_OVN_VIP_EF_SYNC } }
+            steps {
+                build job: "OVN-OP/ovn_vip_ef_sync/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+        }
+
+    }
+
+}

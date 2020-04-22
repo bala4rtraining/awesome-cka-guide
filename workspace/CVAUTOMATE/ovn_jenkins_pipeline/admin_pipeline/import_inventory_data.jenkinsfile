@@ -1,0 +1,50 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    options {
+            buildDiscarder(logRotator(numToKeepStr: '20'))
+        }
+    triggers {
+            cron('H H * * *')
+        }
+
+    stages {
+           stage('Prepare') {
+               steps {
+                   ansiColor('xterm') {
+                        echo "Checking Out ovn_infrastructure for Up-to-date inventory data list..."
+                        dir("ovn_infrastructure") {
+                            git url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git'
+                        }
+                   }
+                }
+           }
+
+           stage('Inventory List Creation ') {
+               steps {
+                     ansiColor('xterm') {
+                        sh "sh ovn_infrastructure/inventories/devlist.sh"
+                        }
+                     }
+               }
+          stage('Inventory DataFile Upload') {
+              steps {
+                  withCredentials([
+                    usernamePassword(credentialsId: 'ovn_database', usernameVariable: 'ovn_database_user', passwordVariable: 'ovn_database_password')
+                ]) {
+                  ansiColor('xterm') {
+                      sh '''
+                      jenkins-sh/inventorydataupload.sh "$ovn_database_user" "$ovn_database_password"
+                      '''
+                  }
+                 }
+              }
+          }
+     }
+}

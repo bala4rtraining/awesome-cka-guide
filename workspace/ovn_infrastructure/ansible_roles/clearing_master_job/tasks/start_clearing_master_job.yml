@@ -1,0 +1,18 @@
+---
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+- name: submit clearing master job  using TLS 
+  run_once: true
+  shell: "{{ nomad_client_path }} run -ca-cert={{nomad_cert_path}}/nomad-ca.pem -client-cert={{nomad_cert_path}}/cli.pem -client-key={{nomad_cert_path}}/cli-key.pem -address=https://{{ ansible_nodename }}:{{ nomad_server_http_port }} {{cas_tools_install_dir}}/ovn_cas_tools/cas-tools-cli.hcl"
+  when: enable_tls_nomad
+
+- name: submit clearing master job  using non TLS
+  run_once: true
+  shell: "{{ nomad_client_path }} run  {{cas_tools_install_dir}}/ovn_cas_tools/cas-tools-cli.hcl"
+  when: not enable_tls_nomad

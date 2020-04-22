@@ -1,0 +1,93 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+    triggers {
+        cron('H 0 * * *')
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '50'))
+    }
+    parameters {
+        booleanParam(defaultValue: true, description: '', name: 'Accountverification_feature')
+        booleanParam(defaultValue: true, description: '', name: 'IFU_feature')
+    }
+    environment {
+        ARTIFACTORY_CREDS = credentials('svcnpovndev_id')
+    }
+    
+    stages {
+        
+        stage('Checkout TESTING Toolkit') {
+            steps{
+                checkout poll: false, scm: [$class: 'GitSCM', branches: [[name: 'feature/OVNLTA-5587-create-jenkins-job-to-run-nightly-tests-using-cli-of-the-testing-toolkit']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_testing_toolkit.git']]]
+            }
+        }
+        
+        stage('Copy config file') {
+            steps{
+                sh'''
+                mkdir -p conf
+                mv ./config.yaml conf/
+                '''
+            }
+        }
+
+        stage('Retrieve profileDb binary file') {
+            steps{
+                sh'''
+                jfrog rt config --url=https://artifactory.trusted.visa.com --user=$ARTIFACTORY_CREDS_USR --password=$ARTIFACTORY_CREDS_PSW --interactive=false
+                jfrog rt dl "ovn/testdata/OVNTT-*" --sort-by=created --sort-order=desc --limit=1
+                tar xfv ./testdata/OVNTT-*.tar.gz
+                chmod +x ./testdata/OVNTT-*
+                PATH=$PATH:./testdata
+                '''
+            }
+        }
+
+        stage('Run docker image') {
+            steps{
+                sh'''
+                docker image prune -f
+                docker pull ovn-docker.artifactory.trusted.visa.com/ovn_testing_toolkit
+                docker run -v $WORKSPACE/testdata:/app/testdata -v $WORKSPACE/conf:/conf ovn-docker.artifactory.trusted.visa.com/ovn_testing_toolkit
+                '''
+            }
+        }
+
+        stage('Run Cucumber Tests for Accountverification_feature') {
+        when { expression { return params.Accountverification_feature } }
+            steps{
+                ansiColor('xterm') {
+                    sh '''
+                    cd app/ovn_testing_toolkit
+                    ./ovn_testing_toolkit -feat=features/accountverification.feature
+                    '''
+                }
+            }
+        }
+
+        stage('Run Cucumber Tests for IFU_feature') {
+        when { expression { return params.IFU_feature } }
+            steps{
+                ansiColor('xterm') {
+                    sh '''
+                    cd app/testing_toolkit
+                    ./ovn_testing_toolkit -feat=features/ifu.feature
+                    '''
+                }
+            }
+        }
+
+    }
+}
+
+//TODO
+// Create follow up tickets with testing_toolkit team to change config.yaml and profile.db mount path.
+// Get confirmation on feature file location (Proposal is that a new repo will be created for storing the feature files.)
+// Expand the jenkinsfile to keep up with the feature file expansion(Currently there are only 2).
+// Add a stage to publish the results from running the feature files that will be consumed by OVNLTA-5589.

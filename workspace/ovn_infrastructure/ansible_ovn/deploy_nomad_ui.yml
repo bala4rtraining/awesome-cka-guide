@@ -1,0 +1,59 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=nomad_ui,nomad_server
+
+# Install nginx, nginx_auth and nomad_ui on same machine
+- name: install nginx, nginx_auth and nomad_ui with ssl enabled
+  hosts: nomad_ui
+  roles:
+    - nginx
+    - nginx_auth
+    - nomad_ui
+  vars:
+    - nginx_sites:
+        default:
+          - listen {{ nginx_default_port }}
+          - server_name localhost
+    - nginx_configs:
+        nomad_ui_upstream:
+          - upstream nomad_ui {
+              server {{nomad_ui_host}}:{{nomad_ui_port}};
+            }
+        auth_upstream:
+          - upstream authServer {
+              server {{nginx_auth_host}}:{{nginx_auth_port}};
+            }
+        websockets:
+          - map $http_upgrade $connection_upgrade {
+              default upgrade;
+              '' close;
+            }
+            
+    - nginx_locations:
+      - site: default
+        locations:
+          - name: nomad_ui
+            location:
+              - location /nomad/ {
+                  auth_request /authorization-proxy/nomad_ui;
+                  proxy_set_header            Connection              $connection_upgrade;
+                  proxy_set_header            Upgrade                 $http_upgrade;
+                  proxy_set_header            Host                    $host;
+                  proxy_set_header            X-Real-IP               $remote_addr;
+                  proxy_set_header            X-Forwarded-For         $proxy_add_x_forwarded_for;
+                  proxy_set_header            X-Forwarded-Proto       $scheme;
+
+                  error_page 403 /forbidden;
+
+                  proxy_pass http://nomad_ui/;
+                }
+          - name: authorizer
+            location:
+              - location /authorization-proxy {
+                  internal;
+                  proxy_set_header X-Original-URI $request_uri;
+                  proxy_set_header X-Original-Method $request_method;
+                  proxy_pass http://authServer;
+                }
+              - location /forbidden {
+                  proxy_pass http://authServer;
+                }

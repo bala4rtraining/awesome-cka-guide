@@ -1,0 +1,51 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '15'))
+    }
+    environment {
+        CLUSTER = 'qat'
+        DATACENTER1 = 'dc1'
+        DATACENTER2 = 'dc2'
+    }
+    stages {
+        stage('stop firewalld') {
+            steps{
+                script {
+                    ansiColor('xterm') {
+                        ansiblePlaybook(
+                                playbook: 'ansible_firewalld/firewalld_service.yml',
+                                inventory: "inventories/${CLUSTER}/${DATACENTER1}",
+                                credentialsId: 'ENV.root_key',
+                                colorized: true,
+                                extraVars: [
+                                        firewalld_state: "stopped"
+                                ]
+                        )
+                    }
+                }
+                script {
+                    ansiColor('xterm') {
+                        ansiblePlaybook(
+                                playbook: 'ansible_firewalld/firewalld_service.yml',
+                                inventory: "inventories/${CLUSTER}/${DATACENTER2}",
+                                credentialsId: 'ENV.root_key',
+                                colorized: true,
+                                extraVars: [
+                                        firewalld_state: "stopped"
+                                ]
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

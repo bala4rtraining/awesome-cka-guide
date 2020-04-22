@@ -1,0 +1,17 @@
+#
+# This file holds the site-specific
+# parameters for OVN Orange server, e.g. IP
+#
+# The IP needs to be in sync to the site specific
+# variable file in cumulus-bgp/bpg-vars.yml
+#
+
+ip_subnet: 10.16.200
+
+
+#
+# DNS domain names
+#
+dns_domain_rack1_fwd: rack1.ovn
+dns_domain_rack2_fwd: rack2.ovn
+dns_domain_rack3_fwd: rack3.ovn

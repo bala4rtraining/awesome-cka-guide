@@ -1,0 +1,71 @@
+---
+- name: create nomad cert directory
+  file: >
+    path="{{nomad_cert_install_dir}}"
+    state=directory
+    recurse=no
+    owner={{nomad_username}}
+    group={{nomad_username}}
+    mode=0755
+
+- name: create nomad cert directory
+  file: >
+    path="{{nomad_cert_install_dir}}"
+    state=directory
+    recurse=no
+    owner={{nomad_username}}
+    group={{nomad_username}}
+    mode=0755
+- name: make sure Nomad CA SSL certificate is installed 
+  copy:
+    content='{{ nomad_ca }}'
+    dest="{{nomad_cert_install_dir}}/nomad-ca.pem"
+    owner={{nomad_username}} 
+    group={{nomad_username}}
+    mode=0600
+
+- name: make sure server.pem SSL certificate is installed
+  copy:
+    content='{{ nomad_server_pem }}'
+    dest="{{nomad_cert_install_dir}}/server.pem"
+    owner={{nomad_username}} 
+    group={{nomad_username}}
+    mode=0600
+
+- name: make sure server-key.pem SSL certificate is installed
+  copy:
+    content='{{ nomad_server_key }}'
+    dest="{{nomad_cert_install_dir}}/server-key.pem"
+    owner={{nomad_username}} 
+    group={{nomad_username}}
+    mode=0600
+- name: make sure client.pem SSL certificate is installed
+  copy:
+    content='{{ nomad_client_pem }}'
+    dest={{nomad_cert_install_dir}}/client.pem
+    owner={{nomad_username}}
+    group={{nomad_username}}
+    mode=0600
+
+- name: make sure client-key.pem SSL certificate is installed
+  copy:
+    content='{{ nomad_client_key }}'
+    dest={{nomad_cert_install_dir}}/client-key.pem
+    owner={{nomad_username}}
+    group={{nomad_username}}
+    mode=0600
+- name: make sure cli.pem SSL certificate is installed
+  copy:
+    content='{{ nomad_cli_pem }}'
+    dest={{nomad_cert_install_dir}}/cli.pem
+    owner={{nomad_username}}
+    group={{nomad_username}}
+    mode=0600
+
+- name: make sure cli-key.pem SSL certificate is installed
+  copy:
+    content='{{ nomad_cli_key }}'
+    dest={{nomad_cert_install_dir}}/cli-key.pem
+    owner={{nomad_username}}
+    group={{nomad_username}}
+    mode=0600

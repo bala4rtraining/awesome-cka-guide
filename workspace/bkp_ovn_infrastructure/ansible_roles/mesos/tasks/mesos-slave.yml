@@ -1,0 +1,16 @@
+---
+- name: Mesos default config file
+  template: src=conf-mesos.j2 dest=/etc/default/mesos
+  notify:
+    - Restart mesos-slave
+
+- name: Mesos Slave config file
+  template: src=conf-mesos-slave.j2 dest=/etc/default/mesos-slave
+  notify:
+    - Restart mesos-slave
+
+- name: Mesos Slave Memory Config
+  template: src=resources.j2 dest=/etc/mesos-slave/resources
+  notify:
+    - Restart mesos-slave
+    - Remove slave meta

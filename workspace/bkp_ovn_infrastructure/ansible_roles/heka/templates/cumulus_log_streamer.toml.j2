@@ -1,0 +1,288 @@
+## {{ ansible_managed }}
+ 
+# Tail Cumulus log files, convert to json and send to elasticsearch
+# Log collection
+[syslog_streamer]
+type = "LogstreamerInput"
+log_directory = "/var/log"
+file_match='syslog\.?(?P<Seq>\d*)'
+priority = ["^Seq"]
+
+[ptmd_streamer]
+type = "LogstreamerInput"
+log_directory = "/var/log"
+file_match='ptmd.log\.?(?P<Seq>\d*)'
+priority = ["^Seq"]
+
+[switchd_streamer]
+type = "LogstreamerInput"
+log_directory = "/var/log"
+file_match= 'switchd\.log\.?(?P<Seq>\d*)'
+priority = ["^Seq"]
+
+[daemon_streamer]
+type = "LogstreamerInput"
+log_directory = "/var/log"
+file_match = 'daemon\.log\.?(?P<Seq>\d*)'
+priority = ["^Seq"]
+ 
+[zebra_streamer]
+type = "LogstreamerInput"
+log_directory = "/var/log"
+file_match = 'zebra\.log\.?(?P<Seq>\d*)'
+priority = ["^Seq"]
+
+[quagga_ospf_streamer]
+type = "LogstreamerInput"
+log_directory = "/var/log/quagga"
+file_match = 'ospfd\.log\.?(?P<Seq>\d*)'
+priority = ["^Seq"]
+ 
+[quagga_bgp_streamer]
+type = "LogstreamerInput"
+log_directory = "/var/log/quagga"
+file_match = 'bgpd\.log\.?(?P<Seq>\d*)'
+priority = ["^Seq"]
+
+{% raw %}
+
+[syslog_ESJsonEncoder]
+type = "ESJsonEncoder"
+es_index_from_timestamp = true
+index = "cumulus-syslog-%{%Y.%m.%d}"
+type_name = "%{Type}"
+
+    [syslog_ESJsonEncoder.field_mappings]
+    Severity = "level"
+
+[ptmd_ESJsonEncoder]
+type = "ESJsonEncoder"
+es_index_from_timestamp = true
+index = "cumulus-ptmd-%{%Y.%m.%d}"
+type_name = "%{Type}"
+    [ptmd_ESJsonEncoder.field_mappings]
+    Severity = "level"
+
+[switchd_ESJsonEncoder]
+type = "ESJsonEncoder"
+es_index_from_timestamp = true
+index = "cumulus-switchd-%{%Y.%m.%d}"
+type_name = "%{Type}"
+    [switchd_ESJsonEncoder.field_mappings]
+    Severity = "level"
+
+[daemon_ESJsonEncoder]
+type = "ESJsonEncoder"
+es_index_from_timestamp = true
+index = "cumulus-daemon-%{%Y.%m.%d}"
+type_name = "%{Type}"
+    [daemon_ESJsonEncoder.field_mappings]
+    Severity = "level"
+
+[zebra_ESJsonEncoder]
+type = "ESJsonEncoder"
+es_index_from_timestamp = true
+index = "cumulus-zebra-%{%Y.%m.%d}"
+type_name = "%{Type}"
+    [zebra_ESJsonEncoder.field_mappings]
+    Severity = "level"
+
+[quagga_ospf_ESJsonEncoder]
+type = "ESJsonEncoder"
+es_index_from_timestamp = true
+index = "cumulus-quagga-ospf-%{%Y.%m.%d}"
+type_name = "%{Type}"
+    [quagga_ospf_ESJsonEncoder.field_mappings]
+    Severity = "level"
+ 
+[quagga_bgp_ESJsonEncoder]
+type = "ESJsonEncoder"
+index = "cumulus-quagga-bgp-%{%Y.%m.%d}"
+type_name = "%{Type}"
+    [quagga_bgp_ESJsonEncoder.field_mappings]
+    Severity = "level"
+
+{% endraw %}
+
+[syslog_ElasticSearchOutput]
+type="ElasticSearchOutput"
+{% if elasticsearch_client_ssl_enabled == "true" %}
+server = "https://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% else %}
+server = "http://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% endif %}
+message_matcher = "Logger == 'syslog_streamer'"
+encoder = "syslog_ESJsonEncoder"
+flush_interval = 1000
+flush_count = 1
+    [syslog_ElasticSearchOutput.buffering]
+    max_file_size = 268435456  # 256MiB
+    max_buffer_size = 268435456  # 256MiB
+    full_action = "shutdown"
+    cursor_update_count = 100
+    {% if elasticsearch_client_ssl_enabled == "true" %}
+    [syslog_ElasticSearchOutput.tls]
+    cert_file = "/etc/pki/tls/elasticsearch-client/certs/{{ inventory_hostname }}.pem"
+    key_file = "/etc/pki/tls/elasticsearch-client/private/{{ inventory_hostname }}.pem"
+    root_cafile = "/etc/pki/tls/elasticsearch-client/certs/bundle.pem"
+    client_auth = "RequireAndVerifyClientCert"
+    prefer_server_ciphers = true
+    min_version = "TLS12"
+    {% endif %}
+
+[ptmd_ElasticSearchOutput]
+type="ElasticSearchOutput"
+{% if elasticsearch_client_ssl_enabled == "true" %}
+server = "https://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% else %}
+server = "http://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% endif %}
+message_matcher = "Logger == 'ptmd_streamer'"
+encoder = "ptmd_ESJsonEncoder"
+flush_interval = 1000
+flush_count = 1
+    [ptmd_ElasticSearchOutput.buffering]
+    max_file_size = 268435456  # 256MiB
+    max_buffer_size = 268435456  # 256MiB
+    full_action = "shutdown"
+    cursor_update_count = 100
+    {% if elasticsearch_client_ssl_enabled == "true" %}
+    [ptmd_ElasticSearchOutput.tls]
+    cert_file = "/etc/pki/tls/elasticsearch-client/certs/{{ inventory_hostname }}.pem"
+    key_file = "/etc/pki/tls/elasticsearch-client/private/{{ inventory_hostname }}.pem"
+    root_cafile = "/etc/pki/tls/elasticsearch-client/certs/bundle.pem"
+    client_auth = "RequireAndVerifyClientCert"
+    prefer_server_ciphers = true
+    min_version = "TLS12"
+    {% endif %}
+
+[switchd_ElasticSearchOutput]
+type="ElasticSearchOutput"
+{% if elasticsearch_client_ssl_enabled == "true" %}
+server = "https://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% else %}
+server = "http://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% endif %}
+message_matcher = "Logger == 'switchd_streamer'"
+encoder = "switchd_ESJsonEncoder"
+flush_interval = 1000
+flush_count = 1
+    [switchd_ElasticSearchOutput.buffering]
+    max_file_size = 268435456  # 256MiB
+    max_buffer_size = 268435456  # 256MiB
+    full_action = "shutdown"
+    cursor_update_count = 100
+    {% if elasticsearch_client_ssl_enabled == "true" %}
+    [switchd_ElasticSearchOutput.tls]
+    cert_file = "/etc/pki/tls/elasticsearch-client/certs/{{ inventory_hostname }}.pem"
+    key_file = "/etc/pki/tls/elasticsearch-client/private/{{ inventory_hostname }}.pem"
+    root_cafile = "/etc/pki/tls/elasticsearch-client/certs/bundle.pem"
+    client_auth = "RequireAndVerifyClientCert"
+    prefer_server_ciphers = true
+    min_version = "TLS12"
+    {% endif %}
+
+[daemon_ElasticSearchOutput]
+type="ElasticSearchOutput"
+{% if elasticsearch_client_ssl_enabled == "true" %}
+server = "https://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% else %}
+server = "http://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% endif %}
+message_matcher = "Logger == 'daemon_streamer'"
+encoder = "daemon_ESJsonEncoder"
+flush_interval = 1000
+flush_count = 1
+    [daemon_ElasticSearchOutput.buffering]
+    max_file_size = 268435456  # 256MiB
+    max_buffer_size = 268435456  # 256MiB
+    full_action = "shutdown"
+    cursor_update_count = 100
+    {% if elasticsearch_client_ssl_enabled == "true" %}
+    [daemon_ElasticSearchOutput.tls]
+    cert_file = "/etc/pki/tls/elasticsearch-client/certs/{{ inventory_hostname }}.pem"
+    key_file = "/etc/pki/tls/elasticsearch-client/private/{{ inventory_hostname }}.pem"
+    root_cafile = "/etc/pki/tls/elasticsearch-client/certs/bundle.pem"
+    client_auth = "RequireAndVerifyClientCert"
+    prefer_server_ciphers = true
+    min_version = "TLS12"
+    {% endif %}
+
+
+[zebra_ElasticSearchOutput]
+type="ElasticSearchOutput"
+{% if elasticsearch_client_ssl_enabled == "true" %}
+server = "https://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% else %}
+server = "http://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% endif %}
+message_matcher = "Logger == 'zebra_streamer'"
+encoder = "zebra_ESJsonEncoder"
+flush_interval = 1000
+flush_count = 1
+    [zebra_ElasticSearchOutput.buffering]
+    max_file_size = 268435456  # 256MiB
+    max_buffer_size = 268435456  # 256MiB
+    full_action = "shutdown"
+    cursor_update_count = 100
+    {% if elasticsearch_client_ssl_enabled == "true" %}
+    [zebra_ElasticSearchOutput.tls]
+    cert_file = "/etc/pki/tls/elasticsearch-client/certs/{{ inventory_hostname }}.pem"
+    key_file = "/etc/pki/tls/elasticsearch-client/private/{{ inventory_hostname }}.pem"
+    root_cafile = "/etc/pki/tls/elasticsearch-client/certs/bundle.pem"
+    client_auth = "RequireAndVerifyClientCert"
+    prefer_server_ciphers = true
+    min_version = "TLS12"
+    {% endif %}
+
+[quagga_ospf_ElasticSearchOutput]
+type="ElasticSearchOutput"
+{% if elasticsearch_client_ssl_enabled == "true" %}
+server = "https://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% else %}
+server = "http://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% endif %}
+message_matcher = "Logger == 'quagga_ospf_streamer'"
+encoder = "quagga_ospf_ESJsonEncoder"
+flush_interval = 1000
+flush_count = 1
+    [quagga_ospf_ElasticSearchOutput.buffering]
+    max_file_size = 268435456  # 256MiB
+    max_buffer_size = 268435456  # 256MiB
+    full_action = "shutdown"
+    cursor_update_count = 100
+    {% if elasticsearch_client_ssl_enabled == "true" %}
+    [quagga_ospf_ElasticSearchOutput.tls]
+    cert_file = "/etc/pki/tls/elasticsearch-client/certs/{{ inventory_hostname }}.pem"
+    key_file = "/etc/pki/tls/elasticsearch-client/private/{{ inventory_hostname }}.pem"
+    root_cafile = "/etc/pki/tls/elasticsearch-client/certs/bundle.pem"
+    client_auth = "RequireAndVerifyClientCert"
+    prefer_server_ciphers = true
+    min_version = "TLS12"
+    {% endif %}
+
+[quagga_bgp_ElasticSearchOutput]
+type="ElasticSearchOutput"
+{% if elasticsearch_client_ssl_enabled == "true" %}
+server = "https://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% else %}
+server = "http://{{ elasticsearch_host }}:{{ elasticsearch_port }}"
+{% endif %}
+message_matcher = "Logger == 'quagga_bgp_streamer'"
+encoder = "quagga_bgp_ESJsonEncoder"
+flush_interval = 1000
+flush_count = 1
+    [quagga_bgp_ElasticSearchOutput.buffering]
+    max_file_size = 268435456  # 256MiB
+    max_buffer_size = 268435456  # 256MiB
+    full_action = "shutdown"
+    cursor_update_count = 100
+    {% if elasticsearch_client_ssl_enabled == "true" %}
+    [quagga_bgp_ElasticSearchOutput.tls]
+    cert_file = "/etc/pki/tls/elasticsearch-client/certs/{{ inventory_hostname }}.pem"
+    key_file = "/etc/pki/tls/elasticsearch-client/private/{{ inventory_hostname }}.pem"
+    root_cafile = "/etc/pki/tls/elasticsearch-client/certs/bundle.pem"
+    client_auth = "RequireAndVerifyClientCert"
+    prefer_server_ciphers = true
+    min_version = "TLS12"
+    {% endif %}

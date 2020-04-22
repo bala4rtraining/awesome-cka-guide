@@ -1,0 +1,9 @@
+---
+- name: Delete any installation of the zookeeper on the node
+  file: >
+    path={{ item }}
+    state=absent
+  with_items:
+    - "{{ zookeeper_install_dir }}"
+    - "{{ data_dir_zookeeper }}"
+    - "{{ log_dir_zookeeper }}"

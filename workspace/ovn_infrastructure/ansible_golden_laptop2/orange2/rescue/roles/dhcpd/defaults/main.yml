@@ -1,0 +1,41 @@
+---
+# defaults file for dhcpd on the rescue
+
+
+################################
+# DHCPD
+################################
+
+#
+# Assign never expired lease time
+#
+default_lease_time: -1
+max_lease_time: -1
+min_lease_time: -1
+
+log_facility: "local7"
+
+
+################################
+# Cumulus
+################################
+
+rescue_cumulus_path: /var/www/html/cumulus
+#cumulus_image_name: cumulus-linux-3.2.0-bcm-amd64-1481677792.ac46c24z44f3e47.bin
+cumulus_image_name: cumulus-linux-3.2.1.bin
+
+cumulus_prov_oob_sw_file: cumulus-provisioning-oob-sw
+cumulus_prov_other_sw_file: cumulus-provisioning-other-sw
+
+################################
+# Centos7
+################################
+rescue_legacy_ks_dir: pxe-install-source-ks
+rescue_legacy_ks_file: centos7-legacy-install-ks.cfg
+rescue_legacy_install_src_dir: centos7-install-source
+rescue_legacy_centos7_iso: CentOS-7-x86_64-DVD-1503-01.iso
+
+#
+# Secureboot
+#
+rescue_tftp_boot: /var/lib/tftpboot

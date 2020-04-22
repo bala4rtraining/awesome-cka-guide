@@ -1,0 +1,20 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=cas_tool
+
+- name: Deploy CAS_Tool Server
+  hosts: cas_tool
+  gather_facts: yes
+  roles:
+    - cas_tool
+  vars:
+    cas_tool_server: true
+    cas_tool_scheme: "http"
+
+- name: Deploy CAS_Tool Client
+  hosts: cas_tool
+  gather_facts: yes
+  roles:
+    - cas_tool
+  vars:
+    cas_tool_server: false
+    cas_tool_scheme: "http"

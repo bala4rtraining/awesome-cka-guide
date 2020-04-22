@@ -1,0 +1,39 @@
+---
+- include: "../ovn_vars.yml"
+
+# Use this playbook to bootstrap tests to run from plays in the tests directory.
+- name: Regression Test Hashicorp Vault (Assumes Vault is unsealed)
+  hosts: ovn_cluster_vault_nodes
+  gather_facts: yes
+  become: yes
+  become_method: sudo
+  vars:
+    vault_regression_tests:
+      - vault_test_secret.sh
+      - vault_test_consul.sh
+  tasks:
+  - name: Copy tests to /tmp directory
+    copy:
+      src: tests/{{ regression_tests }}
+      dest: /tmp/{{ regression_tests }}
+      owner: vault
+      group: vault
+      mode: 0755
+    with_items: "{{ vault_regression_tests }}"
+    run_once: true
+    loop_control:
+      loop_var: regression_tests
+  - name: Execute Vault Regression Tests
+    shell: /tmp/{{ regression_tests }}
+    with_items: "{{ vault_regression_tests }}"
+    run_once: true
+    loop_control:
+      loop_var: regression_tests
+  - name: Remove Vault Regression Tests
+    file:
+      path: /tmp/{{ regression_tests }}
+      state: absent
+    with_items: "{{ vault_regression_tests }}"
+    run_once: true
+    loop_control:
+      loop_var: regression_tests

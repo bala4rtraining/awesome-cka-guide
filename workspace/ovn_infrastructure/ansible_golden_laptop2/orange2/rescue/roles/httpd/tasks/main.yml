@@ -1,0 +1,8 @@
+---
+#
+# http tasks
+#
+- name: Start httpd server
+  service: name=httpd state=restarted enabled=yes
+  
+  

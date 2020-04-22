@@ -1,0 +1,21 @@
+default vesamenu.c32
+prompt 1
+timeout 100
+
+display boot.msg
+
+{% set servars = servers[ansible_hostname] %}
+
+label kick
+  menu label Install OVN Node with ^Kickstart 
+  menu default
+  kernel vmlinuz
+  append initrd=initrd.img inst.ks=http://{{servars.subnet_int_ip}}/{{orange_ks_dir}}/{{orange_ks_file}}
+
+label rescue
+  menu label ^Rescue installed system
+  kernel vmlinuz
+  append initrd=initrd.img rescue
+label local
+  menu label Boot from ^local drive
+  localboot 0xffff

@@ -1,0 +1,9 @@
+
+---
+- include: ../ovn_vars.yml ovn_vars_hosts="{{ target_hosts | default('yum_mirror_servers') }}"
+
+- name: deploy yum_mirrors daemon
+  hosts: "{{ target_hosts | default('yum_mirror_servers') }}"
+  gather_facts: yes
+  roles:
+    - { role: yum_mirrors, dispatch: ['deploy_service_config']}

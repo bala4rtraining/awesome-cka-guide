@@ -1,0 +1,20 @@
+#
+# Global variables
+# for Cumulus BGP configurations
+# site: OCC prod
+
+#
+# This assumes that the netmask is /24
+#
+#
+#
+
+
+
+asn_ovn_leaf1: 4217500101
+asn_ovn_leaf2: 4217500102
+asn_ovn_leaf3: 4217500103
+
+asn_ovn_spines: 4217500110
+asn_ovn_borders: 4217500120
+

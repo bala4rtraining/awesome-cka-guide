@@ -1,0 +1,30 @@
+---
+# Tasks file for initializing vault
+# Tasks perform Master Key Creation and Initial Root Token generation
+# Expect execute tasks on 1 node and one time after bare metal provisioning
+
+- name: Copy PGP public keys to /tmp directory
+  copy:
+    src: /tmp/{{ unseal_pgp_pkey }}
+    dest: /tmp/{{ unseal_pgp_pkey }}
+    owner: vault
+    group: vault
+    mode: 0644
+  with_sequence: start=1 end=3 stride=1 format=unseal_pgp%d.pkey
+  run_once: true
+  loop_control:
+    loop_var: unseal_pgp_pkey
+
+- name: List .pkey files create
+  shell: "ls -m /tmp/*.pkey | sed 's/ //g'"
+  register: unseal_pgp_pkeys
+
+- name: Initialize Vault
+  shell: "{{ vault_install_dir }}/vault init -address=https://{{ vault_listener_tcp_address }} -key-shares={{ vault_num_key_shares }} -key-threshold={{ vault_num_key_threshold }} -pgp-keys='{{ unseal_pgp_pkeys.stdout }}' -ca-cert='{{ vault_backend_consul_tls_ca_file }}' | grep ':' >& /opt/vault.init.exist"
+  args:
+    creates: /opt/vault.init.exist
+  run_once: true # run initialize Vault only on one of the nodes
+  register: vault_init_msg # capture stdout that includes the 5 sealed keys
+
+- debug: msg="{{ vault_init_msg.stdout }}"
+- debug: msg="{{ vault_init_msg.stderr }}"

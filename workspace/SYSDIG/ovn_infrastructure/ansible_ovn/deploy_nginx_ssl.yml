@@ -1,0 +1,22 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=nginx
+
+- name: install nginx with ssl enabled
+  hosts: nginx
+  roles:
+    - nginx
+  vars:
+    - nginx_ssl_certificate_path: "/etc/pki/tls/certs/{{ inventory_hostname }}.pem"
+    - nginx_ssl_certificate_key_path: "/etc/pki/tls/private/{{ inventory_hostname }}.pem"
+    - nginx_sites:
+        default:
+          - listen {{ nginx_default_port }} ssl
+          - server_name localhost
+          - ssl_certificate {{ nginx_ssl_certificate_path }}
+          - ssl_certificate_key {{ nginx_ssl_certificate_key_path }} 
+    - nginx_configs:
+        websockets:
+          - map $http_upgrade $connection_upgrade {
+              default upgrade;
+              '' close;
+            }

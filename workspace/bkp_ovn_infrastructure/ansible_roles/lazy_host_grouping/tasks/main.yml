@@ -1,0 +1,34 @@
+---
+# tasks file for lazy_host_grouping
+
+# this role attempts to create dynamic inventory groups by looking for
+# facts local to each host stored in /etc/ansible/facts.d/provisioned.facts
+#
+# the role folds over all keys in that file in an ini section called 'as'
+# and where the value for that key is 'yes' it creates a group and adds
+# the host to that group.
+#
+# and example /etc/ansible/facts.d/provisioned.facts file might look like:
+#
+# [as]
+# kafka=yes
+# zookeeper=yes
+#
+# in the case that this file and these values don't exist the host will
+# automatically be added to a group called 'unprovisioned'
+
+- name: create dynamic groups based on values in facts.d/provisioned.facts
+  group_by: key={{ item.key }}
+  with_dict: "{{ ((ansible_local|default({})).provisioned|default({})).as|default({}) }}"
+  when: ansible_local is defined
+        and ansible_local.provisioned is defined
+        and ansible_local.provisioned.as is defined
+        and item.value == 'yes'
+  
+- name: create dynamic unprovisioned group for bare hosts
+  group_by: key=unprovisioned
+  when: ansible_local is not defined
+        or ansible_local.provisioned is not defined
+        or ansible_local.provisioned.as is not defined
+
+

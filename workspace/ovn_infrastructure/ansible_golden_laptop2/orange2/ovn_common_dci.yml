@@ -1,0 +1,435 @@
+#
+# Common variables for both switches and servers
+# at DCI data center
+#
+#
+
+
+####################
+# Rescue server
+#
+####################
+
+rescue:
+  
+  hostname: "ovn-rescue-dci" # Has to match hostnames assigned by OGL DHCP during install
+
+  # eno1 - OGL
+  int_1g_ogl:
+
+    subnet: 192.168.0.0
+    subnet_int_ip: 192.168.0.2 
+    subnet_int_ip_len: 24
+    subnet_int_ip_router: 192.168.0.1 # OGL
+    subnet_int_ip_name: "eno1"
+    
+  # eno2 - OOB sw eth0 for OOB-sw:  192.168.1.0/24
+  int_1g_oob_sw_eth0:
+
+    subnet: 192.168.1.0
+    subnet_int_ip: 192.168.1.1
+    subnet_int_ip_len: 24
+    subnet_int_ip_mask: 255.255.255.0    
+    subnet_int_ip_router: 192.168.1.2
+    subnet_int_ip_name: "eno2"
+
+  # eno3 - OOB-sw swp1 for IB + OOB serv: 0.192/26
+  int_1g_oob_sw_swp1:
+
+    subnet: 10.237.0.192
+    subnet_int_ip: 10.237.0.195
+    subnet_int_ip_len: 26
+    subnet_int_ip_mask: 255.255.255.192
+    subnet_int_ip_router: 10.237.0.193 
+    subnet_int_ip_name: "eno3"
+
+
+  # eno4 - OOB-serv swp1 for iLO: 0.128/26
+  int_1g_oob_serv_swp1:
+
+    subnet: 10.237.0.128
+    subnet_int_ip: 10.237.0.130
+    subnet_int_ip_len: 26
+    subnet_int_ip_mask: 255.255.255.192
+    subnet_int_ip_router: 10.237.0.129
+    subnet_int_ip_name: "eno4"
+    
+  # eno49 - compute nodes
+  #         (HAproxy + compute)
+  #
+  #         1.16/29, 1.24/29
+  #         1.32/27, 1.64/27, 1.96/27, 1.128/27
+
+  
+  int_10g_border_sw:
+
+    # HA
+    subnet_ha: 10.237.1.16
+    subnet_ha_len: 29
+    subnet_ha_mask: 255.255.255.248
+    subnet_ha_router: 10.237.1.17
+
+    # Rack1
+    subnet_rack1: 10.237.1.32
+    subnet_rack1_router: 10.237.1.33
+    
+    subnet_rack2: 10.237.1.64
+    subnet_rack2_router: 10.237.1.65
+
+    subnet_rack3: 10.237.1.96
+    subnet_rack3_router: 10.237.1.97
+
+    subnet_rack4: 10.237.1.128    
+    subnet_rack4_router: 10.237.1.129
+
+    subnet_rack5: 10.237.1.160
+    subnet_rack5_router: 10.237.1.161
+
+    subnet_rack_len: 27
+    subnet_rack_mask: 255.255.255.224
+
+    
+    # Rescue itself
+    subnet_rescue: 10.237.1.24
+    subnet_rescue_mask: 255.255.255.248
+    subnet_rescue_router: 10.237.1.25
+    
+    subnet_int_ip: 10.237.1.26 # Assume border sw: swp1-2 ASR1k, swp3-4 EAs, swp5-6 HAproxy, swp7 rescue
+    subnet_int_ip_len: 29
+    subnet_int_ip_router: 10.237.1.25 # 10.237.1.24/29 network
+    subnet_int_ip_name: "eno49"
+    subnet_int_ip_name2: "eno50"
+    subnet_int_ip_bond_name: "bond10g"
+    
+  
+
+##############
+# OOB SW
+##############
+
+oob_sw:
+  
+  hostname: "ST98OVN02JK1MGT"
+
+  int_eth0:
+     subnet_int_ip: 192.168.1.2/24
+     subnet_int_mac: "64:00:6A:DD:8C:A0"
+
+  # swp1-12 are used to connect to other switches
+  # in a singe vlan
+  vlans:
+    vlan201:
+       vlan_id: 201
+       ports: "glob swp1-52"
+       subnet: 10.237.0.192/26
+       subnet_ip: 10.237.0.254/26
+       
+
+##############
+# OOB Serv
+##############
+       
+
+oob_serv:
+  
+  hostname: "ST98OVN03JK1MGT"
+
+  int_eth0:
+     subnet_int_ip: 10.237.0.196/26
+     subnet_int_mac: "64:00:6A:DD:AA:A0"
+  
+  # swp1-32 are used to connect to server iLOs
+  vlans:
+    vlan200:
+      vlan_id: 200
+      ports: "glob swp1-52"
+      subnet: 10.237.0.128/26
+      subnet_ip: 10.237.0.190/26
+
+      
+
+#####################
+# IB switches
+#####################
+
+
+
+#
+# All IB switches
+#
+ip_subnet: 10.237.1 # /24 subnet for the IB cluster
+ip_subnet_asr1k: 10.237.0
+ip_subnet_asr1k_subnet: 10.237.0.64/29
+
+asn_ovn_leaf1: 4219800150
+asn_ovn_leaf2: 4219800151
+asn_ovn_leaf3: 4219800152
+asn_ovn_leaf4: 4219800153
+asn_ovn_leaf5: 4219800154
+
+asn_ovn_spines: 4219800100
+
+asn_ovn_borders: 4219800110
+
+
+#
+# borders
+#
+
+# A3
+ovn_border_leaf1:
+  hostname: "ST98OVN03JK1BL"
+  int_eth0:
+    subnet_int_ip: 10.237.0.220
+    subnet_int_mac: "F4:8E:38:56:81:F6"
+  int_swp1:
+  #  subnet_int_ip: 10.237.0.66/30
+     subnet_int_ip: 10.237.0.77
+  # int_swp2:
+  #   subnet_int_ip: 10.237.0.74/30
+  int_peer_fw:
+    subnet_int_ip: 10.237.0.73
+  
+# A5
+ovn_border_leaf2:
+  hostname: "ST98OVN04JK1BL"
+  int_eth0:
+    subnet_int_ip: 10.237.0.221
+    subnet_int_mac: "F4:8E:38:56:86:F6"
+  int_swp1:
+  #   subnet_int_ip: 10.237.0.70/30
+      subnet_int_ip: 10.237.0.78
+  # int_swp2:
+  #   subnet_int_ip: 10.237.0.78/30
+  int_peer_fw:
+    subnet_int_ip: 10.237.0.73
+    
+#
+# spines
+#
+
+# A3
+ovn_spine1:
+  hostname: "ST98OVN01JK1SP"
+  int_eth0:
+    subnet_int_ip: 10.237.0.210
+    subnet_int_mac: "F4:8E:38:1C:15:D5"    
+# A5
+ovn_spine2:
+  hostname: "ST98OVN02JK1SP"
+  int_eth0:
+    subnet_int_ip: 10.237.0.211
+    subnet_int_mac: "14:18:77:14:DC:28"
+    
+#
+# leafs
+#
+
+# A3
+ovn_leaf1:
+  hostname: "ST98OVN05JK1LF"
+  int_eth0:
+    subnet_int_ip: 10.237.0.200
+    subnet_int_mac: "F4:8E:38:56:7E:F6"    
+# A4
+ovn_leaf2:
+  hostname: "ST98OVN06JK1LF"
+  int_eth0:
+    subnet_int_ip: 10.237.0.201
+    subnet_int_mac: "F4:8E:38:56:95:F6"
+# A5
+ovn_leaf3:
+  hostname: "ST98OVN07JK1LF"
+  int_eth0:
+    subnet_int_ip: 10.237.0.202
+    subnet_int_mac: "F4:8E:38:56:9B:F6"
+# A6    
+ovn_leaf4:
+  hostname: "ST98OVN08JK1LF"
+  int_eth0:
+    subnet_int_ip: 10.237.0.203
+    subnet_int_mac: "F4:8E:38:56:7D:F6"
+
+#A8
+
+
+ovn_leaf5:
+  hostname: "ST98OVN09JK1LF"
+  int_eth0:
+    subnet_int_ip: 10.237.0.204
+    subnet_int_mac: "14:18:77:FA:C4:BD"
+
+
+############################
+# Compute Servers - iLO
+############################
+
+servers_ilo:
+
+
+
+  border:
+    
+    # EA
+    - "94:18:82:7E:F7:00;eaid9811-a-ilo;10.237.0.131"
+    - "94:18:82:7E:E7:E6;eaid9811-b-ilo;10.237.0.132"
+    # HAprox
+    
+    - "30:E1:71:56:46:38;rc981ovnlbp0001;10.237.0.133"
+    - "94:18:82:84:22:BC;rc981ovnlbp0002;10.237.0.134"
+
+    # A3
+  rack1:
+    
+
+    - "94:18:82:84:22:76;rc981ovnapp0101;10.237.0.135"
+    - "30:E1:71:56:36:DA;rc981ovnapp0102;10.237.0.136"
+    - "94:18:82:84:5A:CE;rc981ovnapp0103;10.237.0.137"
+    - "30:E1:71:56:36:F2;rc981ovnapp0104;10.237.0.138"
+    - "94:18:82:84:22:DC;rc981ovnapp0105;10.237.0.139"
+    - "94:18:82:85:01:60;rc981ovnapp0106;10.237.0.140"
+    - "30:E1:71:56:A0:C0;rc981ovnapp0107;10.237.0.141"
+    - "94:18:82:7D:F7:C0;rc981ovnapp0108;10.237.0.142"
+    - "30:E1:71:56:46:D8;rc981ovnapp0109;10.237.0.143"
+
+    # A4
+  rack2:
+
+
+    - "94:18:82:85:11:CE;rc981ovnapp0201;10.237.0.145"
+    - "94:18:82:84:22:CC;rc981ovnapp0202;10.237.0.146"
+    - "94:18:82:85:F0:A8;rc981ovnapp0203;10.237.0.147"
+    - "94:18:82:84:22:E0;rc981ovnapp0204;10.237.0.148"
+    - "94:18:82:84:22:B4;rc981ovnapp0205;10.237.0.149"
+    - "94:18:82:84:22:66;rc981ovnapp0206;10.237.0.150"
+    - "94:18:82:85:DB:20;rc981ovnapp0207;10.237.0.151"
+    - "94:18:82:85:CB:E2;rc981ovnapp0208;10.237.0.152"
+    - "30:E1:71:56:36:DE;rc981ovnapp0209;10.237.0.153"
+    - "94:18:82:85:DB:2C;rc981ovnapp0210;10.237.0.170" # rescue
+  
+
+    # A5
+  rack3:
+
+    - "94:18:82:85:11:C2;rc981ovnapp0301;10.237.0.155"
+    - "30:E1:71:56:01:73;rc981ovnapp0302;10.237.0.156"
+    - "94:18:82:85:EB:0E;rc981ovnapp0303;10.237.0.157"
+    - "94:18:82:85:01:D2;rc981ovnapp0304;10.237.0.158"
+    - "94:18:82:85:DB:BC;rc981ovnapp0305;10.237.0.159"
+    - "30:E1:71:56:C0:0E;rc981ovnapp0306;10.237.0.160"
+    - "94:18:82:85:F0:42;rc981ovnapp0307;10.237.0.161"
+    - "94:18:82:85:F0:F0;rc981ovnapp0308;10.237.0.162"
+    - "94:18:82:85:DB:4E;rc981ovnapp0309;10.237.0.163"
+
+    #A6
+  rack4:
+    - "98:F2:B3:2F:D3:DE;RC981OVNAPP0401;10.237.0.165"
+    - "98:F2:B3:2F:D3:4C;RC981OVNAPP0402;10.237.0.166"
+    - "98:F2:B3:2F:D3:4E;RC981OVNAPP0403;10.237.0.167"
+    - "98:F2:B3:2F:D3:58;RC981OVNAPP0404;10.237.0.168"
+    - "98:F2:B3:2F:D3:50;RC981OVNAPP0405;10.237.0.169"
+    - "98:F2:B3:2F:D3:10;RC981OVNAPP0406;10.237.0.171"
+    - "98:F2:B3:2F:D3:FE;RC981OVNAPP0407;10.237.0.172"
+    
+    
+    #A8
+  rack5:
+    - "98:F2:B3:2D:0C:76;RC981OVNAPP0501;10.237.0.244"
+    - "98:F2:B3:2F:D3:54;RC981OVNAPP0502;10.237.0.245"
+    - "98:F2:B3:2F:D3:0B;RC981OVNAPP0503;10.237.0.246"
+    - "98:F2:B3:2F:F3:10;RC981OVNAPP0504;10.237.0.247"
+    - "98:F2:B3:2F:D3:38;RC981OVNAPP0505;10.237.0.248"
+    - "98:F2:B3:2E:90:F6;RC981OVNAPP0506;10.237.0.249"
+    - "98:F2:B3:2F:D3:44;RC981OVNAPP0507;10.237.0.250"
+    - "98:F2:B3:2F:D3:36;RC981OVNAPP0508;10.237.0.251"
+
+############################
+# Compute Servers - 10G
+############################
+
+
+
+servers_ha:
+
+  
+  border:
+    # HAproxy
+    - "14:02:EC:90:A4:DC;sl981ovnlbp0001;10.237.1.18"
+    - "14:02:EC:8F:99:B8;sl981ovnlbp0002;10.237.1.19"
+
+servers_rack:
+
+    # A3
+  rack1:
+
+    - "14:02:EC:8F:99:8C;sl981ovnapp0101;10.237.1.34"
+    - "14:02:EC:90:8B:00;sl981ovnapp0102;10.237.1.35"
+    - "14:02:EC:90:A5:6C;sl981ovnapp0103;10.237.1.36"
+    - "14:02:EC:90:A5:78;sl981ovnapp0104;10.237.1.37"
+    - "14:02:EC:8F:99:F0;sl981ovnapp0105;10.237.1.38"
+    - "14:02:EC:8F:58:A8;sl981ovnapp0106;10.237.1.39"
+    - "14:02:EC:90:A4:D8;sl981ovnapp0107;10.237.1.40"
+    - "14:02:EC:8F:9A:C0;sl981ovnapp0108;10.237.1.41"
+    - "14:02:EC:90:A5:B0;sl981ovnapp0109;10.237.1.42"
+    - "80:00:27:00:10:00;hsm-rack-a3;10.237.1.50"
+
+    # A4
+  rack2:
+
+    - "14:02:EC:8F:58:B0;sl981ovnapp0201;10.237.1.66"
+    - "14:02:EC:8F:9B:F8;sl981ovnapp0202;10.237.1.67"
+    - "14:02:EC:90:8A:E4;sl981ovnapp0203;10.237.1.68"
+    - "14:02:EC:8E:C6:04;sl981ovnapp0204;10.237.1.69"
+    - "14:02:EC:8F:9A:20;sl981ovnapp0205;10.237.1.70"
+    - "14:02:EC:8F:9C:50;sl981ovnapp0206;10.237.1.71"
+    - "14:02:EC:8F:5D:38;sl981ovnapp0207;10.237.1.72"
+    - "14:02:EC:90:A4:D0;sl981ovnapp0208;10.237.1.73"
+    - "14:02:EC:90:8A:F8;sl981ovnapp0209;10.237.1.74"
+    - "80:00:27:00:10:01;hsm-rack-a4;10.237.1.80"
+
+    # A5
+  rack3:
+
+    - "14:02:EC:90:94:2C;sl981ovnapp0301;10.237.1.98"
+    - "14:02:EC:8F:5D:18;sl981ovnapp0302;10.237.1.99"
+    - "14:02:EC:90:AD:0B;sl981ovnapp0303;10.237.1.100"
+    - "14:02:EC:90:A5:60;sl981ovnapp0304;10.237.1.101"
+    - "14:02:EC:90:AC:DC;sl981ovnapp0305;10.237.1.102"
+    - "14:02:EC:90:AC:D8;sl981ovnapp0306;10.237.1.103"
+    - "14:02:EC:8F:58:9C;sl981ovnapp0307;10.237.1.104"
+    - "14:02:EC:90:8F:04;sl981ovnapp0308;10.237.1.105"
+    - "14:02:EC:90:AC:B4;sl981ovnapp0309;10.237.1.106"
+    - "80:00:27:00:10:02;hsm-rack-a5;10.237.1.110"
+
+
+    #A6
+  rack4:
+    - "48:DF:37:1F:46:5C;SL981OVNAPP0401;10.237.1.132"
+    - "48:DF:37:1D:93:88;SL981OVNAPP0402;10.237.1.133"
+    - "48:DF:37:1E:DE:B4;SL981OVNAPP0403;10.237.1.134"
+    - "48:DF:37:1E:DA:24;SL981OVNAPP0404;10.237.1.135"
+    - "48:DF:37:1E:DA:1C;SL981OVNAPP0405;10.237.1.136"
+    - "48:DF:37:1F:42:3C;SL981OVNAPP0406;10.237.1.137"
+    - "48:DF:37:1F:1F:E4;SL981OVNAPP0407;10.237.1.138"
+
+    #A8
+  rack5:
+    - "48:DF:37:1F:23:2C;SL981OVNAPP0501;10.237.1.162"
+    - "48:DF:37:1F:46:D0;SL981OVNAPP0502;10.237.1.163"
+    - "48:DF:37:1F:40:C4;SL981OVNAPP0503;10.237.1.164"
+    - "48:DF:37:1E:DA:5C;SL981OVNAPP0504;10.237.1.165"
+    - "48:DF:37:1F:48:64;SL981OVNAPP0505;10.237.1.166"
+    - "48:DF:37:1F:48:3C;SL981OVNAPP0506;10.237.1.167"
+    - "48:DF:37:1E:DA:88;SL981OVNAPP0507;10.237.1.168"
+    - "48:DF:37:1F:47:BC;SL981OVNAPP0508;10.237.1.169"
+           
+ 
+
+
+
+
+
+    
+
+
+  

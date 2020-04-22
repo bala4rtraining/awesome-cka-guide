@@ -1,0 +1,19 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+- gather_facts: yes
+  hosts: elasticsearch
+
+# playbook for deploying elasticsearch curator to cleanup older indices.
+- name: run the elasticsearch curator playbook to install elastic curator
+  hosts: elasticsearch
+  roles:
+    - { role: elasticsearch_curator, dispatch: ['installcurator'], when: "hostvars[inventory_hostname].eserv_type == 'default'" }
+
+# playbook for deploying elasticsearch curator cron job in one of the data nodes.
+- name: run the elasticsearch curator playbook to install elastic curator cron job
+  hosts: elasticsearch
+  roles:
+    - { role: elasticsearch_curator, when: "hostvars[inventory_hostname].curator_cron =='enabled'", dispatch: ['deploycurator']  }
+  vars:
+    - elasticsearch_client_ssl_enabled: "false"
+    - elasticsearch_client_use_fqdn: "false"

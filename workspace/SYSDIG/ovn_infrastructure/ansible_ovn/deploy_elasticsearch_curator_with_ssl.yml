@@ -1,0 +1,29 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=elasticsearch
+- gather_facts: yes
+  hosts: elasticsearch
+
+# playbook for deploying elasticsearch curator to cleanup older indices.
+- name: run the elasticsearch curator playbook to install elastic curator
+  hosts: elasticsearch
+  roles:
+    - { role: elasticsearch_curator, dispatch: ['installcurator'], when: "hostvars[inventory_hostname].eserv_type == 'default'" }
+
+# playbook for deploying elasticsearch curator cron job in one of the data nodes.
+- name: run the elasticsearch curator playbook to install elastic curator cron job
+  hosts: elasticsearch
+  roles:
+    - { role: certificates }
+    - { role: elasticsearch_curator, when: "hostvars[inventory_hostname].curator_cron =='enabled'", dispatch: ['deploycurator']  }
+  vars:
+    - elasticsearch_client_ssl_enabled: "true"
+    - elasticsearch_client_use_fqdn: "true"
+    - cert_data: "{{ elasticsearch_client_cert }}"
+    - ca_cert_data: "{{ elasticsearch_client_ca_cert }}"
+    - key_data: "{{ elasticsearch_client_key }}"
+    - cert_path: "/etc/pki/tls/elasticsearch-client/certs"
+    - key_path: "/etc/pki/tls/elasticsearch-client/private"
+    - ca_cert_path: "/etc/pki/tls/elasticsearch-client/certs"
+    - curator_elasticsearch_ca_cert_path: "{{ ca_cert_path }}/bundle.pem"
+    - curator_elasticsearch_cert_path: "{{ cert_path }}/{{ inventory_hostname }}.pem"
+    - curator_elasticsearch_key_path: "{{ key_path }}/{{ inventory_hostname }}.pem"

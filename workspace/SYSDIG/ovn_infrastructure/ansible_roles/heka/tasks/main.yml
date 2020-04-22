@@ -1,0 +1,11 @@
+---
+- name: includes overrides specific to the distribution+version (e.g. Centos7)
+  include_vars: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
+
+- name: Heka role task dispatcher
+  include: "{{ task_item }}.yml" # assumes no nested includes from loops
+  with_items: "{{ dispatch|default([]) }}"
+  when: "dispatch != []"
+  loop_control:
+    loop_var: task_item
+

@@ -1,0 +1,8 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!localhost,!cumulus_switch,!ovn_manager
+
+# Site specific host information
+- name: Stop and disable heka service
+  hosts: all:!localhost:!cumulus_switch:!ovn_manager
+  roles:
+  - { role: heka, dispatch: ['stop_heka'] }

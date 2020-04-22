@@ -1,0 +1,9 @@
+---
+# file: site.yml
+# 
+# This the main playbook for OVN Golden Laptop (OGL)
+#
+
+- include: provision.yml
+
+     

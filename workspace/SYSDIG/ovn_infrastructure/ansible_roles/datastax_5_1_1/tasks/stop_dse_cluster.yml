@@ -1,0 +1,17 @@
+---
+  - name: Disabling systemd configuration for datastax
+    systemd:
+      name: datastax
+      state: stopped
+
+  - name: Killing the processes if there any with dse
+    template: 
+      src: "cassandrascript.sh.j2"
+      dest: "/root/cassandrascript.sh"
+      owner: root
+      group: root
+      mode: "0755"
+
+  - name: Execute the shell script
+    command: sh /root/cassandrascript.sh
+

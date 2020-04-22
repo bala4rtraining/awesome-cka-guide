@@ -1,0 +1,125 @@
+// Jenkinsfile to create a new hotfix for one clearing service.
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        choice(name: 'SERVICE_NAME',
+               choices: 'ovn_clearing_jobs\novn_clearing_xdc_sync\novn_cas_tools\novn_cas_ui\novn_nginx_auth\novn2\novn_riak_persistence\novn_crypto',
+               description: 'What service do you want to create a new hotfix for?')
+
+        validatingString(name: 'RELEASE_VERSION',
+                        defaultValue: '',
+                        regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$',
+                        failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+                        description: 'What is the version that this hotfix belongs to? Use semantic versioning, e.g: x.y.z')
+
+        string(name: 'HOTFIX',
+               defaultValue: '',
+               description: 'What is the new hotfix number? It has to be larger than 1. E.g 2, 3, etc.')
+
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        RELEASE_TAG = "v${params.RELEASE_VERSION}.${params.HOTFIX}"
+        REPOSITORY_URL = "ssh://git@stash.trusted.visa.com:7999/op/${params.SERVICE_NAME}.git"
+        TMP_DIR = "${SERVICE_NAME}_repo"
+        RELEASE_TAG_GO = "${params.RELEASE_VERSION}.${params.HOTFIX}"
+
+    }
+
+    stages {
+
+        stage ('Check prerequisites') {
+
+            steps {
+
+                // If any of the following checks fails, the pipeline should result as FAILURE.
+
+                // 0. Check if the release branch exists.
+                // The following command will return 1 (if branch does exist), 0 otherwise.
+
+                sh "git ls-remote --heads ${REPOSITORY_URL} ${RELEASE_BRANCH} | wc -l"
+
+                // 1. Check if there's a new commit after latest tag
+
+                // 2. Tag provided (${RELEASE_TAG}) doesn't exist.
+
+            }
+
+        }
+
+        stage ('Tagging release branch') {
+            when {
+                            expression {
+                                       params.SERVICE_NAME == 'ovn_clearing_jobs' ||
+                                       params.SERVICE_NAME == 'ovn_clearing_xdc_sync' ||
+                                       params.SERVICE_NAME == 'ovn_riak_persistence'
+                            }
+
+
+            }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "${TMP_DIR}"]],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: "${REPOSITORY_URL}"]]]
+                sh "cd ${TMP_DIR}/ && git tag -a -m \"New hotfix ${params.HOTFIX} for ${params.SERVICE_NAME}\" ${RELEASE_TAG}"
+                sh "cd ${TMP_DIR}/ && git push origin ${RELEASE_TAG}"
+            }
+
+        }
+
+        stage ('Tagging release branch for golang repos') {
+            when {
+                                expression { params.SERVICE_NAME == 'ovn_cas_tools' ||
+                                             params.SERVICE_NAME == 'ovn_cas_ui' ||
+                                             params.SERVICE_NAME == 'ovn_nginx_auth'
+                                }
+
+            }
+            steps {
+
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: "${RELEASE_BRANCH}"]],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "temp_repo"]],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: "${REPOSITORY_URL}"]]]
+                script{
+                withCredentials([sshUserPrivateKey(credentialsId: 'stash', keyFileVariable: 'SSH_KEY')]){
+                sh "cd temp_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh 'cd temp_repo/ && jq --arg value ${RELEASE_TAG_GO} \'.version=$value\' package.json > package.tmp && mv package.tmp package.json'
+                sh "cd temp_repo/ && git add package.json && git commit -m \"modify package.json for release ${params.RELEASE_VERSION}\""
+                sh "cd temp_repo/ && git tag -a -m \"New hotfix ${params.HOTFIX} for ${params.SERVICE_NAME}\" ${RELEASE_TAG}"
+                sh "cd temp_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+
+                }
+                }
+            }
+
+        }
+
+        stage ('Trigger new release build') {
+
+            steps {
+                build job: "OVN-OP/${params.SERVICE_NAME}/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+
+        }
+
+    }
+
+}

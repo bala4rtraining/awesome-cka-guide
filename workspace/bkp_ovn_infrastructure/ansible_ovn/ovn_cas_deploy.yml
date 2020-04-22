@@ -1,0 +1,15 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=hadoop_namenodes,ovn_cluster_vault_nodes,kafka,ovn_riak_servers,nomad_client
+
+- name: Gather facts about OVN CAS middleware
+  hosts: hadoop_namenodes:ovn_cluster_vault_nodes:kafka:ovn_riak_servers
+  gather_facts: yes
+
+- name: Install and config OVN CAS
+  hosts: nomad_client
+  gather_facts: yes
+  become: yes
+  become_method: sudo
+  roles:
+     - { role: hadoop } #hadoop role uses dispatch, so this will only include variables needed for hdfs-site.xml
+     - { role: ovn_cas, dispatch: ['collection-delivery'] }

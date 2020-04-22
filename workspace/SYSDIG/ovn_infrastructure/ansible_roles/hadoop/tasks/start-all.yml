@@ -1,0 +1,30 @@
+---
+# Tasks for starting hadoop services in specific order
+
+- name: start journalnode services
+  service:
+    name: hadoop-hdfs-journalnode
+    state: started
+    enabled: yes
+  when: inventory_hostname in groups['journalnodes']
+
+- name: start zkfc services
+  service:
+    name: hadoop-hdfs-zkfc
+    state: started
+    enabled: yes
+  when: inventory_hostname in groups['hadoop_namenodes']
+
+- name: start namenode services
+  service:
+    name: hadoop-hdfs-namenode
+    state: started
+    enabled: yes
+  when: inventory_hostname in groups['hadoop_namenodes']
+
+- name: start datanode services
+  service:
+    name: hadoop-hdfs-datanode
+    state: started
+    enabled: yes
+  when: inventory_hostname in groups['hadoop_datanodes']

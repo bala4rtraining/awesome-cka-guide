@@ -1,0 +1,55 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+
+  parameters {
+        choice(name:'SERVICETYPE', choices: 'start\nstop', description: 'Starting and stopping of cassandra as a service')
+  }
+
+  stages{
+    stage('set cluster variables') {
+      // boilerplate for stage must be the first stage
+      // in all the cd pipeline jobs.
+      // (see ovn_infrastructure/vars and ovn_infrastructure/src directory for shared libraries)
+        steps {
+         setClusterAndDatacenter(env);
+        }
+    }
+    stage('checkout SCM'){
+      steps{
+        git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    stage('starting cassandra as a service'){
+      when {
+        expression { params.SERVICETYPE == "start" }
+      }
+      steps{
+        ansiColor('xterm'){
+          ansiblePlaybook credentialsId: 'ENV.root_key', inventory: 'inventories/$CLUSTER/$DATACENTER', limit: 'cassandra_servers',extras:'-e "service=${SERVICETYPE}"', colorized: true, playbook: 'ansible_ovn/start_dse.yml', sudoUser: null
+          }
+      }
+    }
+    stage('stopping cassandra as a service'){
+      when {
+        expression { params.SERVICETYPE == "stop" }
+      }
+      steps{
+        ansiColor('xterm'){
+          ansiblePlaybook credentialsId: 'ENV.root_key', inventory: 'inventories/$CLUSTER/$DATACENTER', limit: 'cassandra_servers',extras:'-e "service=${SERVICETYPE}"', colorized: true, playbook: 'ansible_ovn/stop_dse.yml', sudoUser: null
+
+        }
+      }
+    }
+  }
+}

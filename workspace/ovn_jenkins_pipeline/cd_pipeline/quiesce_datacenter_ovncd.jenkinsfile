@@ -1,0 +1,2 @@
+@Library('ovn-shared-library') _
+cdTemplate_InvokeAnsiblePlaybook_ovncd('ovn_app_infrastructure', '$RELEASE_BRANCH', 'ansible_ovn/shutdown_datacenter.yml')

@@ -1,0 +1,7 @@
+---
+
+- name: change unowned file/directory owner & group
+  command: chown root:root /var/lib/tpm
+
+- name: rename /var/lib/tpm to /var/lib/tpm.bak
+  command: mv /var/lib/tpm /var/lib/tpm.bak

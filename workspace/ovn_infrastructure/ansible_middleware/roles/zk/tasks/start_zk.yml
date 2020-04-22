@@ -1,0 +1,5 @@
+---
+- name: start zookeeper
+  systemd:
+    state: started
+    name: zookeeper

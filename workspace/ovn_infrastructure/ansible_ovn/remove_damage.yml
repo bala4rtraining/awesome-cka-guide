@@ -1,0 +1,23 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all
+
+- name: Remove changes made to yum config
+  hosts: all
+  tasks:
+    - name: Remove gateway ports field
+      blockinfile:
+        dest: /etc/ssh/sshd_config
+        block: |
+          GatewayPorts yes
+        state: absent
+    - name: Remove proxy from yum.conf
+      blockinfile:
+        dest: /etc/yum.conf
+        block: |
+          proxy=http://{{ ansible_host }}:12345
+        state: absent
+    - name: Disable yum repository to fetch packages from artifactory
+      yum_repository:
+        description: base-artifactory
+        name: base-artifactory
+        state: absent

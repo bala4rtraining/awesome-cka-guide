@@ -1,0 +1,41 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  parameters {
+      choice(
+          name: 'TASK',
+          choices: 'unarchive_jobs\narchive_jobs',
+          description: 'Move non pipeline jobs from archives folder(unarchive) or move non pipeline scripts to archives folder(archive)'
+      )
+    }
+  stages {
+    stage('Archiving jobs') {
+      when {
+        expression {
+        return params.TASK == 'archive_jobs';
+        }
+      }
+      steps{
+        sh "source jenkins-sh/archive_jobs.sh; archive_jobs"
+      }
+    }
+    stage('unArchiving jobs') {
+      when {
+        expression {
+        return params.TASK == 'unarchive_jobs';
+        }
+      }
+      steps{
+        sh "source jenkins-sh/archive_jobs.sh; unarchive_jobs"
+      }
+    }
+
+  }
+}

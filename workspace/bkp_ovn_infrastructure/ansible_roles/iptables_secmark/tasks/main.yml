@@ -1,0 +1,42 @@
+---
+# tasks file for iptables_secmark
+
+- name: copy SELinux policy for build
+  copy: src=files/ovn_cluster_test.te dest=/tmp/ovn_cluster_test.te owner={{ config_machine }} group={{ config_machine }} mode=0644
+  when: build is defined
+
+- name: copy SELinux Make script for build
+  copy: src=files/ovn_cluster_test_env.sh dest=/tmp/ovn_cluster_test_env.sh owner={{ config_machine }} group={{ config_machine }} mode=0755
+  when: build is defined
+  
+- name: install SELinux policy from build
+  become: yes
+  become_method: sudo
+  command: /tmp/ovn_cluster_test_env.sh
+  when: build is defined
+
+- name: check/query whether already installed
+  shell: rpm -q {{ ovn_cluster_test_selinux | join(" ") }}
+  register: rpm_q
+  changed_when: false
+  failed_when: false
+  ignore_errors: true
+  when: build is not defined
+
+- name: copy rpms to /tmp
+  copy: src=files/ovn_cluster_test_selinux-1.0-1.el7.centos.noarch.rpm dest=/tmp/ovn_cluster_test_selinux-1.0-1.el7.centos.noarch.rpm
+  when: build is not defined and rpm_q|failed
+  
+- name: install SELinux policy from rpm and yum
+  become: yes
+  become_method: sudo
+  yum: name=/tmp/ovn_cluster_test_selinux-1.0-1.el7.centos.noarch.rpm
+  when: build is not defined
+
+- name: copy iptables SECMARK script
+  template: src=templates/iptables_secmark.j2 dest=/tmp/iptables_secmark.sh owner={{ config_machine }} group={{ config_machine }} mode=0755
+  
+- name: load iptables SECMARK policy
+  become: yes
+  become_method: sudo
+  command: /tmp/iptables_secmark.sh

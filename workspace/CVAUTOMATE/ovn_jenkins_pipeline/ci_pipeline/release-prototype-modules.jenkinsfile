@@ -1,0 +1,105 @@
+pipeline {
+agent {
+    docker {
+        image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+        label 'ovn_build'
+        args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    } 
+    parameters {
+        choice(name: 'MODULE_NAME',
+               choices: 'ovn-commons\novn-components',
+               description: 'Which module do you want to publish?')
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        GOPATH = "$WORKSPACE/.go"
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        RELEASE_TAG = "v${params.RELEASE_VERSION}-rc1"
+        RELEASE_TAG_GO = "${params.RELEASE_VERSION}-rc1"
+        RELEASE_TAG_MOD = "v${params.RELEASE_VERSION}"
+        PACKAGE_DIR = "$GOPATH/src/${params.MODULE_NAME}_repo"
+        GO_VERSION = "1.12"
+        GO_LOCAL_REPO="ovn-go-local"
+        ARTIFACTORY_CREDS = credentials('svcnpovndev_id')
+    }
+    stages {
+        stage('Prepare') {
+        steps {
+            // 1. setting up GOPATH structure, since we do not have a src/visa.com prefix inside of our repo
+            // 2. fetching dependencies with glide
+            sh '''
+              ln -snf /usr/local/go/${GO_VERSION}* /usr/local/go/default
+              git show -s --pretty=%ce > .git/committer-email
+              go version
+              rm -rf $PACKAGE_DIR
+              mkdir -p $PACKAGE_DIR
+              cp -r * $PACKAGE_DIR
+              cd $PACKAGE_DIR
+              echo "done"
+              '''
+                }
+            }
+        stage ('Check prerequisites') {
+
+                steps {
+                    sh "echo To be defined, check status of master branches"
+                    sh "echo Check that infrastructure is not created yet"
+                    sh "git config --global user.name 'svcnpovndev'"
+                    sh "git config --global user.email svcnpovndev@visa.com"
+                    }
+
+                }
+        stage('Release Module') {
+            when {
+                expression {
+                   params.MODULE_NAME == 'ovn-commons' ||
+                   params.MODULE_NAME == 'ovn-components'
+                }
+
+            }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir:  "${PACKAGE_DIR}"]],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn-commons.git']]]
+                sh "cd $PACKAGE_DIR && git checkout -b ${RELEASE_BRANCH}"
+            
+                sh "cd $PACKAGE_DIR && git tag -a -m \"${params.MODULE_NAME} RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd $PACKAGE_DIR && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+                sh "echo stage one point 3"
+            }
+
+        }
+        stage ('Trigger new release build') {
+            when {
+                expression {
+                           params.MODULE_NAME == 'ovn-commons' ||
+                           params.MODULE_NAME == 'ovn-components' 
+                }
+
+            }
+            steps {
+                sleep(time:3,unit:"SECONDS")
+                build job: "OVN/OVN_dev/OVN-OP/${params.MODULE_NAME}/${RELEASE_BRANCH}", parameters: [
+                    booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                ]
+            }
+
+        }
+        stage('Publish MODULE to Artifactory') {
+            steps {
+                    sh '''
+                      cd $PACKAGE_DIR
+                      jfrog rt config --url=https://artifactory.trusted.visa.com --user=$ARTIFACTORY_CREDS_USR --password=$ARTIFACTORY_CREDS_PSW --interactive=false
+                      echo $RELEASE_TAG
+                      jfrog rt go-publish ${GO_LOCAL_REPO} ${RELEASE_TAG_MOD}
+                    '''
+                }
+            }
+    }
+}

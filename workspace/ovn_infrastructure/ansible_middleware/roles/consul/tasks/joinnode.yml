@@ -1,0 +1,27 @@
+---
+- name: Echo mandatory variables
+  command: echo {{ agent_mode }}
+
+- name: Server related tasks
+  include_tasks: join_server.yml
+  when:
+    - agent_mode == "server"
+    - inventory_hostname in groups['consul_server']
+
+- name: Client related tasks
+  include_tasks: join_client.yml
+  when:
+    - agent_mode == "client"
+    - inventory_hostname in groups['consul_client']
+
+- name: Server and client related tasks
+  include_tasks: join_server.yml 
+  when:
+    - agent_mode == "all"
+    - inventory_hostname in groups['consul']
+
+- name: Server and client related tasks
+  include_tasks: join_client.yml
+  when:
+    - agent_mode == "all"
+    - inventory_hostname in groups['consul']

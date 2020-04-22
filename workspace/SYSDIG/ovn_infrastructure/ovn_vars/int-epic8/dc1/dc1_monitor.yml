@@ -1,0 +1,14 @@
+---
+kibana_reverse_proxy_enabled: true
+kibana_basepath: "/kibana-int-epic8-1"
+grafana_reverse_proxy_enabled: true
+grafana_reverse_proxy_url: "https://ovntest.visa.com/grafana-int-epic8-1/"
+prometheus_datacenter_id: "INT-EPIC8-DC1"
+grafana_reverse_proxy_path: "grafana-int-epic8-1"
+kibana_reverse_proxy_path: "kibana-int-epic8-1"
+
+alertmanager_context_path: "alertmanager-int-epic8-1"
+alertmanager_app_context_path: "alertmanager-int-epic8-1-app"
+prometheus_context_path: "prometheus-int-epic8-1"
+prometheus_app_context_path: "prometheus-int-epic8-1-app"
+vss_output_context_path: "vss-output-int-epic8-1"

@@ -1,0 +1,36 @@
+## {{ ansible_managed }}
+[LoadAvg]
+type = "FilePollingInput"
+ticker_interval = 10
+file_path = "/proc/loadavg"
+decoder = "LoadAvgDecoder"
+
+[LoadAvgDecoder]
+type = "SandboxDecoder"
+filename = "lua_decoders/linux_loadavg.lua"
+
+[LoadAvgFilter]
+type = "SandboxFilter"
+filename = "lua_filters/loadavg.lua"
+ticker_interval = 60
+preserve_data = {{ heka_data_retention_policy }} 
+message_matcher = "Type == 'stats.loadavg'"
+
+[LoadAvgCarbonLineEncoder]
+type = "SandboxEncoder"
+filename = "lua_encoders/schema_carbon_line.lua"
+   [LoadAvgCarbonLineEncoder.config]
+   name_prefix = "{{ ansible_hostname }}.load"
+
+[LoadAvgCarbonOutput]
+type = "TcpOutput"
+encoder = "LoadAvgCarbonLineEncoder"
+message_matcher = "Type == 'stats.loadavg'"
+address = "{{ carbon_host }}:{{ carbon_port }}"
+
+        [LoadAvgCarbonOutput.buffering]
+        max_buffer_size = {{ heka_total_buffer_size  }}         #Maximum amount of disk space (in bytes) that the entire queue buffer can consume.
+        full_action = {{ heka_action_on_max_buffer }}           #Action on full buffer
+        max_file_size = {{ heka_buffer_file_size  }}            #Size of each file in the queue buffer
+        cursor_update_count = {{ heka_cursor_update_count  }}   #Number of updateCursor calls must be made before the cursor location is flushed to disk.
+

@@ -1,0 +1,15 @@
+---
+# This only runs for non-prod TEST, INTEGRATION, and DEV instances
+# We are installing a non-prod docker host to enable a docker deploy on top for mock EA testing.
+
+- include: ../ovn_vars.yml ovn_vars_hosts=ea_docker_hosts
+
+- gather_facts: true
+  hosts: ea_docker_hosts
+
+- name: Install docker for ea testing
+  hosts: ea_docker_hosts
+  gather_facts: true
+  roles:
+    - { role: '../ansible_roles/docker-ea', dispatch: [ 'provision' ] }
+    - { role: '../ansible_roles/docker-ea', dispatch: [ 'load_run_ea' ] }

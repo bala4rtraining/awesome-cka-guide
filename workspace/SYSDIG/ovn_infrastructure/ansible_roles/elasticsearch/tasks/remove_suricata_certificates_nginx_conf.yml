@@ -1,0 +1,16 @@
+---
+# tasks file for elasticsearch searchguard plugin removal
+- name: Command to remove suricata certificates
+  shell: "rm -rf {{ elasticsearch_suricata_cert_dir }}"
+  
+- name: Command to remove nginx related suricata configuration directory
+  shell: "rm -rf /etc/nginx/conf.d/elasticsearch_suricata"
+
+- name: Command to remove nginx related suricata configuration
+  shell: "rm -f /etc/nginx/conf.d/elasticsearch_suricata.conf"  
+
+- name: Restart the nginx service
+  service:
+    name: "nginx"
+    state: restarted
+    enabled: yes  

@@ -1,0 +1,15 @@
+#
+# Ansible generated
+#
+# It's to be intalled as /etc/rsyslog.d/haproxy-syslog.conf
+# to enable syslog logging of haproxy
+#
+# Haproxy by default logs to "local2"
+#
+
+
+$ModLoad imudp
+$UDPServerRun 514
+$UDPServerAddress 127.0.0.1
+
+local2.*  {{ haproxy_log_file }}

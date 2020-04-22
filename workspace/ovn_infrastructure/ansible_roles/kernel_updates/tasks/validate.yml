@@ -1,0 +1,35 @@
+---
+- name: remove {{ patch_filename }} from tmp
+  file: path=/tmp/{{ patch_filename }} state=absent
+  when: validate_packages
+
+- name: save package name from input file
+  shell: rpm -q --qf "%{NAME}\n" "{{ item }}" >> /tmp/{{ patch_filename }}
+  with_lines: cat "roles/kernel_updates/files/{{ patch_filename }}"
+  when: validate_packages
+  ignore_errors: yes
+
+- name: Check that the {{ patch_filename }} file exists
+  stat:
+    path: /tmp/{{ patch_filename }}
+  register: stat_result
+
+- name: Create the file, if it doesnt exist already
+  copy:
+    content: "{{ patch_filename }}"
+    dest: /tmp/{{ patch_filename }}
+    mode: 0755
+  when: stat_result.stat.exists == False
+
+- name: Print to file contents
+  shell: /bin/cat /tmp/{{ patch_filename }}
+  register: details
+
+- name: display name and version of package
+  shell: rpm -qa {{ item }}
+  with_items: "{{ details.stdout_lines }}"
+  register: shell_output
+  when: (validate_packages and (stat_result.stat.exists == True))
+
+- debug: msg="{{ shell_output.results | map(attribute='stdout') | list }}"
+  when: validate_packages

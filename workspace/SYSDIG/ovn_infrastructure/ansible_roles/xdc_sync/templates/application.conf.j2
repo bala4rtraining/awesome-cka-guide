@@ -1,0 +1,43 @@
+xdc_sync {
+
+  riak {
+    cluster-nodes = [ {% for item in groups.ovn_riak_servers -%}
+                 "{{ item }}:{{riak_port}}"{% if not loop.last %},{% endif %}
+                 {%- endfor %}
+    ]
+    bucket.type = "{{xdc_sync_bucket_type}}"
+    bucket.name = "{{xdc_sync_bucket_name}}"
+    min.connections = 10
+    max.connections = 20
+  }
+
+  kafka {
+    topic.name = "{{xdc_sync_kakfa_topic}}"
+    groupId = "{{xdc_sync_kafka_groupId}}"
+    bootstrap.servers = [
+        "{% for item in groups.kafka -%}
+                 {{ item }}:{{kafka_port}}"{% if not loop.last %},"{% endif %}
+                 {%- endfor %}
+    ]
+    timeout = 1000 // milliseconds
+  }
+
+  hadoop {
+    distcp.hdfs.retries = 3
+    distcp.hdfs.source.prefix = "{{xdc_sync_src_prefix}}"
+    distcp.hdfs.destination.prefix = "{{xdc_sync_dest_prefix}}"
+    distcp.hdfs.namenode.rpc = {{hadoop_namenode_rpc_port}}
+    distcp.hdfs.destination.namenodes = [ {% for item in groups.hadoop_namenodes -%}
+                 "{{ item }}"{% if not loop.last %},{% endif %}
+                  {%- endfor %} ]
+
+    distcp.hdfs.source.namenodes = [ {% for item in remote_namenode_members -%}
+                 "{{ item }}"{% if not loop.last %},{% endif %}
+                  {%- endfor %} ]
+
+{% if xdc_sync_enable_kerberos %}
+    kerberos.principal = "{{ xdc_sync_kerberos_principal }}"
+    kerberos.keytab = "{{ xdc_sync_kerberos_keytab_path }}"
+{% endif %}
+  }
+}

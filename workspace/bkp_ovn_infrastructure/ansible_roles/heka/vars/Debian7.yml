@@ -1,0 +1,43 @@
+# Variables for Debian OS (Cumulus OS)
+#
+heka_conf_dir: /etc/heka/conf.d
+heka_owner: root
+heka_group: root
+heka_service_name : heka
+heka_data_retention_policy : "false"
+
+#
+# Heka deb file name (temporary as we don't have
+# a Debian repo accessible by the switches yet)
+# This needs to be copied to the switch in simulation
+#
+heka_deb_file_dest_dir: /home/cumulus
+
+heka_templates:
+ - src: hekad.toml.j2 
+   dest: "{{ heka_conf_dir }}/hekad.toml"
+   mode: "{{ heka_readable_mode }}"
+
+cumuluslog_templates:
+ - src: cumulus_log_streamer.toml.j2
+   dest: "{{ heka_conf_dir }}/cumulus_log_streamer.toml"
+   mode: "{{ heka_readable_mode }}"
+
+metrics_templates:
+ - src: linux_disk_stats.toml.j2 
+   dest: "{{ heka_conf_dir }}/linux_disk_stats.toml"
+   mode: "{{ heka_readable_mode }}"
+
+ - src: linux_load_avg.toml.j2 
+   dest: "{{ heka_conf_dir }}/linux_load_avg.toml"
+   mode: "{{ heka_readable_mode }}"
+
+ - src: linux_memory_stats.toml.j2 
+   dest: "{{ heka_conf_dir }}/linux_memory_stats.toml"
+   mode: "{{ heka_readable_mode }}"
+
+ - src: linux_netdev.toml.j2 
+   dest: "{{ heka_conf_dir }}//linux_netdev.toml"
+   mode: "{{ heka_readable_mode }}"
+
+

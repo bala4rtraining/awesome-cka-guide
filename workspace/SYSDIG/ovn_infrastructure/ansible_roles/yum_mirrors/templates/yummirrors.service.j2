@@ -1,0 +1,17 @@
+[Unit]
+Description=yummirrors provides syncing of artifactory from source to host.
+
+[Service]
+Type=simple
+User={{ nginx_user }}
+Group={{ nginx_group }}
+Restart=always
+RestartSec=3
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+WorkingDirectory={{ yummirrors_install_dir }}
+ExecStart={{ yummirrors_install_dir }}/{{yummirrors_name}} -config={{ yummirrors_install_dir }}/{{ yummirrors_config }}
+
+[Install]
+WantedBy=multi-user.target

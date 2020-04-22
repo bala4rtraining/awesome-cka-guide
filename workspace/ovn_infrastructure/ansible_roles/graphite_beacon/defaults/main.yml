@@ -1,0 +1,22 @@
+---
+# defaults file for graphite_beacon
+ovngit_ref_pkgs: 3rd_party/graphite-beacon/0.25.4
+download_path_url: "{{ovngit_host}}{{ovngit_ref_pkgs}}:"
+graphite_beacon_ovngit_ref: release/graphite-beacon-ovnmonitor/v0.1
+graphite_beacon_rules_url: "{{ovngit_host}}{{graphite_beacon_ovngit_ref}}:"
+
+graphite_url: "http://localhost:5603"
+# because cli is configured, SMTP no longer needed except for local DEBUG/TEST
+graphite_beacon_email: ""
+graphite_beacon_env: ""
+smtp_mailhost: internet1.visa.com
+
+#  the RPM files are defined in the system specific vars file (e.g. CentOS7.yml)
+## grbeacon_rpms:
+
+#  these python package files are independent of the system release
+grbeacon_pypi:
+ - funcparserlib-0.3.6.tar.gz
+ - certifi-2015.9.6.2.tar.gz
+ - tornado-4.1.tar.gz
+ - graphite_beacon-0.25.4.tar.gz

@@ -1,0 +1,9 @@
+# Playbook to set hdfs user expiry to never
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=hadoop_namenodes,hadoop_datanodes,journalnodes
+
+# set hdfs user expiry to never
+- name:  set hdfs user expiry to never
+  hosts: hadoop_namenodes,hadoop_datanodes,journalnodes
+  roles:
+    - { role: hadoop, dispatch: ['chage-hdfs'] }

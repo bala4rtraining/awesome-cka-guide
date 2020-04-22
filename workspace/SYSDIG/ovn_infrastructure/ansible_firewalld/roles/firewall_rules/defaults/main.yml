@@ -1,0 +1,48 @@
+---
+# Define default empty rules.  The caller should pass in `_rules` for the firewall 
+# the firewall rule structure is defined as
+#
+# firewall_rules:
+# - src: "[ip1, ip2, ip3]"
+#   dest: "[ip1, ip2]"
+#   ports:
+#     - port: "port number"
+#       protocol: "tcp or udp"
+# 
+_rules:
+- src: "[]"
+  dest: "[]"
+  ports: "[]"
+
+#
+# These are the default ports that should be open
+# for the lower environments to make life easier.
+# This variable should be empty for certification and production environments.
+# ports 4161-4162 are to enable `pmrun`
+# port 59500 is the non-ssl haproxy port
+# 
+# !!!!!!! DO NOT REMOVE `ssh` service !!!!!!!!!
+default_public_firewall_rule: |
+  firewall-cmd --permanent --zone=public --add-service='ssh'
+  firewall-cmd --permanent --zone=public --add-port='2377/tcp'
+  firewall-cmd --permanent --zone=public --add-port='4161-4162/tcp'
+  firewall-cmd --permanent --zone=public --add-port='4750/tcp'
+  firewall-cmd --permanent --zone=public --add-port='4789/tcp'
+  firewall-cmd --permanent --zone=public --add-port='7946/tcp'
+  firewall-cmd --permanent --zone=public --add-port='7946/udp'
+  firewall-cmd --permanent --zone=public --add-port='51112/tcp'
+  firewall-cmd --permanent --zone=public --add-port='59500/tcp'
+  firewall-cmd --permanent --zone=public --remove-icmp-block-inversion
+  firewall-cmd --permanent --zone=public --remove-icmp-block=echo-request
+
+_workdir: '/tmp/public_zone'
+
+_east_west_vars_file: '/tmp/east_west_firewall_rules.yml'
+_north_south_vars_file: '/tmp/north_south_firewall_rules.yml'
+_firewall_rules_vars_file: '/tmp/firewall_rules.yml'
+
+default_log_prefix: "ofr_"
+default_log_level: "warning"
+default_log_limit: "10/m"
+
+enable_firewall_rules_push: true

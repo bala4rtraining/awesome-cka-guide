@@ -1,0 +1,51 @@
+---
+# DataStax OpsCenter dse.yaml
+- name: <1-7 DSE> configure dse.yaml file and copy to {{ dstax511_ovn_datastax ['dstax511_dse'] ['rsc_dse_conf_foldr_path'] }}/dse.yml
+  template:
+    src:   "rsc_dse.yaml_5_1_1.j2"
+    dest:  "{{ dstax511_ovn_datastax ['dstax511_dse'] ['rsc_dse_conf_foldr_path'] }}/dse.yml"
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode:  "0644"
+
+- name: <2-7 DSE> configure dse.default and copy to {{dstax511_ovn_datastax ['dstax511_dse'] ['rsc_dse_conf_foldr_path']}}/dse.default.yml
+  template:
+    src:   "rsc_dse.default_5_1_1.j2"
+    dest:  "{{ dstax511_ovn_datastax['dstax511_dse'] ['rsc_dse_conf_foldr_path'] }}/dse.default"
+    owner: "{{ dstax511_ovn_datastax['dstax511_dse']['user'] }}"
+    group: "{{ dstax511_ovn_datastax['dstax511_dse']['group'] }}"
+    mode:  "0644"
+
+- name: <3-7 DSE> configure logback.xml and copy to {{dstax511_ovn_datastax ['dstax511_dse']['rsc_dse_conf_foldr_path']}}/logback.xml
+  template:
+    src: "rsc_dse_logback-dsefs-shell.xml_5_1_1.j2"
+    dest: "{{dstax511_ovn_datastax ['dstax511_dse']['rsc_dse_conf_foldr_path']}}/logback.xml"
+    owner: "{{dstax511_ovn_datastax['dstax511_dse']['user']}}"
+    group: "{{dstax511_ovn_datastax['dstax511_dse']['group']}}"
+    mode: "0644"
+
+# dse.init bash shell file copied to etc_init_d folder. used as startup OpsCenter on Reboot.
+- name: <4-7 DSE> embed dse.init and copy to {{dstax511_ovn_datastax['dstax511_dse']['dstax511_startup_onboot']}}
+  template:
+    src: "dse.init.j2"
+    dest: "{{dstax511_ovn_datastax['dstax511_dse']['dstax511_startup_onboot']}}"
+    owner: "{{dstax511_ovn_datastax['dstax511_dse']['user']}}"
+    group: "{{dstax511_ovn_datastax['dstax511_dse']['group']}}"
+    mode: '0644'
+
+# Setup service relevant files
+- name: <5-7 DSE> Check dse.init exist in the path "/etc/init.d/dse.init"
+  stat: path="/etc/init.d/dse.init"
+  register: tar_status
+
+- name: <6-7 DSE> Write entries into rc0 to rc6 - write Start and Kill links for dse service
+  command: "chkconfig --add /etc/init.d/dse.init"
+  when: tar_status.stat.exists
+
+- name: <7-7 DSE> configure datastax service and copy to {{dstax511_ovn_datastax ['dstax511_dse']['dstax511_system_service_foldr']}}
+  template:
+    src: "datastax.service.j2"
+    dest: "{{dstax511_ovn_datastax ['dstax511_dse']['dstax511_system_service_foldr']}}/datastax.service"
+    owner: "{{dstax511_ovn_datastax['dstax511_dse']['user']}}"
+    group: "{{dstax511_ovn_datastax['dstax511_dse']['group']}}"
+    mode: "0644"

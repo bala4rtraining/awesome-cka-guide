@@ -1,0 +1,73 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  parameters {
+    choice(name: 'RIAK_TLS_ENABLED', choices: 'true\nfalse', description: '')
+    string(name:'extra_vars', defaultValue: '', description: 'extra variables')
+  }
+  environment {
+    otherEnv = "$OTHER_ENV"
+    remoteDCExtraVars = " "
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '15'))
+  }
+  stages {
+    stage('checkout SCM'){
+      steps{
+        git credentialsId: 'ovncd_ssh_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git', branch: "${RELEASE_BRANCH}"
+      }
+    }
+    stage('capture_vars_about_remote_dc'){
+      when { expression { env.OTHER_ENV != null } } 
+      steps{
+        sh '''rm -f /tmp/vars_about_${otherEnv}.yml'''
+
+        ansiColor('xterm'){
+          ansiblePlaybook playbook: 'ansible_ovn/capture_vars_about_dc.yml',
+                          inventory: 'inventories/$CLUSTER/$OTHER_DC',
+                          credentialsId: 'ovncd_ssh_key',
+                          colorized: true,
+                          forks: 5,
+                          sudoUser: null,
+                          extras: "${params.extra_vars} --become -e cluster_name=${OTHER_ENV}"
+        }   
+        script {
+          remoteDCExtraVars = "--extra-vars @/tmp/vars_about_${otherEnv}.yml"
+        }
+      }   
+    }
+    stage('clean_ovn_mediator'){
+      steps{
+        ansiColor('xterm'){
+           ansiblePlaybook playbook: 'ansible_ovn/clean_ovn_mediator.yml',
+                           inventory: 'inventories/$CLUSTER/$DATACENTER',
+                           credentialsId: 'ovncd_ssh_key',
+                           colorized: true,
+                           sudoUser: null,
+                           extras: "${params.extra_vars} --become"
+        }
+      }
+    }
+    stage('deploy_ovn_mediator'){
+      steps{
+        ansiColor('xterm'){
+           ansiblePlaybook playbook: 'ansible_ovn/deploy_ovn_mediator.yml',
+                           inventory: 'inventories/$CLUSTER/$DATACENTER',
+                           credentialsId: 'ovncd_ssh_key',
+                           colorized: true,
+                           forks: 20,
+                           sudoUser: null,
+                           extras: "${params.extra_vars} --become -e riak_tls_enabled=$RIAK_TLS_ENABLED ${remoteDCExtraVars}"
+        }
+      }
+    }
+  }
+}

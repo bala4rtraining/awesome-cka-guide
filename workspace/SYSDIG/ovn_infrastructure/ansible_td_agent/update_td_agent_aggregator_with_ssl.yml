@@ -1,0 +1,49 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=fluentd_aggregator,elasticsearch
+
+- gather_facts:
+  hosts: fluentd_aggregator:elasticsearch
+
+- name: Set Elastic Search Hostname based on eserv_type=lbonly host attribute
+  hosts: fluentd_aggregator
+  tasks:
+    - set_fact: elasticsearch_host="{{ hostvars[item]['ansible_nodename'] }}"
+      with_items: "{{ groups['elasticsearch'] }}"
+      when: hostvars[item].eserv_type == "lbonly"
+
+- name: install and start td_agent as log aggregator.
+  hosts: fluentd_aggregator
+  roles:
+    - nginx
+    - { role: td_agent, dispatch: ['update-config-as-log-aggregator'] }
+  vars:
+    - cert_data: "{{ elasticsearch_client_cert }}"
+    - key_data: "{{ elasticsearch_client_key }}"
+    - ca_cert_data: "{{ elasticsearch_client_ca_cert }}"
+    - cert_path: "/etc/pki/tls/elasticsearch-client/certs"
+    - key_path: "/etc/pki/tls/elasticsearch-client/private"
+    - ca_cert_path: "/etc/pki/tls/elasticsearch-client/certs"
+    - elasticsearch_client_ssl_enabled: "true"
+    - elasticsearch_client_use_fqdn: "true"
+    - nginx_enable_ssl: "true"
+    - nginx_sites:
+        elasticsearch:
+          - listen {{ nginx_elasticsearch_client_port }}
+          - server_name localhost
+    - nginx_configs:
+        elasticsearch_upstream:
+          - upstream elasticsearch {
+              server {{ elasticsearch_lbhost }}:{{ elasticsearch_port }};
+            }
+    - nginx_locations:
+      - site: elasticsearch
+        locations:
+          - name: elasticsearch
+            location:
+              - location / {
+                  proxy_ssl_protocols TLSv1.2;
+                  proxy_ssl_certificate {{ cert_path }}/{{ inventory_hostname }}.pem;
+                  proxy_ssl_certificate_key {{ key_path }}/{{ inventory_hostname }}.pem;
+                  proxy_ssl_trusted_certificate {{ ca_cert_path }}/bundle.pem;
+                  proxy_pass https://elasticsearch;
+                }

@@ -1,0 +1,21 @@
+---
+- hosts: masters
+  tasks:
+  - name: Add docker swarm manager nodes
+    shell: |
+      docker swarm join --token {{ manager_token }} {{ hostvars[groups.masters.0].ansible_default_ipv4.address }}:{{ swarm_cluster_port }}
+    register: swarm_join
+    when: inventory_hostname != groups.masters.0
+  - debug:
+      var: swarm_join.stdout
+  ignore_errors: True
+
+- hosts: workers
+  tasks:
+  - name: Add docker swarm worker nodes
+    shell: |
+      docker swarm join --token {{ worker_token }} {{ hostvars[groups.masters.0].ansible_default_ipv4.address }}:{{ swarm_cluster_port }}
+    register: swarm_join
+  - debug:
+      var: swarm_join.stdout
+  ignore_errors: True

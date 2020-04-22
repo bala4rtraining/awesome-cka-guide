@@ -1,0 +1,23 @@
+[test_server]
+10.207.189.39
+10.207.189.43
+10.207.189.70
+10.207.189.34
+10.207.189.66
+10.207.189.98
+10.207.189.36
+10.207.189.67
+10.207.189.99
+10.207.189.37
+10.207.189.102
+10.207.189.38
+10.207.189.69
+10.207.189.107
+10.207.189.71
+10.207.189.103
+10.207.189.68
+
+
+[all:vars]
+#Please comment the below line if environment already has a path to artifactory.
+#ansible_ssh_extra_args='-R 0.0.0.0:12345:artifactory.trusted.visa.com:80'

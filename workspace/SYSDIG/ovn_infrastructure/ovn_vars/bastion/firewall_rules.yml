@@ -1,0 +1,7 @@
+---
+default_public_firewall_rule: |
+  firewall-cmd --permanent --zone=public --add-service='ssh'
+  firewall-cmd --permanent --zone=public --add-port='{{ pmrun_access_port_range }}/tcp'
+  firewall-cmd --permanent --zone=public --add-port='{{ bladelogic_port_for_yum_updates }}/tcp'
+  firewall-cmd --permanent --zone=public --remove-icmp-block-inversion
+  firewall-cmd --permanent --zone=public --remove-icmp-block=echo-request

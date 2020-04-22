@@ -1,0 +1,2 @@
+kerberos_realm_name: "DC1.CERT.VISA.COM"
+kerberos_xdc_realm_name: "DC2.CERT.VISA.COM"

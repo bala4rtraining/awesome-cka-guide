@@ -1,0 +1,62 @@
+---
+
+- name: Create the Group
+  group: 
+    name="cd"
+    gid="220204"
+    state=present
+
+- name: Create the user
+  user: >
+   name="cd"
+   shell="/bin/bash"
+   uid="220204"
+   groups="cd"
+   append="yes"
+
+- name: create the sudoers directory
+  file:
+    path: "{{ sudoers_config_directory }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Set properties of sudoers
+  copy: content="echo cd ALL=(ALL:ALL) NOPASSWD"  dest="{{ sudoers_config_directory }}/cd"
+
+- name: Install the packages
+  yum: name={{ item }} state=latest update_cache=yes
+  with_lines: cat "roles/vm_onboarding/files/packages" | grep -v '^#'
+
+- name: Backup ssh configuration
+  copy: src="{{ ssh_directory }}/sshd_config" dest="{{ ssh_directory }}/sshd_config_backup"
+  
+- name: deploy ssh configuration
+  template: 
+    src: sshd_config.j2
+    dest: "{{ ssh_directory }}/sshd_config"
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+
+- name: restart ssh 
+  systemd:
+    daemon_reload: yes
+    name: sshd
+    state: restarted
+    enabled: True
+
+- name: validate the ssh service
+  shell: ps -ef | grep -v grep | grep sshd
+  register: result
+
+- debug: 
+    var: result
+    verbosity: 2
+
+- name: "Validate the cipher changes"
+  shell: "sshd -T | grep ciphers"
+  register: cipher_result
+- debug: msg="{{ cipher_result.stdout }}"

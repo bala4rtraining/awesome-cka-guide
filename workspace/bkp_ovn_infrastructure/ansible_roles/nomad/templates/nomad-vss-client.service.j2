@@ -1,0 +1,17 @@
+[Unit]
+Description=Nomad client instance
+After=network.target
+
+[Service]
+Type=simple
+User={{nomad_username}}
+Group={{nomad_username}}
+Restart=always
+RestartSec=3
+TimeoutStopSec=180
+StandardOutput=null
+StandardError=null
+ExecStart={{nomad_client_install_dir}}/nomad agent -config={{nomad_client_install_dir}}/nomad-vss-client.conf
+
+[Install]
+WantedBy=multi-user.target

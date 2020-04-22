@@ -1,0 +1,5 @@
+security.protocol: ssl
+ssl.key.location: "clientcert_qa.key"
+ssl.key.password: "Ovnqa@bdeeng1"
+ssl.certificate.location: "clientcert_qa.pem"
+ssl.ca.location: "Ovnqa.cer"

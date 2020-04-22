@@ -1,0 +1,132 @@
+---
+- name: check zookeeper status
+  shell: "systemctl status zookeeper"
+  register: zookeeper_status
+  ignore_errors: true
+  no_log: true
+
+- name: ensure java is present
+  yum: name={{ jre_name }} state=present
+  when: zookeeper_status.rc != 0
+
+- name: ensure java is set to unlimited crypto policy
+  include_role:
+    name: java
+    tasks_from: enable-crypto
+  when: zookeeper_status.rc != 0
+
+- name: create group for java applications
+  group: name=java state=present
+  when: zookeeper_status.rc != 0
+
+- name: create group for zookeeper
+  group: name={{ zookeeper_group }} state=present
+  when: zookeeper_status.rc != 0
+
+- name: create user for zookeeper
+  user: name={{ zookeeper_user }} group={{ zookeeper_group }} state=present
+  when: zookeeper_status.rc != 0
+
+- name: add zookeeper user to java group
+  user: name={{ zookeeper_user }} groups=java append=yes state=present
+  when: zookeeper_status.rc != 0
+
+- name: add zookeeper user to prometheus group
+  user: name={{ zookeeper_user }} groups={{ prometheus_group }} append=yes state=present
+  when: zookeeper_status.rc != 0 and monitor_zookeeper_using_prometheus == "true"
+
+- name: install kerberos client
+  include_role:
+    name: kerberos
+    tasks_from: kerberos_client
+  vars:
+    kerberos_principal_names: ["{{ zookeeper_principal_name }}"]
+    kerberos_merged_keytab: "{{ zookeeper_principal_name }}"
+    kerberos_keytab_owner: "{{ zookeeper_user }}"
+    kerberos_keytab_group: "{{ zookeeper_group }}"
+  when: zookeeper_status.rc != 0 and (zookeeper_enable_client_authentication == "true" or zookeeper_enable_server_authentication == "true")
+
+- name: uninstall zookeeper
+  file: path={{ item }} state=absent
+  with_items:
+    - "{{ zookeeper_install_dir }}"
+  when: zookeeper_status.rc != 0 and zookeeper_reinstall == "true"
+
+- name: unarchive zookeeper release
+  unarchive:
+    src: "{{ zookeeper_artifactory_url }}"
+    dest: /opt
+    copy: no
+    owner: "{{ zookeeper_user }}"
+    group: "{{ zookeeper_group }}"
+    creates: "{{ zookeeper_install_dir }}"
+    validate_certs: no
+  when: zookeeper_status.rc != 0
+
+- name: create link
+  file: path={{ zookeeper_install_dir }} src=/opt/{{ zookeeper_release }} state=link
+  when: zookeeper_status.rc != 0
+
+- name: zookeeper configuration file
+  template:
+    src: "{{ item_config }}.j2"
+    dest: "{{ zookeeper_install_dir }}/conf/{{ item_config }}"
+    owner: "{{ zookeeper_user }}"
+    group: "{{ zookeeper_group }}"
+    mode: 0640
+  with_items:
+    - zoo.cfg
+    - log4j.properties
+    - jaas.conf
+    - java.env
+  loop_control:
+    loop_var: item_config
+  when: zookeeper_status.rc != 0
+
+- name: create ovn data directory
+  file:
+    dest: "{{ ovn_data_dir }}"
+    state: directory
+    recurse: no
+    owner: root
+    group: root
+    mode: 0755
+  when: zookeeper_status.rc != 0
+
+- name: create zookeeper data and log directories
+  file:
+    dest: "{{ item_dir }}"
+    state: directory
+    recurse: yes
+    owner: "{{ zookeeper_user }}"
+    group: "{{ zookeeper_group }}"
+    mode: 0750
+  with_items:
+    - "{{ zookeeper_data_dir }}"
+    - "{{ zookeeper_log_dir }}"
+  loop_control:
+    loop_var: item_dir
+  when: zookeeper_status.rc != 0
+
+- name: zookeeper id
+  template:
+    src: myid.j2
+    dest: "{{ zookeeper_data_dir }}/myid"
+    owner: "{{ zookeeper_user }}"
+    group: "{{ zookeeper_group }}"
+    mode: 0640
+  when: zookeeper_status.rc != 0
+
+- name: zookeeper systemd configuration
+  template:
+    src: zookeeper.service.j2
+    dest: /etc/systemd/system/zookeeper.service
+    owner: root
+    group: root
+    mode: 0644
+  when: zookeeper_status.rc != 0
+  register: zookeeper_unit
+
+- name: reload systemd configuration
+  systemd: daemon_reload=yes
+  when: zookeeper_status.rc != 0 and zookeeper_unit.changed

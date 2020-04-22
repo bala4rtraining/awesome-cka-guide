@@ -1,0 +1,66 @@
+rhel_centos_7: '{{(ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_major_version == "7"}}'
+
+nginx_auth_name: "ovn_nginx_auth"
+nginx_auth_version: "0.1.0"
+nginx_auth_platform: "linux-amd64"
+nginx_auth_tarball: "{{nginx_auth_name}}-v{{nginx_auth_version}}-{{nginx_auth_platform}}.tar.gz"
+release_artifactory_url: "https://artifactory.trusted.visa.com/ovn/repo"
+nginx_auth_artifact_url: "{{ release_artifactory_url }}/{{nginx_auth_tarball}}"
+
+nginx_auth_install_dir: "/opt/app/{{nginx_auth_name}}"
+nginx_auth_log_dir: "/var/log/{{nginx_auth_name}}"
+
+nginx_auth_username: was
+nginx_auth_group: was
+nginx_auth_service: "{{nginx_auth_name}}.service"
+nginx_auth_service_template: "{{nginx_auth_name}}.service.j2"
+
+# Application Specific defaults
+nginx_auth_config: "{{nginx_auth_name}}.yaml"
+nginx_auth_config_template: "{{nginx_auth_name}}.yaml.j2"
+
+nginx_auth_host: "127.0.0.1"
+nginx_auth_port: 4242
+nginx_auth_scheme: "http"
+
+# TLS specific settings, if scheme == "https"
+nginx_auth_server_cert: "certificate.pem"
+nginx_auth_server_key: "private.key"
+nginx_auth_root_ca_certs: [ "ca.crt" ]
+nginx_auth_tls_min_version: 1.1
+
+# By default, mutual ssl is false
+nginx_auth_enable_mutual_ssl: false
+nginx_auth_client_ca_certs: [ "ca.crt" ]
+
+# Logger
+nginx_auth_logger_level: "info"
+nginx_auth_logger_dest: "/var/log/{{nginx_auth_name}}/{{nginx_auth_name}}.log"
+
+nginx_auth_ldap_host: "visadcoce.visa.com"
+nginx_auth_ldap_port: "389"
+nginx_auth_ldap_groups: [".*OVNDEV.*", ".*group_ovn_.*"]
+
+nginx_auth_session_secret: "ovn_secret_key"
+nginx_auth_session_maxage: 900
+nginx_auth_session_secure: "false"
+nginx_auth_passthrough: "false"
+
+#List of Trusted URls for valid redirects . For example if we are hosting 
+# kibana-dc1 and grafana-dc1 please put the values nginx_auth_trusted_urls: [ "/kibana-dc1", "grafana-dc1" ]
+nginx_auth_trusted_urls: [ "/kibana", "/grafana" ]
+
+ovn_cas_admin: "ovn_dev_cas_admin"
+ovn_cas_viewer: "ovn_dev_cas_viewer"
+ovn_cas_editor: "ovn_dev_cas_editor"
+ovn_cas_nomad_role_access: "admin"
+ovn_default_alertmanager_role_access: "viewer"
+
+ovn_nginx_admin: "ovn_test_admin"
+ovn_nginx_viewer: "ovn_test_viewer"
+ovn_nginx_editor: "ovn_test_editor"
+
+ovn_default_prometheus_role_access: "viewer"
+nginx_auth_passthrough: "false"
+
+nginx_auth_csrf: "cityovnfoster"

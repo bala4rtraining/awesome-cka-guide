@@ -1,0 +1,47 @@
+---
+# This role playbook pulls latest EA image from repository loads the EA configuration 
+# and runs a docker EA docker container on specified host
+
+- name: pull docker ea image from repository
+  shell: docker image pull "{{ docker_ea_image_name }}:latest"
+
+- name: create  directory for ssl cert
+  file:
+    path: "{{ path_ea_ssl_on_host }}"
+    owner: "root"
+    group: "root"
+    mode: "0744"
+    state: directory
+
+# copy ea cert on host
+- name: copy ea ssl certificate to docker host
+  unarchive:
+    src: ea_ssl.tar
+    dest: "{{ path_to_untar_ssl }}"
+    owner: "root"
+    group: "root"
+
+# copy eas.properties template
+- name: copy ea.property template to host
+  template:
+    src: eas.properties.j2
+    dest: "{{ path_ea_ssl_on_host }}/eas.properties"
+    owner: "root"
+    group: "root"
+    mode: "0744"
+
+# Use container with the name as docker_ea_<hostname> 
+- name: Stop the docker ea container on the host if it is already running
+  shell: docker stop "docker_ea_{{ ansible_hostname }}"
+  ignore_errors: yes
+
+- name: Waiting for 30 seconds before starting the docker_ea again
+  wait_for: timeout=30
+
+- name: Remove the existing container with name docker_ea_<hostname>
+  shell: docker rm "docker_ea_{{ ansible_hostname }}"
+  ignore_errors: yes
+
+# Run docker-ea image with port mappings and ssl certificate 
+- name: load docker ea image in the  new container
+  shell: docker run --privileged=true -d -v "{{ path_ea_ssl_on_host }}":"{{ path_ea_ssl_in_docker }}" -p "{{ ea_ftps_docker_port1 }}":"{{ ea_ftps_host_port1 }}" -p "{{ ea_apf_docker_port1 }}":"{{ ea_apf_host_port1 }}" -p "{{ ea_ftps_docker_port2 }}":"{{ ea_ftps_host_port2 }}" -p "{{ ea_ftps_docker_port3 }}":"{{ ea_ftps_host_port3 }}" --name "docker_ea_{{ ansible_hostname }}" -i  "{{ docker_ea_image_name }}"

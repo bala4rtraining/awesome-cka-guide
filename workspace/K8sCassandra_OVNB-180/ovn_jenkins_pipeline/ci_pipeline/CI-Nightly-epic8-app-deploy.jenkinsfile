@@ -1,0 +1,46 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/'
+    }
+  }
+
+  options {
+      buildDiscarder(logRotator(numToKeepStr: '95'))
+  }
+
+
+  environment {
+    CLUSTER = 'int-epic8'
+    DATACENTER1 = 'dc1'
+    DATACENTER2 = 'dc2'
+  }
+
+  stages {
+  stage('Checkout SCM'){
+          steps{
+          git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git'
+          }
+      }
+
+    stage ('deploying Vss_production application'){
+      steps {
+
+        ansiblePlaybook credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", extras: "--extra-vars @config/${env.CLUSTER}.vars.secret.yml", playbook: 'ansible_vss/deploy_sshkeys.yml'
+        ansiblePlaybook credentialsId: 'ENV.root_key', inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", extras: "--extra-vars @config/${env.CLUSTER}.vars.secret.yml", playbook: 'ansible_vss/deploy_sshkeys.yml'
+
+        ansiColor('xterm'){
+
+        ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', forks: 20, inventory: 'inventories/$CLUSTER/$DATACENTER1', extras: "--extra-vars @config/${env.CLUSTER}.vars.secret.yml ", playbook: 'ansible_vss/clean_deploy_app.yml', sudoUser: null
+        ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', forks: 20, inventory: 'inventories/$CLUSTER/$DATACENTER2', extras: "--extra-vars @config/${env.CLUSTER}.vars.secret.yml ", playbook: 'ansible_vss/clean_deploy_app.yml', sudoUser: null
+
+        }
+      }
+    }
+  }
+}

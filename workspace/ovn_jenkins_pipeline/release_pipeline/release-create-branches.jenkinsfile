@@ -1,0 +1,219 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+        booleanParam(name: 'RELEASE_OVN_MEDIATOR',            defaultValue: false, description: 'Is OVN Mediator part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_SWITCH',              defaultValue: false, description: 'Is OVN Switch part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_UMF_DELIVERY',        defaultValue: false, description: 'Is OVN UMF Delivery part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_VITALSIGNS_DELIVERY', defaultValue: false, description: 'Is OVN Vitalsigns Delivery part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_MULTIDC_SYNC',        defaultValue: false, description: 'Is OVN Multidc Sync part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_VIP_EF_SYNC',         defaultValue: false, description: 'Is OVN VIP EF Sync part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_KH_PROFILE',          defaultValue: false, description: 'Is OVN KH Profile part of the upcoming release?')
+        booleanParam(name: 'OVN_INFRASTRUCTURE_REQUIRED',     defaultValue: false, description: 'Is OVN Infrastructure required? Check only if you know what you are doing')
+        booleanParam(name: 'OVN_APP_INFRASTRUCTURE_REQUIRED', defaultValue: false, description: 'Is OVN App Infrastructure required? Check only if you know what you are doing')
+        booleanParam(name: 'OVN_JENKINS_PIPELINE_REQUIRED',   defaultValue: false, description: 'Is OVN JENKINS PIPELINE required? Check only if you know what you are doing')
+
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        RELEASE_TAG = "v${params.RELEASE_VERSION}-rc1"
+    }
+
+    stages {
+
+        stage('Releasing Mediator') {
+            when { expression { return params.RELEASE_OVN_MEDIATOR } }
+            steps {
+                ansiColor('xterm') {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_mediator_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_mediator.git']]]
+                sh "cd ovn_mediator_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                copyArtifacts filter: '.frozen.packages*', projectName: 'release-freeze-dependencies', selector: lastSuccessful(), target: 'ovn_mediator_repo/'
+                sh "grep '/ovn_mediator.git' ovn_mediator_repo/.frozen.packages || (echo -e '\033[0;31mFailed to find the dependencies in frozen.packages for ovn_mediator\033[0m' && exit 1)"
+                sh "cd ovn_mediator_repo/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn_mediator_repo/ && git tag -a -m \"OVN Mediator RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_mediator_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+            }
+        }
+
+        stage('Releasing Switch') {
+            when { expression { return params.RELEASE_OVN_SWITCH } }
+            steps {
+                ansiColor('xterm') {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_switch_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_switch.git']]]
+                sh "cd ovn_switch_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                copyArtifacts filter: '.frozen.packages*', projectName: 'release-freeze-dependencies', selector: lastSuccessful(), target: 'ovn_switch_repo/'
+                sh "grep '/ovn_switch.git' ovn_switch_repo/.frozen.packages || (echo -e '\033[0;31mFailed to find the dependencies in frozen.packages for ovn_switch\033[0m' && exit 1)"
+                sh "cd ovn_switch_repo/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn_switch_repo/ && git tag -a -m \"OVN Switch RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_switch_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+            }
+        }
+
+        stage('Releasing UMF Delivery') {
+            when { expression { return params.RELEASE_OVN_UMF_DELIVERY } }
+            steps {
+                ansiColor('xterm') {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_umf_delivery_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_umf_delivery.git']]]
+                sh "cd ovn_umf_delivery_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                copyArtifacts filter: '.frozen.packages*', projectName: 'release-freeze-dependencies', selector: lastSuccessful(), target: 'ovn_umf_delivery_repo/'
+                sh "grep '/ovn_umf_delivery.git' ovn_umf_delivery_repo/.frozen.packages || (echo -e '\033[0;31mFailed to find the dependencies in frozen.packages for ovn_umf_delivery\033[0m' && exit 1)"
+                sh "cd ovn_umf_delivery_repo/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn_umf_delivery_repo/ && git tag -a -m \"OVN UMF Delivery RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_umf_delivery_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+            }
+        }
+
+        stage('Releasing Vitalsigns Delivery') {
+            when { expression { return params.RELEASE_OVN_VITALSIGNS_DELIVERY } }
+            steps {
+                ansiColor('xterm') {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_vitalsigns_delivery_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_vitalsigns_delivery.git']]]
+                sh "cd ovn_vitalsigns_delivery_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                copyArtifacts filter: '.frozen.packages*', projectName: 'release-freeze-dependencies', selector: lastSuccessful(), target: 'ovn_vitalsigns_delivery_repo/'
+                sh "grep '/ovn_vitalsigns_delivery.git' ovn_vitalsigns_delivery_repo/.frozen.packages || (echo -e '\033[0;31mFailed to find the dependencies in frozen.packages for ovn_vitalsigns_delivery\033[0m' && exit 1)"
+                sh "cd ovn_vitalsigns_delivery_repo/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn_vitalsigns_delivery_repo/ && git tag -a -m \"OVN Vitalsigns Delivery RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_vitalsigns_delivery_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+            }
+        }
+
+        stage('Releasing Multidc Sync') {
+            when { expression { return params.RELEASE_OVN_MULTIDC_SYNC } }
+            steps {
+                ansiColor('xterm') {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_multidc_sync_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_multidc_sync.git']]]
+                sh "cd ovn_multidc_sync_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                copyArtifacts filter: '.frozen.packages*', projectName: 'release-freeze-dependencies', selector: lastSuccessful(), target: 'ovn_multidc_sync_repo/'
+                sh "grep '/ovn_multidc_sync.git' ovn_multidc_sync_repo/.frozen.packages || (echo -e '\033[0;31mFailed to find the dependencies in frozen.packages for ovn_multidc_sync\033[0m' && exit 1)"
+                sh "cd ovn_multidc_sync_repo/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn_multidc_sync_repo/ && git tag -a -m \"OVN Multidc Sync RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_multidc_sync_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+            }
+        }
+
+        stage('Releasing VIP EF Sync') {
+            when { expression { return params.RELEASE_OVN_VIP_EF_SYNC } }
+            steps {
+                ansiColor('xterm') {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_vip_ef_sync_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_vip_ef_sync.git']]]
+                sh "cd ovn_vip_ef_sync_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                copyArtifacts filter: '.frozen.packages*', projectName: 'release-freeze-dependencies', selector: lastSuccessful(), target: 'ovn_vip_ef_sync_repo/'
+                sh "grep '/ovn_vip_ef_sync.git' ovn_vip_ef_sync_repo/.frozen.packages || (echo -e '\033[0;31mFailed to find the dependencies in frozen.packages for ovn_vip_ef_sync\033[0m' && exit 1)"
+                sh "cd ovn_vip_ef_sync_repo/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+                sh "cd ovn_vip_ef_sync_repo/ && git tag -a -m \"OVN VIP EF Sync RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_vip_ef_sync_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+            }
+        }
+
+        stage('Releasing KH profile') {
+            when { expression { return params.RELEASE_OVN_KH_PROFILE } }
+            steps {
+                ansiColor('xterm') {
+                    checkout poll: false, scm: [$class: 'GitSCM',
+                                                branches: [[name: 'master']],
+                                                doGenerateSubmoduleConfigurations: false,
+                                                extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_kh_profile_repo']],
+                                                submoduleCfg: [],
+                                                userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_kh_profile.git']]]
+                    sh "cd ovn_kh_profile_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                    copyArtifacts filter: '.frozen.packages*', projectName: 'release-freeze-dependencies', selector: lastSuccessful(), target: 'ovn_kh_profile_repo/'
+                    sh "grep '/ovn_kh_profile.git' ovn_kh_profile_repo/.frozen.packages || (echo -e '\033[0;31mFailed to find the dependencies in frozen.packages for ovn_kh_profile\033[0m' && exit 1)"
+                    sh "cd ovn_kh_profile_repo/ && git add .frozen.packages* && git commit -m \"Freezing dependencies for release ${params.RELEASE_VERSION}\""
+                    sh "cd ovn_kh_profile_repo/ && git tag -a -m \"OVN VIP EF Sync RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                    sh "cd ovn_kh_profile_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+                }
+            }
+        }
+
+        stage('Releasing OVN_INFRASTRUCTURE') {
+            when { expression { return params.OVN_INFRASTRUCTURE_REQUIRED } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_infrastructure_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git']]]
+                sh "cd ovn_infrastructure_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh "cd ovn_infrastructure_repo/ && git tag -a -m \"OVN INFRASTRUCTURE RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_infrastructure_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+        }
+
+        stage('Releasing OVN_APP_INFRASTRUCTURE') {
+            when { expression { return params.OVN_APP_INFRASTRUCTURE_REQUIRED } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_app_infrastructure_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git']]]
+                sh "cd ovn_app_infrastructure_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh "cd ovn_app_infrastructure_repo/ && git tag -a -m \"OVN APP_INFRASTRUCTURE RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_app_infrastructure_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+        }
+        stage('Releasing OVN_JENKINS_PIPELINE') {
+            when { expression { return params.OVN_JENKINS_PIPELINE_REQUIRED } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_jenkins_pipeline_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_jenkins_pipeline.git']]]
+                sh "cd ovn_jenkins_pipeline_repo/ && git checkout -b ${RELEASE_BRANCH}"
+                sh "cd ovn_jenkins_pipeline_repo/ && git tag -a -m \"OVN JENKINS PIPELINE RC1 for ${params.RELEASE_VERSION}\" ${RELEASE_TAG}"
+                sh "cd ovn_jenkins_pipeline_repo/ && git push origin ${RELEASE_TAG} && git push origin ${RELEASE_BRANCH}"
+            }
+        }
+    }
+}
+
+

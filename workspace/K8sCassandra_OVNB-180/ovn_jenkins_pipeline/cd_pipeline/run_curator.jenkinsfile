@@ -1,0 +1,3 @@
+@Library('ovn-shared-library') _
+cdTemplate_InvokeAnsiblePlaybook('ovn_infrastructure', '$RELEASE_BRANCH', 'ansible_ovn/run_curator.yml','-e @config/$ENV.vars.secret.yml -e {"curator_log_patterns_old_indicies": $curator_log_patterns_old_indicies} -e artifactory_url="https://artifactory.trusted.visa.com"')
+

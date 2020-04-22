@@ -1,0 +1,111 @@
+---
+# ci-nightly-healthcheck is helpful to run tests on the ci-nightly servers to verify they are working correclty.
+# This playbook helps us to verify/validate the following.
+#auth services up and running in appropriate servers
+#TCP Ports open for mediator and switch & umf broker
+#Filesystem is within limits (< 80%) on all servers in cluster
+#Dual center connectivity is active
+- include: ../ovn_vars.yml ovn_vars_hosts=all
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+
+
+
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+
+- name: ci-nightly 
+  hosts: all
+  gather_facts: yes
+  any_errors_fatal: True
+  tasks:
+    #checking if the services are up or not
+    - name: check the status of service kafka 
+      shell: systemctl status kafka
+      register: service_status_test
+      when: inventory_hostname in groups['kafka']
+      failed_when: "'running' not in service_status_test.stdout"
+
+    - name: check the status of service kafka_mirror_maker 
+      shell: systemctl status kafka_mirror_maker
+      register: service_status_test
+      when: inventory_hostname in groups['kafka_mirror_maker']
+      failed_when: "'running' not in service_status_test.stdout"
+      
+    - name: check the status of service zookeeper 
+      shell: systemctl status zookeeper
+      register: service_status_test
+      when: inventory_hostname in groups['zookeeper']
+      failed_when: "'running' not in service_status_test.stdout"
+
+    - name: check the status of service riak 
+      shell: systemctl status riak
+      register: service_status_test
+      when: inventory_hostname in groups['ovn_riak_servers']
+      failed_when: "'running' not in service_status_test.stdout"
+
+    - name: check the status of service ovn_umf_broker 
+      shell: systemctl status ovn_umf_broker
+      register: service_status_test
+      when: inventory_hostname in groups['ovn_umf_broker']
+      failed_when: "'running' not in service_status_test.stdout"
+
+      #checking the status of ovn_multidc_sync to verify dual center connectivity
+    - name: check the status of service ovn_multidc_sync 
+      shell: systemctl status ovn_multidc_sync
+      register: service_status_test
+      when: inventory_hostname in groups['ovn_multidc_sync']
+      failed_when: "'running' not in service_status_test.stdout"
+
+    # checking if the ports are open for mediator
+    - name: checking for port on mediator server is open
+      wait_for:
+        timeout: 3
+        host: "{{ inventory_hostname }}"
+        port: "{{ item }}"
+      with_items: 
+        - "{{ netiso_port }}"
+        - "{{ forward_handler_port }}"
+      when: inventory_hostname in groups['ovn_mediator_servers']
+
+    #checking if the ports are open for umf_broker
+    - name: checking for port on umf_broker server is open
+      wait_for:
+        timeout: 3
+        host: "{{ inventory_hostname }}"
+        port: "{{ item }}"
+      with_items: 
+        - "{{ umf_ub_port }}"
+        - "{{ umf_listener_port }}"
+      when: inventory_hostname in groups['ovn_umf_broker']
+
+
+    #checking if the filesystem within limits (< 80%) on all servers
+    - name: Testing disk space availablility
+      assert:
+        that:
+            - item.mount != '/' or {{ item.mount == '/' and item.size_available > (item.size_total|float * 0.2) }}
+      with_items: '{{ ansible_mounts }}'
+      register: disk_free
+    - fail:
+      msg: 'Disk space needs attention.'
+      when: disk_free|failed  

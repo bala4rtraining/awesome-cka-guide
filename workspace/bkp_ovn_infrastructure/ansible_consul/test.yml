@@ -1,0 +1,6 @@
+# Use this playbook to bootstrap tests to run from plays in the tests directory.
+- hosts: all
+  gather_facts: yes
+  tasks:
+  - name: Test for Consul
+    debug: msg="not testing yet"

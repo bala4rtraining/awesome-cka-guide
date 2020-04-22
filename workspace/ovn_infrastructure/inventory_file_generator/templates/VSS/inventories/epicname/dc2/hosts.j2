@@ -1,0 +1,324 @@
+#########
+# DC2 datacenter - integration Clearing Flow environment {{ epic_name }}
+#########
+
+[{{ vm_dc2_name[0] }}]
+{{ vm_dc2_ip[0] }}
+
+[{{ vm_dc2_name[1] }}]
+{{ vm_dc2_ip[1] }}
+
+[{{ vm_dc2_name[2] }}]
+{{ vm_dc2_ip[2] }}
+
+[{{ vm_dc2_name[3] }}]
+{{ vm_dc2_ip[3] }}
+
+[{{ vm_dc2_name[4] }}]
+{{ vm_dc2_ip[4] }}
+
+[{{ vm_dc2_name[5] }}]
+{{ vm_dc2_ip[5] }}
+
+####### Inventory specific VARS
+
+[{{ vm_dc2_name[4] }}:vars]
+prometheus_mode='active'
+
+[{{ vm_dc2_name[1] }}:vars]
+eserv_type='lbonly'
+
+[{{ vm_dc2_name[2] }}:vars]
+eserv_type='default'
+
+[{{ vm_dc2_name[3] }}:vars]
+eserv_type='default'
+
+####### DC2 OVN Components
+
+# (Restricted Zone)
+[dc2_kafka:children]
+{{ vm_dc2_name[0] }}
+{{ vm_dc2_name[1] }}
+{{ vm_dc2_name[2] }}
+
+[dc2_ovn_mediator_servers:children]
+{{ vm_dc2_name[0] }}
+{{ vm_dc2_name[1] }}
+{{ vm_dc2_name[2] }}
+
+# (Restricted Zone)
+[dc2_kafka_mirror_maker:children]
+{{ vm_dc2_name[2] }}
+
+# (Restricted Zone)
+[dc2_hadoop_namenodes:children]
+{{ vm_dc2_name[0] }}
+{{ vm_dc2_name[1] }}
+
+# (Restricted Zone)
+[dc2_hadoop_datanodes:children]
+{{ vm_dc2_name[2] }}
+{{ vm_dc2_name[3] }}
+{{ vm_dc2_name[4] }}
+
+# (Restricted Zone)
+[dc2_nomad_server:children]
+{{ vm_dc2_name[5] }}
+{{ vm_dc2_name[0] }}
+{{ vm_dc2_name[1] }}
+
+# (Restricted Zone)
+[dc2_nomad_client:children]
+{{ vm_dc2_name[2] }}
+{{ vm_dc2_name[3] }}
+{{ vm_dc2_name[4] }}
+
+# (Restricted Zone)
+[dc2_ovn_riak_servers:children]
+{{ vm_dc2_name[5] }}
+{{ vm_dc2_name[0] }}
+{{ vm_dc2_name[1] }}
+
+# (Restricted Zone)
+[dc2_zookeeper:children]
+{{ vm_dc2_name[2] }}
+{{ vm_dc2_name[3] }}
+{{ vm_dc2_name[4] }}
+
+# (Restricted Zone)
+[dc2_journalnodes:children]
+{{ vm_dc2_name[0] }}
+{{ vm_dc2_name[1] }}
+{{ vm_dc2_name[2] }}
+
+# (Restricted Zone)
+[dc2_ftps_server:children]
+{{ vm_dc2_name[3] }}
+
+# (Restricted Zone)
+[dc2_elasticsearch:children]
+{{ vm_dc2_name[0] }}
+{{ vm_dc2_name[1] }}
+{{ vm_dc2_name[2] }}
+
+# (Restricted Zone)
+[dc2_kibana:children]
+{{ vm_dc2_name[3] }}
+
+# (Restricted Zone)
+[dc2_grafana:children]
+{{ vm_dc2_name[4] }}
+
+# (Restricted Zone)
+[dc2_graphite:children]
+{{ vm_dc2_name[5] }}
+
+[dc2_haproxy:children]
+{{ vm_dc2_name[0] }}
+
+# (Restricted Zone)
+[dc2_prometheus_server:children]
+{{ vm_dc2_name[1] }}
+
+# (Restricted Zone)
+[dc2_prometheus_alertmanager:children]
+{{ vm_dc2_name[2] }}
+
+# (Restricted Zone)
+[dc2_prometheus_pushgateway:children]
+{{ vm_dc2_name[3] }}
+
+# (Restricted Zone)
+[dc2_ovn_xdc_sync:children]
+{{ vm_dc2_name[4] }}
+
+# (Restricted Zone)
+[dc2_fluentd_aggregator:children]
+{{ vm_dc2_name[5] }}
+{{ vm_dc2_name[0] }}
+
+[fluentd_aggregator_ha01:children]
+dc2_fluentd_aggregator_ha01
+
+[fluentd_aggregator_ha02:children]
+dc2_fluentd_aggregator_ha02
+
+[dc2_fluentd_aggregator_ha01:children]
+{{ vm_dc2_name[0] }}
+{{ vm_dc2_name[1] }}
+{{ vm_dc2_name[2] }}
+{{ vm_dc2_name[3] }}
+{{ vm_dc2_name[4] }}
+{{ vm_dc2_name[5] }}
+
+[dc2_fluentd_aggregator_ha02:children]
+{{ vm_dc2_name[0] }}
+{{ vm_dc2_name[1] }}
+{{ vm_dc2_name[2] }}
+{{ vm_dc2_name[3] }}
+{{ vm_dc2_name[4] }}
+{{ vm_dc2_name[5] }}
+
+[dc2_nomad_ui:children]
+{{ vm_dc2_name[4] }}
+
+[dc2_cas_tool:children]
+{{ vm_dc2_name[1] }}
+
+[dc2_ovn_vss_servers:children]
+{{ vm_dc2_name[2] }}
+{{ vm_dc2_name[3] }}
+
+[dc2_yum_mirror_servers:children]
+{{ vm_dc2_name[2] }}
+{{ vm_dc2_name[5] }}
+
+# all application in the DC2 datacenter
+[dc2_ovn_application:children]
+dc2_ovn_xdc_sync
+dc2_ovn_vss_servers
+
+# all infrastructure in the DC2 datacenter
+[dc2_ovn_infrastructure:children]
+dc2_kafka
+dc2_kafka_mirror_maker
+dc2_hadoop_namenodes
+dc2_hadoop_datanodes
+dc2_nomad_server
+dc2_nomad_client
+dc2_ovn_riak_servers
+dc2_zookeeper
+dc2_ftps_server
+dc2_elasticsearch
+dc2_kibana
+dc2_grafana
+dc2_graphite
+dc2_haproxy
+dc2_prometheus_server
+dc2_prometheus_alertmanager
+dc2_prometheus_pushgateway
+dc2_journalnodes
+dc2_fluentd_aggregator
+dc2_fluentd_aggregator_ha01
+dc2_fluentd_aggregator_ha02
+dc2_yum_mirror_servers
+dc2_ovn_mediator_servers
+
+# all nodes in the DC2 datacenter
+[dc2:children]
+dc2_ovn_application
+dc2_ovn_infrastructure
+
+# all hdfs components in DC2
+[dc2_hdfs_HA_All_nodes:children]
+dc2_zookeeper
+dc2_journalnodes
+dc2_hadoop_namenodes
+dc2_hadoop_datanodes
+
+######
+# OVN Components
+######
+
+# Restricted Zone
+[kafka:children]
+dc2_kafka
+
+# Restricted Zone
+[kafka_mirror_maker:children]
+dc2_kafka_mirror_maker
+
+# Restricted Zone
+[ovn_mediator_servers:children]
+dc2_ovn_mediator_servers
+
+# Restricted Zone
+[hadoop_namenodes:children]
+dc2_hadoop_namenodes
+
+# Restricted Zone
+[hadoop_datanodes:children]
+dc2_hadoop_datanodes
+
+# Restricted Zone
+[nomad_server:children]
+dc2_nomad_server
+
+# Restricted Zone
+[nomad_client:children]
+dc2_nomad_client
+
+# Restricted Zone
+[ovn_riak_servers:children]
+dc2_ovn_riak_servers
+
+# Restricted Zone
+[zookeeper:children]
+dc2_zookeeper
+
+# Restricted Zone
+[journalnodes:children]
+dc2_journalnodes
+
+# Restricted Zone
+[ftps_server:children]
+dc2_ftps_server
+
+# Restricted Zone
+[elasticsearch:children]
+dc2_elasticsearch
+
+# Restricted Zone
+[kibana:children]
+dc2_kibana
+
+# Restricted Zone
+[grafana:children]
+dc2_grafana
+
+# Restricted Zone
+[graphite:children]
+dc2_graphite
+
+# Perimeter Zone
+[haproxy:children]
+dc2_haproxy
+
+# Restricted Zone
+[prometheus_server:children]
+dc2_prometheus_server
+
+# (Restricted Zone)
+[prometheus_alertmanager:children]
+dc2_prometheus_alertmanager
+
+# (Restricted Zone)
+[prometheus_pushgateway:children]
+dc2_prometheus_pushgateway
+
+# (Restricted Zone)
+[ovn_xdc_sync:children]
+dc2_ovn_xdc_sync
+
+# (Restricted Zone)
+[fluentd_aggregator:children]
+dc2_fluentd_aggregator
+
+[datacenter:children]
+dc2
+
+[hdfs_HA_All_nodes:children]
+dc2_hdfs_HA_All_nodes
+
+[nomad_ui:children]
+dc2_nomad_ui
+
+[cas_tool:children]
+dc2_cas_tool
+
+[ovn_vss_servers:children]
+dc2_ovn_vss_servers
+
+[yum_mirror_servers:children]
+dc2_yum_mirror_servers

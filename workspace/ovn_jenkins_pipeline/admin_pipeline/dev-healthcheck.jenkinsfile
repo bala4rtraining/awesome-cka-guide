@@ -1,0 +1,86 @@
+def ssh_down_hosts
+def above_capacity_hosts
+
+pipeline {
+    agent {
+      docker {
+        image 'centos7_ovn_docker'
+        label 'ovn_build'
+        args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /opt/app/ovnhub:/opt/app/ovnhub'
+      }
+    }
+    environment {
+        OVNINFRA_URL = 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git'
+        OVNPPL_URL = 'ssh://git@stash.trusted.visa.com:7999/op/ovn_jenkins_pipeline.git'
+        OUTPUTFILE = sh(returnStdout: true, script: "echo hoststatus-`date +%Y-%m-%d`.csv").trim()
+        OUTPUTFILE_JSON = sh(returnStdout: true, script: "echo hoststatus-`date +%Y-%m-%d`.json").trim()
+        TABLEFILE = 'table.html'
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+    triggers {
+        cron('H H * * *')
+    }
+    
+    stages {
+       stage('Prepare') {
+           steps {
+               ansiColor('xterm') {
+                    echo "Checking Out ovn_infrastructure for Up-to-date Hostlist..."
+                    dir("ovn_infrastructure") {
+                        git credentialsId: 'ENV.root_key', url: OVNINFRA_URL
+                    }
+               }
+            }
+       }
+      stage('Check Hosts') {
+          steps {
+              ansiColor('xterm') {
+                  sh "sh jenkins-sh/dev-healthcheck.sh"
+              }
+          }
+      }
+      stage('Read CSV'){
+        steps{
+            script{
+                ssh_down_hosts=0
+                above_capacity_hosts=0
+                readFile("$OUTPUTFILE").split('\n').each { line, count ->
+                    def fields = line.split(',')
+                    if (fields[2].toString().equals("NA")){
+                        ssh_down_hosts=ssh_down_hosts+1
+                    }
+                    else if (fields[2].toString().equals("No")){
+                        above_capacity_hosts=above_capacity_hosts+1
+                    }
+            }
+            }
+        }
+      }
+      stage ('Archive') {
+          steps {
+              echo "Archiving..."
+              archiveArtifacts OUTPUTFILE
+              archiveArtifacts OUTPUTFILE_JSON
+              archiveArtifacts TABLEFILE
+          }
+      }
+    }
+    post {
+        always {
+            emailext mimeType: 'text/html',
+            body: '${FILE,path="table.html"}', 
+            subject: "Daily Dev Server Health Check Summary [SSH FAILURES: ${ssh_down_hosts}, ABOVE 80% CAPACITY: ${above_capacity_hosts}]",
+            from: "OVN Admin Job Jenkins <noreply@visa.com>",
+            to: "gdlovndevops@visa.com"
+            cleanWs()
+        }
+        failure {
+            mail body: "Daily Dev Server Health Check Failed",
+            subject: "Daily Dev Server Health Check Summary [SSH FAILURES: ${ssh_down_hosts}, ABOVE 80% CAPACITY: ${above_capacity_hosts}]",
+            from: "OVN Admin Job Jenkins <noreply@visa.com>",
+            to: "gdlovndevops@visa.com"
+        }
+    }
+}

@@ -1,0 +1,2 @@
+@Library('ovn-shared-library') _
+ciNightlyflowDeploy('clearingAppDeploy', 'int-epic2')

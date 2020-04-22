@@ -1,0 +1,49 @@
+pipeline {
+       agent {
+           docker {
+               image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+               label 'ovn_build'
+               args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /var/run/docker.sock:/var/run/docker.sock'
+           }
+       }
+
+       options {
+           ansiColor('xterm-256color')
+           timeout(time: 1, unit: 'HOURS')
+       }
+       environment {
+           GOPATH = "$WORKSPACE/.go"
+           GO_VERSION = "1.12"
+           GO111MODULE = "on"
+           ARTIFACTORY_CREDS = credentials('svcnpovndev_id')
+           GOPROXY="https://artifactory.trusted.visa.com/api/go/ovn-go-virtual"
+           ARTIFACTORY_URL="https://artifactory.trusted.visa.com"
+           GO_LOCAL_REPO="ovn-go-local"
+       }
+       stages {
+           stage('checkout SCM'){
+             steps{
+                git branch: "master", url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn-commons.git'
+             }
+           }
+           stage('prepare') {
+               steps {
+                   // 1. setting up GOPATH structure, since we do not have a src/visa.com prefix inside of our repo
+                   // 2. fetching dependencies with glide
+                   sh '''
+                  ln -snf /usr/local/go/${GO_VERSION}* /usr/local/go/default
+                  git show -s --pretty=%ce > .git/committer-email
+                  go version
+                  '''
+               }
+           }
+           stage('benchmark tests') {
+              steps {
+                 sh '''
+                    make bench
+                    '''
+               }
+           }
+        }
+    }
+

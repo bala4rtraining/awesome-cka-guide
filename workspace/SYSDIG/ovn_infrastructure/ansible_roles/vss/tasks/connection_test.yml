@@ -1,0 +1,37 @@
+---
+
+- name: copy mock file from ftps
+  shell: scp -i /home/{{ vss_username }}/.ssh/vss {{ vss_username }}@{{ groups['ftps_server'][0] }}:/tmp/vss_conn_test/INDOINPAMOCK /tmp/INDOINPAMOCK
+
+- name: read mock file
+  shell: cat /tmp/INDOINPAMOCK
+  register: inpa_content
+
+- assert:
+    that:
+      - "inpa_content.stdout == 'this is a mock INDOINPA file'"
+  ignore_errors: yes
+
+- name: remove mock inpa
+  file:
+    path: /tmp/INDOINPAMOCK
+    state: absent
+
+
+- name: create mock vss report file
+  copy:
+    content: "this is a mock vss report"
+    dest: "/home/{{ vss_username }}/testfile.txt"
+    mode: 0744
+
+- name: test OVN VSS to MVS connectivity
+  shell: lftp -p 21021 {{ vss_mvs_hostname }} -e "set ftp:ssl-force true; user {{ vss_mvs_username }} {{ vss_mvs_password }}; pwd; cd ..; pwd; cd ..; pwd; site cyl;site pri=25; site sec=5;put -a /home/{{ vss_username }}/testfile.txt -o \"'pvs.ovn.indo.vsjes(+1)'\";"
+  ignore_errors: yes
+
+
+- name: test connectivity to mirror server
+  shell: 'ssh -i /home/{{ vss_username }}/.ssh/vss {{ vss_username }}@{{ vss_mirror_server }} "ls -la /opt/app/vss/output"'
+  ignore_errors: yes
+
+
+

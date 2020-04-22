@@ -1,0 +1,27 @@
+# This file executes a list of roles
+# to set up an OGL machine.
+#
+# The OGL machine or VM is Centos 7 based.
+#
+# It starts by install required packages
+# that will be used to boostrap Cumulus 
+# switches and HP servers.
+# Next it runs an OGL specific role
+# to complete the setup
+#
+- name: Install and config the OGL
+  hosts: OGL_host
+  gather_facts: yes
+  become: yes
+  vars_files:
+    # site-specfic
+    #- site_vars_oce_prod.yml
+    #- site_vars_occ_prod.yml
+    - site_vars_ocw_prod.yml
+  roles:
+    - { role: tftp, tags: 'vm' }
+    - goldenlaptop 
+    - { role: dhcpd, tags: 'vm' }
+    - { role: httpd, tags: 'vm' }
+
+

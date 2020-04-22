@@ -1,0 +1,42 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# see also https://github.com/swiftgist/vagrant-ceph/blob/master/Vagrantfile
+
+begin
+  load './custom'
+rescue LoadError
+  def patch
+  end
+end
+
+Vagrant.configure(2) do |config|
+
+  config.vm.define "build", autostart: false do |build|
+    build.vm.box = "centos-7.2-1"
+
+    build.vm.provider :virtualbox do |vb|
+      vb.memory = 1280
+    end
+
+    build.vm.provider :libvirt do |libvirt, override|
+      libvirt.uri = 'qemu+unix:///system'
+      libvirt.memory = 1280
+      override.vm.synced_folder ".", "/vagrant", type: "rsync", disabled: true
+    end
+
+    build.vm.provision "ansible" do |ansible|
+      ansible.playbook = "provision_build.yml"
+      ansible.verbose = "v"
+      # ansible.groups = inventory_groups
+      ansible.limit = "build"
+      ansible.sudo = true
+      ansible.raw_ssh_args = $ansible_raw_ssh_args if defined? $ansible_raw_ssh_args
+      ansible.extra_vars = $ansible_extra_vars || { proxy_env: {} }
+      ansible.tags = ENV['with_tags'] || nil
+      ansible.skip_tags = ENV['without_tags'] || nil
+    end
+  end
+end
+
+patch

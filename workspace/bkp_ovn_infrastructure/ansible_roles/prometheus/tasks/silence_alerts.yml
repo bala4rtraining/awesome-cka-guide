@@ -1,0 +1,62 @@
+---
+- name: Seperate hostnames
+  set_fact: 
+    ovn_target_host="{{split_hosts.split(',')}}"
+    ovn_alerts="{{split_alerts.split(',')}}"
+    
+- name: Trigger muting of alerts at DataCenter and Host level
+  uri: 
+    url: http://127.0.0.1:{{ alertmanager_port }}/{{ alertmanager_context_path }}/api/v1/silences
+    method: POST
+    return_content: yes
+    body: {"createdBy":"ovnadmin", "comment":"Maintenance - Silence Alerts", "startsAt": '{{ START_TIME }}', "endsAt": '{{ END_TIME }}', "matchers":[{"name":"datacenter_id", "value": '{{ prometheus_datacenter_id }}', "isRegex":false},{"name":"hostname", "value": '{{ item }}', "isRegex":false}]}
+    body_format: json
+  when: ((not((host_name is undefined) or (host_name is none) or (host_name | trim == '')))
+        and
+        ((alert_name is undefined) or (alert_name is none) or (alert_name | trim == '')))
+  with_items: "{{ ovn_target_host }}"          
+    
+- name: Trigger muting of alerts at DataCenter level
+  uri: 
+    url: http://127.0.0.1:{{ alertmanager_port }}/{{ alertmanager_context_path }}/api/v1/silences
+    method: POST
+    return_content: yes
+    body: {"createdBy":"ovnadmin", "comment":"Maintenance - Silence Alerts", "startsAt": '{{ START_TIME }}', "endsAt": '{{ END_TIME }}', "matchers":[{"name":"datacenter_id", "value": '{{ prometheus_datacenter_id }}', "isRegex":false}]}
+    body_format: json
+  when: (((host_name is undefined) or (host_name is none) or (host_name | trim == ''))
+        and
+        ((alert_name is undefined) or (alert_name is none) or (alert_name | trim == ''))
+        and
+        ((label_name is undefined) or (label_name is none) or (label_name | trim == ''))
+        and
+        ((label_value is undefined) or (label_value is none) or (label_value | trim == '')))        
+        
+- name: Trigger muting of alerts at DataCenter and Alert level
+  uri: 
+    url: http://127.0.0.1:{{ alertmanager_port }}/{{ alertmanager_context_path }}/api/v1/silences
+    method: POST
+    return_content: yes
+    body: {"createdBy":"ovnadmin", "comment":"Maintenance - Silence Alerts", "startsAt": '{{ START_TIME }}', "endsAt": '{{ END_TIME }}', "matchers":[{"name":"datacenter_id", "value": '{{ prometheus_datacenter_id }}', "isRegex":false},{"name":"alertname", "value": '{{ item }}', "isRegex":false}]}
+    body_format: json
+  when: ((not((alert_name is undefined) or (alert_name is none) or (alert_name | trim == '')))
+        and
+        ((host_name is undefined) or (host_name is none) or (host_name | trim == ''))
+        and
+        ((label_name is undefined) or (label_name is none) or (label_name | trim == ''))
+        and
+        ((label_value is undefined) or (label_value is none) or (label_value | trim == '')))
+  with_items: "{{ ovn_alerts }}"
+
+- name: Trigger muting of alerts based on custom label, custom value and alertname
+  uri: 
+    url: http://127.0.0.1:{{ alertmanager_port }}/{{ alertmanager_context_path }}/api/v1/silences
+    method: POST
+    return_content: yes
+    body: {"createdBy":"ovnadmin", "comment":"Maintenance - Silence Alerts", "startsAt": '{{ START_TIME }}', "endsAt": '{{ END_TIME }}', "matchers":[{"name":"datacenter_id", "value": '{{ prometheus_datacenter_id }}', "isRegex":false},{"name":"{{label_name}}", "value":"{{label_value}}", "isRegex":false},{"name":"alertname", "value": '{{ item }}', "isRegex":false}]}
+    body_format: json
+  when: not((label_name is undefined) or (label_name is none) or (label_name | trim == ''))
+        and
+        not((label_value is undefined) or (label_value is none) or (label_value | trim == ''))
+        and
+        not((alert_name is undefined) or (alert_name is none) or (alert_name | trim == ''))
+  with_items: "{{ ovn_alerts }}"        

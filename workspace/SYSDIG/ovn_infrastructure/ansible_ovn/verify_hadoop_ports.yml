@@ -1,0 +1,8 @@
+# verify hadoop cluster ports
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=hdfs_HA_All_nodes
+
+- name: verify hadoop ports
+  hosts: hdfs_HA_All_nodes
+  roles:
+    - { role: hadoop, dispatch: ['verify-ports'] }

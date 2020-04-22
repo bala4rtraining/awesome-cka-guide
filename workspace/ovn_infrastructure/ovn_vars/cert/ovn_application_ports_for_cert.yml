@@ -1,0 +1,15 @@
+---
+##########
+# This file defines OVN application ports that are SPECIFIC to the `CERT` environment.
+# 
+# Ideally there should not be any port definitions defined here.
+#
+# Before adding port definitions here, please discuss with rest of the team and
+# obtain approval from management.
+#
+
+# overrides the haproxy_ssl_port from the top level
+haproxy_ssl_port: "51121"
+
+# overrides the zk_port from the top level.
+zk_port: "2181"

@@ -1,0 +1,12 @@
+---
+- name: Get Silence ID's using API GET Method
+  uri: 
+    url: http://127.0.0.1:{{ alertmanager_port }}/{{ alertmanager_context_path }}/api/v1/silences
+    method: GET
+    return_content: yes
+  register: result_get
+
+- name: Delete all Silences
+  command: curl -X DELETE 'http://127.0.0.1:{{ alertmanager_port }}/{{ alertmanager_context_path }}/api/v1/silence/{{item.id}}'
+  when: item.endsAt == '{{END_TIME}}'
+  with_items: "{{ result_get.json.data }}"

@@ -1,0 +1,164 @@
+@Library('ovn-shared-library') _
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/'
+    }
+  }
+
+  options {
+      buildDiscarder(logRotator(numToKeepStr: '95'))
+  }
+
+  environment {
+    CLUSTER = "int-epic13"
+    DATACENTER1 = 'dc1'
+    DATACENTER2 = 'dc2'
+  }
+
+  stages {
+    stage('Checkout SCM') {
+          steps{
+          git credentialsId: 'ENV.root_key', branch: "master", url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_infrastructure.git'
+          }
+      }
+
+    stage('stop') {
+      steps {
+        parallel(
+          'stop-hadoop-dc1': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", playbook: 'ansible_ovn/stop_hadoop_cluster.yml'
+            }
+          },
+          'stop-hadoop-dc2': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", playbook: 'ansible_ovn/stop_hadoop_cluster.yml'
+            }
+          }
+        )
+      }
+    }
+
+    stage('init') {
+      steps {
+        parallel(
+          'init-dc1': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}", playbook: 'ansible_ovn/set_cluster_facts_infra.yml', extras: '-e DATACENTER="${DATACENTER1}"'
+            }
+          },
+          'init-dc2': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}", playbook: 'ansible_ovn/set_cluster_facts_infra.yml', extras: '-e DATACENTER="${DATACENTER2}"'
+            }
+          }
+        )
+      }
+    }
+
+    stage('clean'){
+      steps {
+        parallel(
+          'clean-hadoop-dc1': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", playbook: 'ansible_ovn/clean_hadoop.yml', extras: '-e hadoop_reinstall=true'
+            }
+          },
+          'clean-hadoop-dc2': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", playbook: 'ansible_ovn/clean_hadoop.yml', extras: '-e hadoop_reinstall=true'
+            }
+          }
+        )
+      }
+    }
+
+    stage('zookeeper-deploy') {
+      steps {
+        parallel(
+          'zookeeper-dc1': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", playbook: 'ansible_zookeeper/provision.yml'
+            }
+          },
+          'zookeeper-dc2': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", playbook: 'ansible_zookeeper/provision.yml'
+            }
+          }
+        )
+      }
+    }
+
+    stage('kafka-deploy') {
+      steps {
+        parallel(
+          'kafka-dc1': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", playbook: 'ansible_kafka/site.yml'
+            }
+          },
+          'kafka-dc2': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", playbook: 'ansible_kafka/site.yml'
+            }
+          }
+        )
+      }
+    }
+
+    stage('nomad-deploy') {
+      steps {
+        parallel(
+          'nomad-dc1': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", playbook: 'ansible_ovn/deploy_nomad.yml', extras: '-e @config/test1.vars.secret.yml'
+            }
+          },
+          'nomad-dc2': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", playbook: 'ansible_ovn/deploy_nomad.yml', extras: '-e @config/test2.vars.secret.yml'
+            }
+          }
+        )
+      }
+    }
+
+    stage('hadoop-deploy') {
+      steps {
+        parallel(
+          'hadoop-dc1': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", playbook: 'ansible_ovn/hadoop.yml', extras: "--extra-vars '{hadoop_reinstall: True}'"
+            }
+          },
+          'hadoop-dc2': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", playbook: 'ansible_ovn/hadoop.yml', extras: "--extra-vars '{hadoop_reinstall: True}'"
+            }
+          }
+        )
+      }
+    }
+
+    stage('cassandra-deploy') {
+      steps{
+        parallel(
+          'cassandra-dc1': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", playbook: 'ansible_ovn/deploy_datastax.yml', extras: '--extra-vars "version=4.8.6"'
+            }
+          },
+          'cassandra-dc2': {
+            ansiColor('xterm') {
+              ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", playbook: 'ansible_ovn/deploy_datastax.yml', extras: '--extra-vars "version=4.8.6"'
+            }
+          }
+        )
+      }
+    }
+  }
+}

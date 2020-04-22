@@ -1,0 +1,67 @@
+---
+- name: check if {{ prometheus_archive_base }} is already provisioned
+  stat:
+    path: "{{ prometheus_install_dir }}/{{ prometheus_archive_base }}"
+  register: prometheus_provision_status
+
+- name: deploy prometheus package.
+  unarchive:
+    src: "{{ prometheus_archive }}"
+    dest: "{{ prometheus_install_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: 0755
+    copy: no
+  when: prometheus_provision_status.stat.exists == false
+
+- name: link to prometheus directory {{ prometheus_base_dir }}
+  file:
+    src: "{{ prometheus_archive_base }}"
+    dest: "{{ prometheus_base_dir }}"
+    force: yes
+    state: link
+
+- name: create prometheus data directory {{ prometheus_data_dir }}
+  file:
+    dest: "{{ prometheus_data_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: 0750
+    state: directory
+
+- name: deploy prometheus config
+  template:
+    src: "prometheus.yml.j2"
+    dest: "{{ prometheus_base_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: 0644
+  register: prometheus_config_result
+
+- name: deploy prometheus service
+  template:
+    src: "prometheus.service.j2"
+    dest: "/etc/systemd/system/prometheus.service"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: 0644
+  register: prometheus_service_result
+
+- name: reload system service configs.
+  shell: systemctl daemon-reload
+  when: >
+    prometheus_service_result.changed == true
+
+- name: Enable and start prometheus package.
+  service:
+    name: prometheus
+    state: restarted
+  when: >
+    prometheus_config_result.changed == true or
+    prometheus_service_result.changed == true
+
+- name: Ensure prometheus is started and enabled to start at boot.
+  service:
+    name: prometheus
+    state: started
+    enabled: yes

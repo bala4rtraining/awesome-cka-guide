@@ -1,0 +1,23 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_umf_delivery[0]
+
+- name: start/stop apf ovn_umf_delivery
+  hosts: ovn_umf_delivery[0]
+  tags:
+    - umfd_apf
+  tasks:
+    - service: name=ovn_umf_delivery_apf state="{{state}}"
+
+- name: start/stop ub ovn_umf_delivery
+  hosts: ovn_umf_delivery[0]
+  tags:
+    - umfd_ub
+  tasks:
+    - service: name=ovn_umf_delivery_ub state="{{state}}"
+
+- name: start/stop ub2 ovn_umf_delivery
+  hosts: ovn_umf_delivery[0]
+  tags:
+    - umfd_ub2
+  tasks:
+    - service: name=ovn_umf_delivery_ub2 state="{{state}}"

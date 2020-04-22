@@ -1,0 +1,70 @@
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '--network ovntest -v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh -v /opt/app/ovnhub:/opt/app/ovnhub -v /var/run/docker.sock:/var/run/docker.sock'
+    }
+  }
+
+   parameters {
+                  string(name: 'branch', defaultValue: 'master', description: 'Enter the release branch details')
+   }
+   environment {
+    GOPATH = "$WORKSPACE/.go"
+    PACKAGE_DIR = "$GOPATH/src/visa.com/ovn"
+    GLIDE_HOME = "$WORKSPACE/.glide"
+    GLIDE_TMP = "$WORKSPACE/.tmp"
+    GO_VERSION = "1.9"
+    MODE = "e2e"
+    HOSTS = "MiddlewareCassandra:9042"
+    ENABLEDSSL = "false"
+    PATHCERT = ""
+    PATHKEY = ""
+    PATHCA = ""
+    IMAGECASSANDRA = "poc-dtr.visa.com/np-0018591/cassandra:311"
+    NAMEOFCONTAINER = "MiddlewareCassandra"
+  }
+  stages{
+    stage('Checkout DataAccessLayer') {
+       steps{
+          git credentialsId: '', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn2.git', branch: "${params.branch}"
+       }
+    }
+    stage('prepare') {
+      steps {
+        ansiColor('xterm') {
+          // 1. setting up GOPATH structure, since we do not have a scr/visa.com prefix inside of our repo
+          // 2. fetching dependencies with glide
+          // 3. building profile DB for testing
+          sh '''
+          git show -s --pretty=%ce > .git/committer-email
+
+          source /etc/profile.d/go.sh $GO_VERSION
+          go version
+
+          mkdir -p $GLIDE_HOME $GLIDE_TMP
+
+          rm -rf $PACKAGE_DIR
+          mkdir -p $PACKAGE_DIR
+          cp -r * $PACKAGE_DIR
+
+          cd $PACKAGE_DIR
+
+          glide --debug install
+          '''
+        }
+      }
+    }
+    stage('run_makefile') {
+      steps {
+         ansiColor('xterm') {
+           sh '''
+            cd $PACKAGE_DIR
+            make middleware-test mode=$MODE hosts=$HOSTS SslEnabled=$ENABLEDSSL certPath=$PATHCERT keyPath=$PATHKEY caPath=$PATHCA CassandraImage=$IMAGECASSANDRA NameOfContainer=$NAMEOFCONTAINER
+            '''
+         }
+      }
+    }
+  }
+}

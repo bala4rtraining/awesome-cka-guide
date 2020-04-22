@@ -1,0 +1,9 @@
+---
+# This ansible playbook is to copy DEK onto nomad clients and encrypt it on filesystem
+
+- include: ../ovn_vars.yml ovn_vars_hosts=nomad_client,nomad_server,ovn_vss_servers
+
+- name: Transfer DEK onto file system
+  hosts: nomad_client,nomad_server,ovn_vss_servers
+  roles:
+    - data_encryption_at_rest

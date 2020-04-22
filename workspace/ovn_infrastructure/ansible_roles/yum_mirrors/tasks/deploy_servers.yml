@@ -1,0 +1,54 @@
+---
+# install the packages 
+- name: install packages for building local repository
+  yum: 
+    name: "{{ item }}"
+    state: present
+    #disablerepo: "{{ disabled_yum_repos }}"
+  with_items:
+    - 'yum-utils'
+    - 'createrepo'
+
+# create the directory
+- name: create directory for storing packages
+  file:
+    path: '{{ yum_mirror_dir }}'
+    state: directory
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_group }}"
+    mode: 0755
+
+#create repo directory
+- name: create directory for storing packages
+  file:
+    path: "{{ yum_mirror_dir }}/{{ item }}"
+    state: directory
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_group }}"
+    mode: 0755
+  with_items: "{{ yum_repos }}"
+
+# take the bakup of existing config file
+- name: checking if config file exists in yum mirror servers
+  stat: 
+    path: "{{ yum_config_dir }}/ovn_centos_el7.repo"
+  register: config_result
+
+- name: rename the existing yum mirror server config file as backup
+  shell: mv "{{ yum_config_dir }}/ovn_centos_el7.repo" "{{yum_config_dir }}/ovn_centos_el7.repo_backup"
+  when: config_result.stat.exists == True
+
+# create configuration file for deployment repo
+- name: create yum mirror server configuration file for deployment repo
+  template:
+    src: 'templates/ovn_deployment_el7.j2'
+    dest: "{{ yum_config_dir }}/ovn_deployment_el7.repo"
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+
+# clean the yum cache
+- name: clean yum cache
+  shell: |
+    yum clean all

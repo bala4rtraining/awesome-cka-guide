@@ -1,0 +1,3 @@
+---
+- name: run zookeeper-client
+  shell: "{{ zookeeper_install_dir }}/bin/zkCli.sh -server $(hostname -f):{{ zk_port }} ls /"

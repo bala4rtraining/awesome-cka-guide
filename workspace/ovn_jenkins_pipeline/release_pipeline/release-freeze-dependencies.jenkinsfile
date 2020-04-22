@@ -1,0 +1,117 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+        booleanParam(name: 'RELEASE_OVN_MEDIATOR',            defaultValue: false, description: 'Is OVN Mediator part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_SWITCH',              defaultValue: false, description: 'Is OVN Switch part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_UMF_DELIVERY',        defaultValue: false, description: 'Is OVN UMF Delivery part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_VITALSIGNS_DELIVERY', defaultValue: false, description: 'Is OVN Vitalsigns Delivery part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_MULTIDC_SYNC',        defaultValue: false, description: 'Is OVN Multidc Sync part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_VIP_EF_SYNC',         defaultValue: false, description: 'Is OVN VIP EF Sync part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_KH_PROFILE',          defaultValue: false, description: 'Is OVN KH PROFILE part of the upcoming release?')
+    }
+
+    stages {
+
+        stage('Import mediator packages') {
+            when { expression { return params.RELEASE_OVN_MEDIATOR } }
+            steps {
+                sh 'mkdir mediator_files'
+                copyArtifacts filter: 'project_latest.packages*', optional: false, projectName: 'OVN-OP/ovn_mediator/master', selector: lastSuccessful(), target: 'mediator_files/'
+            }
+        }
+
+        stage('Import switch packages') {
+            when { expression { return params.RELEASE_OVN_SWITCH } }
+            steps {
+                sh 'mkdir switch_files'
+                copyArtifacts filter: 'project_latest.packages*', optional: false, projectName: 'OVN-OP/ovn_switch/master', selector: lastSuccessful(), target: 'switch_files/'
+            }
+        }
+
+        stage('Import umf_delivery packages') {
+            when { expression { return params.RELEASE_OVN_UMF_DELIVERY } }
+            steps {
+                sh 'mkdir umf_delivery_files'
+                copyArtifacts filter: 'project_latest.packages*', optional: false, projectName: 'OVN-OP/ovn_umf_delivery/master', selector: lastSuccessful(), target: 'umf_delivery_files/'
+            }
+        }
+
+        stage('Import vitalsigns_delivery packages') {
+            when { expression { return params.RELEASE_OVN_VITALSIGNS_DELIVERY } }
+            steps {
+                sh 'mkdir vitalsigns_delivery_files'
+                copyArtifacts filter: 'project_latest.packages*', optional: false, projectName: 'OVN-OP/ovn_vitalsigns_delivery/master', selector: lastSuccessful(), target: 'vitalsigns_delivery_files/'
+            }
+        }
+
+        stage('Import multidc_sync packages') {
+            when { expression { return params.RELEASE_OVN_MULTIDC_SYNC } }
+            steps {
+                sh 'mkdir multidc_sync_files'
+                copyArtifacts filter: 'project_latest.packages*', optional: false, projectName: 'OVN-OP/ovn_multidc_sync/master', selector: lastSuccessful(), target: 'multidc_sync_files/'
+            }
+        }
+
+        stage('Import riak_persistence packages') {
+            when { expression { return params.RELEASE_OVN_RIAK_PERSISTENCE } }
+            steps {
+                sh 'mkdir riak_persistence_files'
+                copyArtifacts filter: 'project_latest.packages*', optional: false, projectName: 'OVN-OP/ovn_riak_persistence/master', selector: lastSuccessful(), target: 'riak_persistence_files/'
+            }
+        }
+
+        stage('Import vip_ef_sync packages') {
+            when { expression { return params.RELEASE_OVN_VIP_EF_SYNC } }
+            steps {
+                sh 'mkdir vip_ef_sync_files'
+                copyArtifacts filter: 'project_latest.packages*', optional: false, projectName: 'OVN-OP/ovn_vip_ef_sync/master', selector: lastSuccessful(), target: 'vip_ef_sync_files/'
+            }
+        }
+
+        stage('Create ovn_kh_profile packages') {
+            when { expression { return params.RELEASE_OVN_KH_PROFILE } }
+            environment {
+                REPO_DIR = "ovn_kh_profile_repo"
+            }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: "${REPO_DIR}"]],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: "ssh://git@stash.trusted.visa.com:7999/op/ovn_kh_profile.git"]]]
+                sh "cd ${REPO_DIR} && make deps test-deps"
+                sh "cd ${REPO_DIR} && make deps-list > project_latest.packages"
+                sh "cd ${REPO_DIR} && make deps-list.mk > project_latest.packages.mk"
+                sh "mkdir ovn_kh_profile_files && cp ${REPO_DIR}/project_latest.packages* ovn_kh_profile_files/"
+            }
+        }
+
+        stage ('Build frozen packages') {
+            when { anyOf {
+                    expression { return params.RELEASE_OVN_MEDIATOR };
+                    expression { return params.RELEASE_OVN_SWITCH };
+                    expression { return params.RELEASE_OVN_UMF_DELIVERY };
+                    expression { return params.RELEASE_OVN_VITALSIGNS_DELIVERY };
+                    expression { return params.RELEASE_OVN_MULTIDC_SYNC };
+                    expression { return params.RELEASE_OVN_VIP_EF_SYNC };
+                    expression { return params.RELEASE_OVN_KH_PROFILE }
+                } }
+            steps {
+                sh 'cat *_files/project_latest.packages    | sed  "s/ *$//" | sort -ui > .frozen.packages'
+                sh 'cat *_files/project_latest.packages.mk | sed  "s/ *$//" | sort -ui > .frozen.packages.mk'
+                archiveArtifacts artifacts: '.frozen.packages*', fingerprint: true
+            }
+        }
+
+    }
+}

@@ -1,0 +1,39 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ovn_switch_servers,ovn_mediator_servers,ftps_server[0]
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- name: remove profile from switch nodes
+  hosts: ovn_switch_servers
+  roles:
+    - { role: profile, dispatch: ['remove'], profile_version_dir: "{{profile_version|default(omit)}}" }
+  vars:
+    name: ovn_switch
+
+- name: remove profile from mediator nodes
+  hosts: ovn_mediator_servers
+  roles:
+    - { role: profile, dispatch: ['remove'], profile_version_dir: "{{profile_version|default(omit)}}" }
+  vars:
+    name: ovn_mediator
+
+- name: remove profile from ovn_vip_ef_sync nodes
+  hosts: ftps_server[0]
+  roles:
+    - { role: profile, dispatch: ['remove'], profile_version_dir: "{{profile_version|default(omit)}}" }
+  vars:
+    name: ovn_vip_ef_sync

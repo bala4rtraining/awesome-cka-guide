@@ -1,0 +1,5 @@
+---
+# Visa NTP and DNS servers for Indonesia
+visa_dns_servers: "['10.200.160.134', '10.200.160.135', '10.200.160.137', '10.200.160.138']"
+visa_ntp_servers: '{{visa_dns_servers}}'
+visa_dns_domain: 'visa.com'

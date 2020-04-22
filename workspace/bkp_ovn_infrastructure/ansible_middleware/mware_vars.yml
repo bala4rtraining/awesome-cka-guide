@@ -1,0 +1,105 @@
+---
+########
+# This playbook dynamically loads configs from the target cluster in middleware inventory.
+#
+# All OVN playbooks under middleware must use the ansible `include` directive to load
+# this playbook as the very first step in the playbooks.
+#
+#    include: <path to mware_vars.yml>/ovn_vars.yml
+#               or
+#    include: mware_vars.yml
+#
+########
+
+- hosts: "{{ ovn_vars_hosts | default('all,localhost,!cumulus_switch,!ovn_manager') }}"
+  gather_facts: false
+  tasks:
+
+  # all configs that are common across all CLUSTERs are defined in the YAML files
+  # inside this directory.
+  - include_vars:
+      dir: "vars"
+      depth: 1
+
+  # configs specific to the CLUSTER or overrides are defined in the YAML files
+  # inside this directory.
+  - include_vars:
+      dir: "vars/{{ CLUSTER }}"
+      depth: 1
+    when: CLUSTER is defined
+
+  # configs specific to the DATACENTER within the CLUSTER or overrides are defined in the YAML files
+  # inside this directory.
+  - include_vars:
+      dir: "vars/{{ CLUSTER }}/{{ DATACENTER }}"
+      depth: 1
+    ignore_errors: yes
+    when: CLUSTER is defined and DATACENTER is defined
+  
+  post_tasks:
+  
+  - debug:
+      var: switch_ovngit_ref
+    run_once: true
+  
+  - debug:
+      var: mediator_ovngit_ref
+    run_once: true
+  
+  - debug:
+      var: umf_delivery_ovngit_ref
+    run_once: true
+  
+  - debug:
+      var: umf_broker_ovngit_ref
+    run_once: true
+  
+  - debug:
+      var: multidc_sync_ovngit_ref
+    run_once: true
+  
+  - debug:
+      var: vitalsigns_ovngit_ref
+    run_once: true
+  
+  - debug:
+      var: vip_ef_sync_ovngit_ref
+    run_once: true
+  
+  - debug:
+      var: currency_ovngit_ref
+    run_once: true
+  
+  - debug:
+      var: profile_tarball
+    run_once: true
+  
+  - debug:
+      var: cas_tool_version
+    run_once: true
+  
+  - debug:
+      var: ovn_cas_tools_version
+    run_once: true
+  
+  - debug:
+      var: collection_job_version
+    run_once: true
+  
+  - debug:
+      var: xdc_sync_version
+    run_once: true
+  
+  - debug:
+      var: nomad_ui_tarball
+    run_once: true
+  
+  - debug:
+      var: ovn_clearing_rpm_version
+    run_once: true
+  
+  - debug:
+      var: nginx_auth_version
+    run_once: true
+
+  

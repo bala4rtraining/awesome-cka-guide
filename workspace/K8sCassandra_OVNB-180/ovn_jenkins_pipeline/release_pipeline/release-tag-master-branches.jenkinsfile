@@ -1,0 +1,122 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+        booleanParam(name: 'RELEASE_OVN_MEDIATOR',            defaultValue: false, description: 'Is OVN Mediator part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_SWITCH',              defaultValue: false, description: 'Is OVN Switch part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_UMF_DELIVERY',        defaultValue: false, description: 'Is OVN UMF Delivery part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_VITALSIGNS_DELIVERY', defaultValue: false, description: 'Is OVN Vitalsigns Delivery part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_MULTIDC_SYNC',        defaultValue: false, description: 'Is OVN Multidc Sync part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_VIP_EF_SYNC',         defaultValue: false, description: 'Is OVN VIP EF Sync part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_RIAK_PERSISTENCE',    defaultValue: false, description: 'Is OVN RIAK PERSISTENCE part of the upcoming release?')
+
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        PRE_RELEASE_TAG = "v${params.RELEASE_VERSION}-pre-alpha"
+    }
+
+    stages {
+
+        stage('Tagging Mediator') {
+            when { expression { return params.RELEASE_OVN_MEDIATOR } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_mediator_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_mediator.git']]]
+                sh "cd ovn_mediator_repo/ && git tag -a -m \"OVN Mediator ${params.RELEASE_VERSION} Pre Alpha version\" ${PRE_RELEASE_TAG}"
+                sh "cd ovn_mediator_repo/ && git push origin ${PRE_RELEASE_TAG}"
+            }
+
+        }
+
+        stage('Tagging Switch') {
+            when { expression { return params.RELEASE_OVN_SWITCH } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_switch_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_switch.git']]]
+                sh "cd ovn_switch_repo/ && git tag -a -m \"OVN Switch ${params.RELEASE_VERSION} Pre Alpha version\" ${PRE_RELEASE_TAG}"
+                sh "cd ovn_switch_repo/ && git push origin ${PRE_RELEASE_TAG}"
+            }
+
+        }
+
+        stage('Tagging UMF Delivery') {
+            when { expression { return params.RELEASE_OVN_UMF_DELIVERY } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_umf_delivery_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_umf_delivery.git']]]
+                sh "cd ovn_umf_delivery_repo/ && git tag -a -m \"OVN UMF Delivery ${params.RELEASE_VERSION} Pre Alpha version\" ${PRE_RELEASE_TAG}"
+                sh "cd ovn_umf_delivery_repo/ && git push origin ${PRE_RELEASE_TAG}"
+            }
+
+        }
+
+        stage('Tagging Vitalsigns Delivery') {
+            when { expression { return params.RELEASE_OVN_VITALSIGNS_DELIVERY } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_vitalsigns_delivery_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_vitalsigns_delivery.git']]]
+                sh "cd ovn_vitalsigns_delivery_repo/ && git tag -a -m \"OVN Vitalsigns Delivery ${params.RELEASE_VERSION} Pre Alpha version\" ${PRE_RELEASE_TAG}"
+                sh "cd ovn_vitalsigns_delivery_repo/ && git push origin ${PRE_RELEASE_TAG}"
+            }
+
+        }
+
+        stage('Tagging Multidc Sync') {
+            when { expression { return params.RELEASE_OVN_MULTIDC_SYNC } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_multidc_sync_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_multidc_sync.git']]]
+                sh "cd ovn_multidc_sync_repo/ && git tag -a -m \"OVN Multidc Sync ${params.RELEASE_VERSION} Pre Alpha version\" ${PRE_RELEASE_TAG}"
+                sh "cd ovn_multidc_sync_repo/ && git push origin ${PRE_RELEASE_TAG}"
+            }
+
+        }
+
+        stage('Tagging VIP EF Sync') {
+            when { expression { return params.RELEASE_OVN_VIP_EF_SYNC } }
+            steps {
+                checkout poll: false, scm: [$class: 'GitSCM',
+                                            branches: [[name: 'master']],
+                                            doGenerateSubmoduleConfigurations: false,
+                                            extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ovn_vip_ef_sync_repo']],
+                                            submoduleCfg: [],
+                                            userRemoteConfigs: [[url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_vip_ef_sync.git']]]
+                sh "cd ovn_vip_ef_sync_repo/ && git tag -a -m \"OVN VIP EF Sync ${params.RELEASE_VERSION} Pre Alpha version\" ${PRE_RELEASE_TAG}"
+                sh "cd ovn_vip_ef_sync_repo/ && git push origin ${PRE_RELEASE_TAG}"
+            }
+
+        }
+
+    }
+}
+
+

@@ -1,0 +1,10 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=all,!cumulus_switch
+
+#
+# This playbook should be run as cd user with priviliged escalation (ansible become)
+# to make sure we have a record of what was done on the target system.
+- name: Provision SSH CA accounts with "{{ cd_principal }}" principal
+  hosts: all
+  roles:
+  - { role: ssh_ca, dispatch: ['deploy-sshca'] }

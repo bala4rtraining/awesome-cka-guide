@@ -1,0 +1,30 @@
+@Library('ovn-shared-library') _
+
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+      args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+    }
+  }
+  parameters {
+      booleanParam(defaultValue: false, description: '', name: 'COPY_ALL_JOBS')
+      choice(choices: 'master\nrelease-0.3.18', description: 'release-0.0.00', name: 'BRANCH')
+      string(defaultValue: null, description: 'Eg: deploy_xdc_sync', name: 'JENKINS_FILE_NAME')
+    }
+  stages {
+    stage('Copying all jobs') {
+      when {expression {return params.COPY_ALL_JOBS;}}
+      steps{
+        sh "bash jenkins-sh/jenkinsjobloader.sh -a ${env.CLUSTER} ${env.BRANCH}"
+      }
+    }
+    stage('Copying a single job') {
+      when {expression {return params.JENKINS_FILE_NAME;}}
+      steps{
+        sh "bash jenkins-sh/jenkinsjobloader.sh -j ${params.JENKINS_FILE_NAME} ${env.BRANCH} ${env.CLUSTER}"
+      }
+    }
+  }
+}

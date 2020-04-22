@@ -1,0 +1,33 @@
+---
+- name: install the fluentd erlangservices plugin from the artifactory using curl command
+  shell: "curl -XGET {{ artifactory_gem_repo }}/gems/fluent-plugin-parser-erlangservices-{{ fluent_plugin_parser_erlangservices_version }}.gem -o /tmp/fluent-plugin-parser-erlangservices-{{ fluent_plugin_parser_erlangservices_version }}.gem"
+
+- name: set permission for /tmp/ folder for td-agent user
+  file:
+    path: /tmp/fluent-plugin-parser-erlangservices-{{ fluent_plugin_parser_erlangservices_version }}.gem
+    mode: "0750"
+    owner: "{{ td_agent_user }}"
+    group: "{{ td_agent_group }}"
+
+- name: install fluentd erlangservices plugin to parse erlang logs
+  shell: "td-agent-gem install --local /tmp/fluent-plugin-parser-erlangservices-{{ fluent_plugin_parser_erlangservices_version }}.gem"
+  become_user: "{{ td_agent_user }}"
+  become: true
+
+- name: delete the temp fluent-plugin-parser-erlangservices file installed in step 1
+  file:
+    state: absent
+    path: "/tmp/fluent-plugin-parser-erlangservices-{{ fluent_plugin_parser_erlangservices_version }}.gem"
+
+- name: Restart fluentd service.
+  systemd:
+    name: td-agent
+    state: restarted
+
+- name: ensure td-agent is started 
+  systemd:
+    name: td-agent
+    state: started
+
+- name: td-agent is enabled to start at boot.
+  shell: systemctl enable td-agent.service

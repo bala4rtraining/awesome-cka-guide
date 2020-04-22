@@ -1,0 +1,103 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=cas_ui
+
+#==============================================================================#
+#
+# Deprecation warning: This file has been moved to new repository. Do not modify this copy.
+#
+# Please see: https://stash.trusted.visa.com:7990/projects/OP/repos/ovn_app_infrastructure/browse
+#
+#==============================================================================#
+- name: Fail when allow_ovninfra_playbook is not defined
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        var: ALLOW_OVNINFRA_PLAYBOOK
+    - debug:
+        msg: "ALLOW_OVNINFRA_PLAYBOOK variable is required"
+      failed_when: "'true' not in ALLOW_OVNINFRA_PLAYBOOK"
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "This file has been deprecated and moved to ovn_app_infrastructure repository"
+      run_once: true
+#Deploy cas_ui and configure nginx on its machine.
+- name:  deploy CAS_UI Server
+  hosts: cas_ui
+  gather_facts: yes
+  roles:
+    - cas_ui
+  vars:
+    cas_ui_http_host: "localhost"
+    cas_ui_scheme: "https"
+    cas_ui_cas_tool_host: "sl73ovnapd073.visa.com"
+    # Required for mutual ssl between CAS-UI and CAS-Tools
+    cas_ui_cas_tools_client_cert: "/etc/pki/tls/certs/{{ inventory_hostname }}.pem"
+    cas_ui_cas_tools_client_key:  "/etc/pki/tls/private/{{ inventory_hostname }}.pem"
+    cas_ui_cas_tools_client_ca_certs:
+      - "/etc/pki/tls/certs/root.pem"
+      - "/etc/pki/tls/certs/intermediate.pem"
+
+    #TLS related default configurations
+    cas_ui_server_cert: "/etc/pki/tls/certs/{{ inventory_hostname }}.pem"
+    cas_ui_server_key: "/etc/pki/tls/private/{{ inventory_hostname }}.pem"
+    cas_ui_server_root_ca_certs:
+      - "/etc/pki/tls/certs/root.pem"
+      - "/etc/pki/tls/certs/intermediate.pem"
+    cas_ui_client_root_ca_certs: []
+
+#Commenting out the playbook section below which requires changes to OVN manager..  We will revisit this later.
+# #Configure reverse proxy for cas ui
+# - name: Configure OVN manager nginx to reverse proxy cas ui requests
+#   hosts: ovn_manager
+#   roles:
+#     - nginx
+#     - nginx_auth
+#   vars:
+#     - cas_ui_nginx_ssl_certificate_path: "/etc/pki/tls/certs/{{ inventory_hostname }}.pem"
+#     - cas_ui_nginx_ssl_certificate_key_path: "/etc/pki/tls/private/{{ inventory_hostname }}.pem"
+#     - nginx_sites:
+#         default:
+#           - listen {{ nginx_default_port }} ssl
+#           - server_name localhost
+#           - ssl_certificate {{ cas_ui_nginx_ssl_certificate_path }}
+#           - ssl_certificate_key {{ cas_ui_nginx_ssl_certificate_key_path }}
+#     - cas_ui_scheme: "https"
+#     - nginx_configs:
+#         cas_upstream:
+#           - upstream cas_ui { server {{ groups.cas_ui[0] }}:7443; }
+#         auth_upstream:
+#           - upstream authServer { server localhost:4242; }
+#     - nginx_locations:
+#         - site: default
+#           locations:
+#             - name: cas
+#               location:
+#                 - location /cas {
+#                     auth_request /authentication-proxy;
+#                     auth_request_set $token $upstream_http_x_token;
+#                     auth_request_set $redirect_uri $upstream_http_redirect_uri;
+#                     error_page 401 = @error401;
+#                     proxy_set_header X-Token $token;
+#                     proxy_pass {{ cas_ui_scheme }}://cas_ui;
+#                   }
+#             - name: authenticator
+#               location:
+#                 - location /login { 
+#                     proxy_pass http://authServer; 
+#                   }
+#                   location /logout { 
+#                     proxy_pass http://authServer; 
+#                   }
+#                   location /authentication-proxy { 
+#                     internal; 
+#                     proxy_set_header X-Original-URI $request_uri; 
+#                     proxy_pass http://authServer; 
+#                   }
+#                   location @error401 { 
+#                     add_header Set-Cookie "redirect_uri=$redirect_uri; path=/; max-age=120;" always; 
+#                     return 302 /login; 
+#                   }

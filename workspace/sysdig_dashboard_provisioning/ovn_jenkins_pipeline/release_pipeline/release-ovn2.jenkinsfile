@@ -1,0 +1,88 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+
+    parameters {
+
+        booleanParam(name: 'RELEASE_VSSWRAPPER',          defaultValue: false, description: 'Is Vsswrapper part of the upcoming release?')
+        booleanParam(name: 'RELEASE_BRIDGEEAFETCH',	      defaultValue: false, description: 'Is Bridgeeafetch part of the upcoming release?')
+        booleanParam(name: 'RELEASE_DELIVERYPROCESSOR',   defaultValue: false, description: 'Is Deliveryprocessor part of the upcoming release?')
+        booleanParam(name: 'RELEASE_WINDOWMANAGER',       defaultValue: false, description: 'Is Windowmanager part of the upcoming release?')
+        booleanParam(name: 'RELEASE_OVN_MP',              defaultValue: false, description: 'Is Ovn_mp part of the upcoming release?')
+        booleanParam(name: 'RELEASE_MOCKMVS',             defaultValue: false, description: 'Is Mockmvs part of the upcoming release?')
+        booleanParam(name: 'RELEASE_GOOVNT',          	  defaultValue: false, description: 'Is Goovnt part of the upcoming release?')
+        booleanParam(name: 'RELEASE_CTT',                  defaultValue: false, description: 'Is CTT part of the upcoming release?')
+        booleanParam(name: 'RELEASE_COLLECTIONPROCESSOR', defaultValue: false, description: 'Is Collectionprocessor part of the upcoming release?')
+        
+        validatingString(name: 'RELEASE_VERSION', defaultValue: '', regex: '^[0-9]+\\.[0-9]+\\.[0-9]+$', failedValidationMessage: 'Please ,kindly follow this format 0.2.16',
+        description: 'What is the upcoming release version? Use semantic versioning, e.g: x.y.z')
+    }
+
+    environment {
+        RELEASE_BRANCH = "release-${params.RELEASE_VERSION}"
+        RELEASE_TAG = "v${params.RELEASE_VERSION}-rc1"
+    }
+
+    stages {
+
+        stage ('Check prerequisites') {
+
+            steps {
+                sh "echo To be defined, check status of master branches"
+                sh "echo Check that infrastructure is not created yet"
+            }
+
+        }
+
+        stage ('Tagging master branches for Clearing') {
+
+            steps {
+                build job: 'release-ovn2-tag-master-branches', parameters: [
+                    booleanParam(name: 'RELEASE_VSSWRAPPER',            value: params.RELEASE_VSSWRAPPER),
+                    booleanParam(name: 'RELEASE_BRIDGEEAFETCH',         value: params.RELEASE_BRIDGEEAFETCH),
+                    booleanParam(name: 'RELEASE_DELIVERYPROCESSOR',     value: params.RELEASE_DELIVERYPROCESSOR),
+                    booleanParam(name: 'RELEASE_WINDOWMANAGER',         value: params.RELEASE_WINDOWMANAGER),
+                    booleanParam(name: 'RELEASE_OVN_NGINX_AUTH',        value: params.RELEASE_OVN_NGINX_AUTH),
+                    booleanParam(name: 'RELEASE_OVN_MP',                value: params.RELEASE_OVN_MP),
+                    booleanParam(name: 'RELEASE_MOCKMVS',               value: params.RELEASE_MOCKMVS),
+                    booleanParam(name: 'RELEASE_CTT',                   value: params.RELEASE_CTT),
+                    booleanParam(name: 'RELEASE_COLLECTIONPROCESSOR',   value: params.RELEASE_COLLECTIONPROCESSOR),
+                    validatingString(name: 'RELEASE_VERSION',           value: String.valueOf(RELEASE_VERSION))
+                ]
+            }
+        }
+
+        stage ('Create release branches for Clearing') {
+
+            steps {
+                build job: 'release-ovn2-create-branches', parameters: [
+                    booleanParam(name: 'RELEASE_VSSWRAPPER',          value: params.RELEASE_VSSWRAPPER),
+                    booleanParam(name: 'RELEASE_BRIDGEEAFETCH',       value: params.RELEASE_BRIDGEEAFETCH),
+                    booleanParam(name: 'RELEASE_DELIVERYPROCESSOR',   value: params.RELEASE_DELIVERYPROCESSOR),
+                    booleanParam(name: 'RELEASE_WINDOWMANAGER',       value: params.RELEASE_WINDOWMANAGER),
+                    booleanParam(name: 'RELEASE_OVN_NGINX_AUTH',      value: params.RELEASE_OVN_NGINX_AUTH),
+                    booleanParam(name: 'RELEASE_OVN_MP',              value: params.RELEASE_OVN_MP),
+                    booleanParam(name: 'RELEASE_MOCKMVS',             value: params.RELEASE_MOCKMVS),
+                    booleanParam(name: 'RELEASE_CTT',                 value: params.RELEASE_CTT),
+                    booleanParam(name: 'RELEASE_COLLECTIONPROCESSOR',   value: params.RELEASE_COLLECTIONPROCESSOR),
+                    validatingString(name: 'RELEASE_VERSION',         value: String.valueOf(RELEASE_VERSION))
+                ]
+            }
+        }
+
+         stage ('OVN2 release build') {
+                    steps {
+                        build job: "OVN-OP/ovn2/${RELEASE_BRANCH}", parameters: [
+                            booleanParam(name: 'BUILD_AND_PUBLISH', value: true)
+                        ]
+                    }
+                }
+    }
+
+
+}

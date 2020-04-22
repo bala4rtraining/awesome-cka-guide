@@ -1,0 +1,2 @@
+@Library('ovn-shared-library') _
+cdTemplate_InvokeAnsiblePlaybook('ovn_infrastructure', '$RELEASE_BRANCH', 'ansible_ovn/deploy_ovn_core_components.yaml','-e @config/${env.ENV}.vars.secret.yml -e alertmanager_repeat_interval=36h')

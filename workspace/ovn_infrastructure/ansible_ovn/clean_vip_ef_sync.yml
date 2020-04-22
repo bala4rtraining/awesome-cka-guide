@@ -1,0 +1,11 @@
+---
+- include: ../ovn_vars.yml ovn_vars_hosts=ftps_server[0]
+
+- name: clean ovn_multidc_sync environment
+  hosts: ftps_server[0]
+  tasks:
+    - service: name={{item}} state=stopped
+    - file: path=/opt/{{item}} state=absent
+    - file: path=/var/lib/{{item}} state=absent
+  vars:
+    item: ovn_vip_ef_sync

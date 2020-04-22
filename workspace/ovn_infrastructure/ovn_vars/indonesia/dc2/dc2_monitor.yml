@@ -1,0 +1,31 @@
+---
+kibana_reverse_proxy_enabled: true
+kibana_nginx_enable_ssl: "true"
+kibana_basepath: "/kibana-telin"
+kibana_reverse_proxy_path: "kibana-telin"
+
+grafana_reverse_proxy_enabled: true
+grafana_auth_proxy_enabled: true
+grafana_nginx_enable_ssl: "true"
+grafana_reverse_proxy_url: "https://sl73ovnmgp02.visa.com/grafana-telin/"
+grafana_reverse_proxy_path: "grafana-telin"
+
+nginx_enable_ssl: "true"
+
+
+graphite_url: "http://10.237.9.36:5603"
+prometheus_datacenter_id: "TELIN"
+
+alertmanager_context_path: "alertmanager-telin"
+alertmanager_app_context_path: "alertmanager-telin-app"
+prometheus_context_path: "prometheus-telin"
+prometheus_app_context_path: "prometheus-telin-app"
+vss_output_context_path: "vss-output-telin"
+#This will be used for constructing the link/URL back to prometheus source pages from alertmanager pages via reverse proxy(ovnmanager).
+prometheus_external_host: "sl73ovnmgp02.visa.com"
+
+
+elastalert_env: "TELIN"
+
+prometheus_public: |
+ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCwxDqw653rdxLWE09wb7AooS1XggLEZnBp/XNVAmtGlbxTSEuN8AT9lbCbzKMnXLGrzXkJxq+1ZaZ3dV2a1IUUktzMF+SGaSaxxtHbREQk7Z1zZ+NB0khcDt8siUOLZ/zueFlx0/kYyGQ94mpnO676U7/Loll2sVL2EDSYG8hqcqZMVyxnjxkJJxPemZ3nhCP9z7T72s+I0XDu7acl/iTFQhGaBtGux8uOLdD+H0RwATTKjOIJCiFsFmdOHNHFyxW4Lf2vQ+m5HvjC0DePwxtzMnguoAGCal35xZdL0z0Xm4jwo2c7zdaR8pQYRDsOHa04oTE0i1z465G3ayd6WQ/L indonesia

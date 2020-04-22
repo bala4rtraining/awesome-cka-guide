@@ -1,0 +1,34 @@
+//
+// This pipeline is for deleting project from cloud view
+//
+
+pipeline {
+
+ agent any
+
+
+ stages {
+
+  stage('checkout SCM') {
+   steps {
+    git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_devcassandra.git', branch: "master"
+   }
+  }
+
+
+  stage('DeleteProject') {
+   steps {
+    sh 'cvautomate/cv_delete_project.sh'
+   }
+   
+   post {
+    always {
+     cleanWs()
+    }
+   }
+  
+  }
+
+
+ }
+}

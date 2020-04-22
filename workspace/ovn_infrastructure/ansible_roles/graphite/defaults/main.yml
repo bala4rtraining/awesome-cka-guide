@@ -1,0 +1,24 @@
+---
+# defaults file for graphite
+# CentOS7 and RedHat6 have separate vars lists for that include the platform specific stuffs
+download_path_url: "{{artifactory_host}}/ovn-extra-el7"
+
+apply_graphite_patch: false
+archive_ref_graphiteweb: "ovn/repo/graphite-web-0.9.12-tar.gz"
+archive_ref_carbon: "ovn/repo/carbon-0.9.12-tar.gz"
+archive_ref_whisper: "ovn/repo/whisper-0.9.12-tar.gz"
+
+graphite_port: 5603
+carbon_port: 2003
+disable_port_80: true
+
+graphite_apache_wsgi_socket_prefix: run/wsgi
+graphite_apache_vhost_name: graphite.conf
+
+graphite_templates:
+ - { src: carbon.conf.j2, dest: /opt/graphite/conf/carbon.conf, mode: '0644' }
+ - { src: graphite-web.wsgi.j2, dest: /opt/graphite/graphite-web.wsgi, mode: '0755' }
+ - { src: storage-schemas.conf.j2, dest: /opt/graphite/conf/storage-schemas.conf, mode: '0644' }
+ - { src: storage-aggregation.conf.j2, dest: /opt/graphite/conf/storage-aggregation.conf, mode: '0644' }
+ - { src: local_settings.py.j2, dest: /opt/graphite/webapp/graphite/local_settings.py, mode: '0644' }
+ - { src: graphite-web.conf.j2, dest: /etc/httpd/conf.d/graphite-web.conf, mode: '0644' }

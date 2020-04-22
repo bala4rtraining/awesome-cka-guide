@@ -1,0 +1,61 @@
+---
+# tasks file for graphite_beacon
+- name: includes overrides specific to the distribution+version (e.g. Centos7)
+  include_vars: "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
+
+- name: stop grbeacon service
+  service: name=graphite-beacon state=stopped
+  ignore_errors: yes
+
+- name: create grbeacon group
+  group: name=grbeacon state=present
+
+- name: create grbeacon user
+  user: >
+    name=grbeacon group=grbeacon system=yes
+    home=/var/lib/graphite-beacon shell=/bin/false
+    state=present
+
+## [Part 1] RPM installs
+- name: install rpms
+  yum: name={{download_path_url}}/{{item}} state=present
+  with_items: '{{grbeacon_rpms}}'
+
+## [Part 2] Python package installs
+- name: download pypi tarballs to /tmp/
+  get_url: url={{download_path_url}}/pypi/{{item}} dest=/tmp/{{item}} use_proxy=no
+  with_items: '{{grbeacon_pypi}}'
+
+- name: install pypi packages
+  pip: name=/tmp/{{item}} state=present
+  with_items: '{{grbeacon_pypi}}'
+
+- name: delete uploaded pypi tarballs (remote)
+  file: dest=/tmp/{{item}} state=absent
+  with_items: '{{grbeacon_pypi}}'
+
+## [Part 3] Configuration files + Rules
+- name: apply grbeacon config template
+  template:
+    src: config.json.j2
+    dest: /var/lib/graphite-beacon/config.json
+    owner: grbeacon
+    group: grbeacon
+    mode: "0664"
+
+- name: Retrieve the latest release of graphite-beacon-monitor file from OVNGIT
+  get_url:
+     url: "{{graphite_beacon_rules_url}}/ovnmonitor-alerts.json"
+     dest: /var/lib/graphite-beacon/ovnmonitor-alerts.json
+
+- name: install grbeacon service template
+  template: src={{item.src}} dest={{item.dest}} mode={{item.mode}}
+  with_items:
+   - "{{ service_template }}"
+
+## [Part 4] Start grbeacon as a service
+- name: restart grbeacon service
+  service: name=graphite-beacon state=restarted
+
+
+

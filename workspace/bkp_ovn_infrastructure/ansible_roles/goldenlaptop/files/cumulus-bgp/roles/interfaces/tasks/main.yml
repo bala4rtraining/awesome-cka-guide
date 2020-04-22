@@ -1,0 +1,7 @@
+---
+# tasks file for interfaces
+
+
+- name: Configure /etc/network/interfaces on a Cumulus switch
+  template: src=interfaces.j2 dest=/etc/network/interfaces
+  notify: Reload networking

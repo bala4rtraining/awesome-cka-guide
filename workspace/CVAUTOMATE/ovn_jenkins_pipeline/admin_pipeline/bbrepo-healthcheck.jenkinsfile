@@ -1,0 +1,64 @@
+pipeline {
+    agent {
+        docker {
+            image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+            label 'ovn_build'
+            args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/was/.ssh'
+        }
+    }
+    environment {
+        REPO_FILE = sh(returnStdout: true, script: "echo repo.list.`date +%Y%m%d`").trim()
+        REPO_SETTINGS_FILE = sh(returnStdout: true, script: "echo getsettings.`date +%Y%m%d`").trim()
+        ATTACH_FILE="getsettings.txt"
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+    triggers {
+        cron('H H * * *')
+    }
+    
+    stages {
+      stage('checkout SCM') {
+          steps{
+            git credentialsId: 'ENV.root_key', url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_jenkins_pipeline.git'
+          }
+      }
+      stage('Get Repository List') {
+          steps {
+            ansiColor('xterm') {
+              withCredentials([usernameColonPassword(credentialsId: 'svcovnrepoadm_pwd', variable: 'USERPASS')]) {
+                sh '''
+                  sh jenkins-sh/repolist.sh $USERPASS
+                  sh jenkins-sh/getsettings.sh $REPO_FILE $USERPASS
+                  cp $REPO_SETTINGS_FILE $ATTACH_FILE
+                '''
+                }
+              }
+          }
+      }
+      stage ('Archive') {
+          steps {
+              echo "Archiving..."
+              archiveArtifacts REPO_SETTINGS_FILE
+            }
+        }
+    }
+    post {
+        always {
+            emailext mimeType: 'text/html',
+            attachmentsPattern: 'getsettings.txt',
+            body: "OVN REPO - Health Check Summary Attached",
+            subject: 'OVN REPO - Health Check Summary',
+            from: "OVN Admin Job Jenkins <noreply@visa.com>", 
+            to: "gdlovndevops@visa.com, cramalin@visa.com"
+            cleanWs()
+        }
+        failure {
+            mail body: "OVN REPO - Health Check Summary Failed",
+            subject: "OVN REPO - Health Check Summary",
+            from: "OVN Admin Job Jenkins <noreply@visa.com>",
+            to: "gdlovndevops@visa.com, cramalin@visa.com"
+        }
+    }
+}

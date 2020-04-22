@@ -1,0 +1,91 @@
+@Library('ovn-shared-library') _
+pipeline {
+  agent {
+    docker {
+      image 'ovn-docker.artifactory.trusted.visa.com/centos7_ovn_docker'
+      label 'ovn_build'
+       args '-v /sys/fs/cgroup:/sys/fs/cgroup -v /home/was/.ssh:/home/'
+    }
+  }
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '95'))
+  }
+  environment {
+    CLUSTER = "int-epic15"
+    DATACENTER1 = 'dc1'
+    DATACENTER2 = 'dc2'
+    RELEASE_ARTIFACTORY_URL=https://artifactory.trusted.visa.com/ovn-releases/ovn-app-temp-el7
+  }
+
+  stages {
+  stage('Checkout SCM'){
+          steps{
+          git credentialsId: 'ENV.root_key', branch: "master", url: 'ssh://git@stash.trusted.visa.com:7999/op/ovn_app_infrastructure.git'
+          }
+      }
+stage('deploying Clearing application'){
+   steps {
+    ansiColor('xterm') {
+      script {
+        def clearing_1 = [:]
+        clearing_1["deploy_cas_tools-${DATACENTER1}"] = runPlaybook("ansible_ovn/deploy_cas_tools.yml", "${CLUSTER}", "${DATACENTER1}", 5, '-e @config/${CLUSTER}.vars.secret.yml -e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}"')
+        clearing_1["deploy_cas_tools-${DATACENTER2}"] = runPlaybook("ansible_ovn/deploy_cas_tools.yml", "${CLUSTER}", "${DATACENTER2}", 5, '-e @config/${CLUSTER}.vars.secret.yml -e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}"')
+        parallel clearing_1
+        }
+        script {
+        def clearing_2 = [:]
+            ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER1}", playbook: 'ansible_ovn/copy_encrypted_dek.yml', extras: "-e @config/test1.vars.secret.yml"
+            ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}/${env.DATACENTER2}", playbook: 'ansible_ovn/copy_encrypted_dek.yml', extras: "-e @config/test2.vars.secret.yml"
+            ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', forks: 20, inventory: 'inventories/$CLUSTER', playbook: 'ansible_ovn/set_cluster_facts_app.yml', sudoUser: null, extras: '-e  DATACENTER="${DATACENTER2}"'
+            ansiblePlaybook colorized: true, credentialsId: 'ENV.root_key', forks: 20, inventory: 'inventories/$CLUSTER', playbook: 'ansible_ovn/set_cluster_facts_app.yml', sudoUser: null, extras: ' -e  DATACENTER="${DATACENTER1}"'
+
+         parallel clearing_2
+         }
+                script {
+        def clearing_3 = [:]
+            ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}", playbook: 'ansible_ovn/set_cluster_facts_infra.yml', extras: '-e DATACENTER="dc1"'
+            ansiblePlaybook colorized: true, credentialsId: "ENV.root_key", inventory: "inventories/${env.CLUSTER}", playbook: 'ansible_ovn/set_cluster_facts_infra.yml', extras: '-e DATACENTER="dc2"'
+
+         parallel clearing_3
+        }
+        script {
+        def clearing_4 = [:]
+        clearing_4["deploy_xdc_sync-${DATACENTER1}"] = runPlaybook("ansible_ovn/deploy_xdc_sync.yml", "${CLUSTER}", "${DATACENTER1}", 5, '-e @config/${CLUSTER}.vars.secret.yml -e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}" -e " xdc_sync_version=0.3.18-rc1"')
+        clearing_4["deploy_xdc_sync-${DATACENTER2}"] = runPlaybook("ansible_ovn/deploy_xdc_sync.yml", "${CLUSTER}", "${DATACENTER2}", 5, '-e @config/${CLUSTER}.vars.secret.yml -e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}" -e "xdc_sync_version=0.3.18-rc1"')
+        parallel clearing_4
+        }
+        script {
+        def clearing_5 = [:]
+        clearing_5["deploy_parameterized_jobs_bridge_ea_fetch-${DATACENTER1}"] = runPlaybook("ansible_nomad/deploy_parameterized_jobs_bridge_ea_fetch.yml", "${CLUSTER}", "${DATACENTER1}", 5, '-e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}"')
+        clearing_5["deploy_parameterized_jobs_bridge_ea_fetch-${DATACENTER2}"] = runPlaybook("ansible_nomad/deploy_parameterized_jobs_bridge_ea_fetch.yml", "${CLUSTER}", "${DATACENTER2}", 5, '-e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}"')
+        parallel clearing_5
+        }
+        script {
+        def clearing_6 = [:]
+        clearing_6["deploy_parameterized_jobs_cfprocessor-${DATACENTER1}"] = runPlaybook("ansible_nomad/deploy_parameterized_jobs_cfprocessor.yml", "${CLUSTER}", "${DATACENTER1}", 5, '-e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}"')
+        clearing_6["deploy_parameterized_jobs_cfprocessor-${DATACENTER2}"] = runPlaybook("ansible_nomad/deploy_parameterized_jobs_cfprocessor.yml", "${CLUSTER}", "${DATACENTER2}", 5, '-e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}"')
+        parallel clearing_6
+        }
+        script {
+          def clearing_7 = [:]
+          clearing_7["clearing_job_nomad-${DATACENTER1}"] = runPlaybook("ansible_ovn/clearing_job_nomad.yml", "${CLUSTER}", "${DATACENTER1}", 5, '-e @config/${CLUSTER}.vars.secret.yml -e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}" -e "ovn_clearing_jobs_version=0.3.18-rc2"')
+          clearing_7["clearing_job_nomad-${DATACENTER2}"] = runPlaybook("ansible_ovn/clearing_job_nomad.yml", "${CLUSTER}", "${DATACENTER2}", 5, '-e @config/${CLUSTER}.vars.secret.yml -e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}" -e "ovn_clearing_jobs_version=0.3.18-rc2"')
+          parallel clearing_7
+          }
+          script {
+          def clearing_8 = [:]
+          clearing_8["clearing_master_job_deploy-${DATACENTER1}"] = runPlaybook("ansible_ovn/clearing_master_job_deploy.yml", "${CLUSTER}", "${DATACENTER1}", 5, '-e @config/${CLUSTER}.vars.secret.yml -e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}" -e "ovn_clearing_enable_kerberos=false" -e "ovn_clearing_jobs_version=0.3.18-rc2"')
+          clearing_8["clearing_master_job_deploy-${DATACENTER2}"] = runPlaybook("ansible_ovn/clearing_master_job_deploy.yml", "${CLUSTER}", "${DATACENTER2}", 5, '-e @config/${CLUSTER}.vars.secret.yml -e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}" -e "ovn_clearing_enable_kerberos=false" -e "ovn_clearing_jobs_version=0.3.18-rc2"')
+          parallel clearing_8
+          }
+          script {
+          def clearing_9 = [:]
+          clearing_9["clearing_install_certs-${DATACENTER1}"] = runPlaybook("ansible_ovn/clearing_install_certs.yml", "${CLUSTER}", "${DATACENTER1}", 5, '-e @config/dev1.vars.secret.yml -e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}"')
+          clearing_9["clearing_install_certs-${DATACENTER2}"] = runPlaybook("ansible_ovn/clearing_install_certs.yml", "${CLUSTER}", "${DATACENTER2}", 5, '-e @config/dev1.vars.secret.yml -e "release_artifactory_url=${RELEASE_ARTIFACTORY_URL}"')
+          parallel clearing_9
+          }
+        }
+       }
+     }
+    } //stages
+   }

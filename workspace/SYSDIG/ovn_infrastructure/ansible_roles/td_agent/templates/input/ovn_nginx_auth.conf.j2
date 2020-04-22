@@ -1,0 +1,31 @@
+#Input
+<worker 0>
+    <source>
+      @type tail
+      path /var/log/ovn_nginx_auth/ovn_nginx_auth.log
+      pos_file /opt/app/td-agent/td_agent_ovn_nginx_auth_tail.pos
+      tag ovn.log.{{ td_agent_mode }}.ovn_nginx_auth
+      format json
+      read_from_head true
+      limit_recently_modified 7d
+    </source>
+</worker>
+
+#Discard debug logs
+<filter ovn.log.{{ td_agent_mode }}.ovn_nginx_auth>
+  @type grep
+  <regexp>
+    key logger
+    pattern ^(Authorizer|Authenticator)$
+  </regexp>
+</filter>
+
+#Transform
+<filter ovn.log.{{ td_agent_mode }}.ovn_nginx_auth>
+  @type record_transformer
+  enable_ruby
+  <record>
+   index_prefix fluentd_ovn_nginx_${record["logger"]}
+  </record>
+</filter>
+
